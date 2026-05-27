@@ -187,7 +187,7 @@ setInterval(updateStatusMessage, 15000);
 
 
 // ==========================================================================
-// 2. HIGH-FIDELITY WEB AUDIO SYNTHESIZER
+// 2. HIGH-FIDELITY WEB AUDIO SYNTHESIZER & LOCAL SOUND FALLBACK SYSTEM
 // ==========================================================================
 
 let audioCtx = null;
@@ -200,221 +200,257 @@ function initAudio() {
   if (banner) banner.classList.add("hidden");
 }
 
+// Robust local audio file loader with bulletproof synthesiser fallback
+function playSoundWithFallback(filename, synthesizerFn) {
+  initAudio();
+  
+  const localPath = `sounds/filterblade/${filename}`;
+  const audio = new Audio(localPath);
+  audio.volume = 0.65;
+  
+  let fallbackTriggered = false;
+  
+  const triggerFallback = () => {
+    if (fallbackTriggered) return;
+    fallbackTriggered = true;
+    synthesizerFn();
+  };
+  
+  // Triggers if file is missing (404) or failed to load
+  audio.onerror = () => {
+    triggerFallback();
+  };
+  
+  audio.play()
+    .then(() => {
+      // Audio is playing successfully!
+    })
+    .catch((err) => {
+      // Autoplay blocked, or file 404, fall back to synthesiser
+      triggerFallback();
+    });
+}
+
 // Synthesize: Divine Orb sound (Clean glass bell + metallic echo)
 function playDivineSound() {
-  initAudio();
-  if (!audioCtx) return;
-  
-  const now = audioCtx.currentTime;
-  
-  // 1. High chime bell tone
-  const osc1 = audioCtx.createOscillator();
-  const osc2 = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-  
-  osc1.type = "sine";
-  osc1.frequency.setValueAtTime(1150, now);
-  osc1.frequency.exponentialRampToValueAtTime(800, now + 1.2);
-  
-  osc2.type = "sine";
-  osc2.frequency.setValueAtTime(1730, now); // Metallic disharmony
-  
-  gainNode.gain.setValueAtTime(0.001, now);
-  gainNode.gain.linearRampToValueAtTime(0.25, now + 0.02);
-  gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
-  
-  // Filter for metallic ring
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = "bandpass";
-  filter.frequency.value = 1200;
-  filter.Q.value = 4.0;
-  
-  // Connections
-  osc1.connect(filter);
-  osc2.connect(filter);
-  filter.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-  
-  osc1.start(now);
-  osc2.start(now);
-  osc1.stop(now + 1.6);
-  osc2.stop(now + 1.6);
-  
-  // 2. Add high transient strike (click)
-  const transientOsc = audioCtx.createOscillator();
-  const transientGain = audioCtx.createGain();
-  transientOsc.type = "triangle";
-  transientOsc.frequency.setValueAtTime(2500, now);
-  transientOsc.frequency.exponentialRampToValueAtTime(150, now + 0.05);
-  
-  transientGain.gain.setValueAtTime(0.18, now);
-  transientGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
-  
-  transientOsc.connect(transientGain);
-  transientGain.connect(audioCtx.destination);
-  transientOsc.start(now);
-  transientOsc.stop(now + 0.1);
+  playSoundWithFallback("AlertSound16.mp3", () => {
+    if (!audioCtx) return;
+    
+    const now = audioCtx.currentTime;
+    
+    // 1. High chime bell tone
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(1150, now);
+    osc1.frequency.exponentialRampToValueAtTime(800, now + 1.2);
+    
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(1730, now); // Metallic disharmony
+    
+    gainNode.gain.setValueAtTime(0.001, now);
+    gainNode.gain.linearRampToValueAtTime(0.25, now + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+    
+    // Filter for metallic ring
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 1200;
+    filter.Q.value = 4.0;
+    
+    // Connections
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 1.6);
+    osc2.stop(now + 1.6);
+    
+    // 2. Add high transient strike (click)
+    const transientOsc = audioCtx.createOscillator();
+    const transientGain = audioCtx.createGain();
+    transientOsc.type = "triangle";
+    transientOsc.frequency.setValueAtTime(2500, now);
+    transientOsc.frequency.exponentialRampToValueAtTime(150, now + 0.05);
+    
+    transientGain.gain.setValueAtTime(0.18, now);
+    transientGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+    
+    transientOsc.connect(transientGain);
+    transientGain.connect(audioCtx.destination);
+    transientOsc.start(now);
+    transientOsc.stop(now + 0.1);
+  });
 }
 
 // Synthesize: Exalted Orb sound (Hollow metallic clang)
 function playExaltedSound() {
-  initAudio();
-  if (!audioCtx) return;
-  
-  const now = audioCtx.currentTime;
-  
-  const osc = audioCtx.createOscillator();
-  const subOsc = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-  
-  osc.type = "triangle";
-  osc.frequency.setValueAtTime(320, now);
-  osc.frequency.exponentialRampToValueAtTime(450, now + 0.1); // pitch bend up
-  
-  subOsc.type = "sawtooth";
-  subOsc.frequency.setValueAtTime(160, now);
-  
-  gainNode.gain.setValueAtTime(0.001, now);
-  gainNode.gain.linearRampToValueAtTime(0.28, now + 0.01);
-  gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
-  
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = "bandpass";
-  filter.frequency.setValueAtTime(380, now);
-  filter.frequency.exponentialRampToValueAtTime(500, now + 0.5);
-  filter.Q.value = 3;
-  
-  osc.connect(filter);
-  subOsc.connect(filter);
-  filter.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-  
-  osc.start(now);
-  subOsc.start(now);
-  osc.stop(now + 1.0);
-  subOsc.stop(now + 1.0);
+  playSoundWithFallback("AlertSound1.mp3", () => {
+    if (!audioCtx) return;
+    
+    const now = audioCtx.currentTime;
+    
+    const osc = audioCtx.createOscillator();
+    const subOsc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(450, now + 0.1); // pitch bend up
+    
+    subOsc.type = "sawtooth";
+    subOsc.frequency.setValueAtTime(160, now);
+    
+    gainNode.gain.setValueAtTime(0.001, now);
+    gainNode.gain.linearRampToValueAtTime(0.28, now + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+    
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(380, now);
+    filter.frequency.exponentialRampToValueAtTime(500, now + 0.5);
+    filter.Q.value = 3;
+    
+    osc.connect(filter);
+    subOsc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.start(now);
+    subOsc.start(now);
+    osc.stop(now + 1.0);
+    subOsc.stop(now + 1.0);
+  });
 }
 
 // Synthesize: Chaos Orb sound (Dull chaotic impact + rustle)
 function playChaosSound() {
-  initAudio();
-  if (!audioCtx) return;
-  
-  const now = audioCtx.currentTime;
-  
-  const osc = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-  
-  osc.type = "sawtooth";
-  osc.frequency.setValueAtTime(120, now);
-  osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
-  
-  gainNode.gain.setValueAtTime(0.35, now);
-  gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
-  
-  // Noise transient (rustle)
-  const bufferSize = audioCtx.sampleRate * 0.15;
-  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = Math.random() * 2 - 1;
-  }
-  
-  const noise = audioCtx.createBufferSource();
-  noise.buffer = buffer;
-  
-  const noiseFilter = audioCtx.createBiquadFilter();
-  noiseFilter.type = "lowpass";
-  noiseFilter.frequency.value = 800;
-  
-  const noiseGain = audioCtx.createGain();
-  noiseGain.gain.setValueAtTime(0.18, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
-  
-  osc.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-  
-  noise.connect(noiseFilter);
-  noiseFilter.connect(noiseGain);
-  noiseGain.connect(audioCtx.destination);
-  
-  osc.start(now);
-  noise.start(now);
-  osc.stop(now + 0.4);
-  noise.stop(now + 0.4);
+  playSoundWithFallback("AlertSound2.mp3", () => {
+    if (!audioCtx) return;
+    
+    const now = audioCtx.currentTime;
+    
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+    
+    gainNode.gain.setValueAtTime(0.35, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+    
+    // Noise transient (rustle)
+    const bufferSize = audioCtx.sampleRate * 0.15;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+    
+    const noiseFilter = audioCtx.createBiquadFilter();
+    noiseFilter.type = "lowpass";
+    noiseFilter.frequency.value = 800;
+    
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0.18, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    
+    osc.start(now);
+    noise.start(now);
+    osc.stop(now + 0.4);
+    noise.stop(now + 0.4);
+  });
 }
 
 // Synthesize: Mirror of Kalandra sound (Ultra-premium epic bell chord chime!)
 function playMirrorSound() {
-  initAudio();
-  if (!audioCtx) return;
-  
-  const now = audioCtx.currentTime;
-  const frequencies = [261.63, 329.63, 392.00, 523.25, 783.99, 1046.50]; // Beautiful C Major chime chord
-  
-  frequencies.forEach((freq, index) => {
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+  playSoundWithFallback("AlertSound16.mp3", () => {
+    if (!audioCtx) return;
     
-    // alternate chime shapes for harmonic riches
-    osc.type = index % 2 === 0 ? "sine" : "triangle";
-    osc.frequency.setValueAtTime(freq, now + (index * 0.04)); // Arpeggiated strike
+    const now = audioCtx.currentTime;
+    const frequencies = [261.63, 329.63, 392.00, 523.25, 783.99, 1046.50]; // Beautiful C Major chime chord
     
-    gainNode.gain.setValueAtTime(0.001, now);
-    gainNode.gain.linearRampToValueAtTime(0.2, now + (index * 0.04) + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 3.0);
-    
-    // Add pulsing tremolo to the main chime chord
-    const tremolo = audioCtx.createGain();
-    const lfo = audioCtx.createOscillator();
-    lfo.frequency.value = 6; // 6Hz hum
-    const lfoGain = audioCtx.createGain();
-    lfoGain.gain.value = 0.4;
-    
-    lfo.connect(lfoGain);
-    lfoGain.connect(tremolo.gain);
-    
-    osc.connect(gainNode);
-    gainNode.connect(tremolo);
-    tremolo.connect(audioCtx.destination);
-    
-    lfo.start(now);
-    osc.start(now);
-    lfo.stop(now + 3.2);
-    osc.stop(now + 3.2);
+    frequencies.forEach((freq, index) => {
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      // alternate chime shapes for harmonic riches
+      osc.type = index % 2 === 0 ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(freq, now + (index * 0.04)); // Arpeggiated strike
+      
+      gainNode.gain.setValueAtTime(0.001, now);
+      gainNode.gain.linearRampToValueAtTime(0.2, now + (index * 0.04) + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 3.0);
+      
+      // Add pulsing tremolo to the main chime chord
+      const tremolo = audioCtx.createGain();
+      const lfo = audioCtx.createOscillator();
+      lfo.frequency.value = 6; // 6Hz hum
+      const lfoGain = audioCtx.createGain();
+      lfoGain.gain.value = 0.4;
+      
+      lfo.connect(lfoGain);
+      lfoGain.connect(tremolo.gain);
+      
+      osc.connect(gainNode);
+      gainNode.connect(tremolo);
+      tremolo.connect(audioCtx.destination);
+      
+      lfo.start(now);
+      osc.start(now);
+      lfo.stop(now + 3.2);
+      osc.stop(now + 3.2);
+    });
   });
 }
 
 // Synthesize: Hype Guild RIP (Sad gothic minor synth roll)
 function playRipSound() {
-  initAudio();
-  if (!audioCtx) return;
-  
-  const now = audioCtx.currentTime;
-  // A Minor chord notes arpeggiated downwards
-  const notes = [440.00, 349.23, 293.66, 220.00]; // A4 -> F4 -> D4 -> A3
-  
-  notes.forEach((freq, index) => {
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+  playSoundWithFallback("AlertSoundDouble.mp3", () => {
+    if (!audioCtx) return;
     
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(freq, now + (index * 0.15));
+    const now = audioCtx.currentTime;
+    // A Minor chord notes arpeggiated downwards
+    const notes = [440.00, 349.23, 293.66, 220.00]; // A4 -> F4 -> D4 -> A3
     
-    gainNode.gain.setValueAtTime(0.001, now);
-    gainNode.gain.linearRampToValueAtTime(0.15, now + (index * 0.15) + 0.02);
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-    
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(400, now);
-    
-    osc.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
-    osc.start(now);
-    osc.stop(now + 1.5);
+    notes.forEach((freq, index) => {
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(freq, now + (index * 0.15));
+      
+      gainNode.gain.setValueAtTime(0.001, now);
+      gainNode.gain.linearRampToValueAtTime(0.15, now + (index * 0.15) + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+      
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(400, now);
+      
+      osc.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      osc.start(now);
+      osc.stop(now + 1.5);
+    });
   });
 }
 
