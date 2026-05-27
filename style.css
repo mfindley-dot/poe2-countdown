@@ -1622,6 +1622,94 @@ body {
   font-weight: bold;
 }
 
+/* Stash Reserves Tracker Progress Bar */
+.reserves-tracker {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--border-radius-gothic);
+  padding: 10px 15px;
+  margin-bottom: 12px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.reserves-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.font-small {
+  font-size: 0.65rem !important;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.reserves-bar-container {
+  width: 100%;
+  height: 8px;
+  background: #090705;
+  border: 1px solid #1c1917;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.reserves-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #b8860b 0%, #ffd700 100%);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+  transition: width 0.8s cubic-bezier(0.1, 0.8, 0.3, 1);
+}
+
+.reserves-status-subtext {
+  font-size: 0.55rem;
+  color: var(--gold-faded);
+  text-align: center;
+  margin-top: 4px;
+  font-weight: bold;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+/* Leaderboard Tabs */
+.leaderboard-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  flex-grow: 1;
+  background: #110e0a;
+  color: var(--gold-faded);
+  border: 1px solid var(--gold-primary);
+  border-radius: var(--border-radius-gothic);
+  padding: 5px 10px;
+  font-family: var(--font-header);
+  font-size: 0.65rem;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all var(--transition-speed);
+  outline: none;
+}
+
+.tab-btn:hover {
+  color: var(--gold-hover);
+  border-color: var(--gold-hover);
+  box-shadow: 0 0 5px var(--gold-glow);
+}
+
+.tab-btn.active-tab {
+  background: linear-gradient(180deg, #2b1f14 0%, #150f09 100%);
+  color: #fff;
+  border-color: var(--gold-hover);
+  box-shadow: 
+    0 0 8px var(--gold-glow),
+    inset 0 0 5px rgba(212,175,55,0.15);
+}
+
 /* Responsive grid overrides for minigame */
 @media (max-width: 1024px) {
   .arcade-game-grid {

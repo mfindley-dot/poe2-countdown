@@ -25,10 +25,16 @@ const GameState = {
 // Dynamic Game Music Soundtracks (Google Flow Music generated)
 const bgMusic = new Audio("music/the-grind-begins.mp3");
 const bossMusic = new Audio("music/monkey-boss-smash.mp3");
+const bankerMusic = new Audio("music/banker-stash-dash.mp3");
 bgMusic.loop = true;
 bossMusic.loop = true;
+bankerMusic.loop = true;
 bgMusic.volume = 0.28;  // balanced background volume
 bossMusic.volume = 0.32; // slightly louder for boss fight intensity
+bankerMusic.volume = 0.35; // bouncy beat for the loot dash chase!
+
+// Track live currency deducted from reserves during active Banker chase
+let bankerDeductedChaosThisRun = 0;
 
 let currentGameState = GameState.SELECT;
 let gameMuted = false;
@@ -232,6 +238,17 @@ class Enemy {
       this.slamChargeTimer = 0;
       this.isBoss = true;
     }
+    else if (type === "banker") {
+      // Creg the Guild Banker!
+      this.radius = 14;
+      this.hp = 250; // Tanky sack-carrier, harder to kill but drops jackpot!
+      this.maxHp = this.hp;
+      this.speed = player.speed + 0.35; // Runs faster than the player!
+      this.color = "#fbbf24"; // Golden amber
+      this.damage = 0; // Banker does not attack player
+      this.bankerTimer = 600; // 10 seconds at 60 FPS
+      this.isBoss = false;
+    }
   }
 
   update() {
@@ -309,6 +326,49 @@ class Enemy {
         this.y += this.vy;
       }
     }
+    else if (this.type === "banker") {
+      this.bankerTimer--;
+      
+      // Flee away from player position
+      const dx = this.x - player.x;
+      const dy = this.y - player.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist > 2) {
+        let fleeX = dx / dist;
+        let fleeY = dy / dist;
+        
+        // edge-avoidance steering vector
+        if (this.x < 50) fleeX = 1;
+        if (this.x > canvas.width - 50) fleeX = -1;
+        if (this.y < 50) fleeY = 1;
+        if (this.y > canvas.height - 50) fleeY = -1;
+        
+        const fleeLen = Math.sqrt(fleeX * fleeX + fleeY * fleeY);
+        if (fleeLen > 0) {
+          this.vx = (fleeX / fleeLen) * this.speed;
+          this.vy = (fleeY / fleeLen) * this.speed;
+        }
+      } else {
+        this.vx = 0;
+        this.vy = 0;
+      }
+      
+      this.x += this.vx;
+      this.y += this.vy;
+      
+      // Edge clamping
+      this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+      this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+      
+      // Escape condition
+      if (this.bankerTimer <= 0) {
+        this.active = false;
+        if (typeof triggerBankerEscape === "function") {
+          triggerBankerEscape(this.x, this.y);
+        }
+      }
+    }
   }
 
   draw() {
@@ -362,6 +422,69 @@ class Enemy {
         ctx.fill();
         ctx.stroke();
       }
+    }
+    else if (this.type === "banker") {
+      // Draw Creg the Banker NPC!
+      // 1. Draw the brown currency sack on his back with gilded ties
+      ctx.beginPath();
+      ctx.arc(this.x - 9, this.y + 5, 7, 0, Math.PI * 2);
+      ctx.fillStyle = "#a16207"; // Sack brown
+      ctx.strokeStyle = "#ffd700"; // Gold thread
+      ctx.lineWidth = 1.5;
+      ctx.fill();
+      ctx.stroke();
+      
+      // 2. Draw gold tie details on sack
+      ctx.beginPath();
+      ctx.moveTo(this.x - 6, this.y + 2);
+      ctx.lineTo(this.x - 4, this.y);
+      ctx.moveTo(this.x - 6, this.y + 2);
+      ctx.lineTo(this.x - 7, this.y - 1);
+      ctx.strokeStyle = "#ffd700";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      
+      // 3. Draw main banker golden body
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "#fbbf24"; // Amber-gold body
+      ctx.strokeStyle = "#451a03"; // Rich dark brown border
+      ctx.lineWidth = 2.5;
+      ctx.fill();
+      ctx.stroke();
+      
+      // 4. Draw hipster spectacles/eyes
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(this.x - 4, this.y - 3, 3, 2.2); // Left lens
+      ctx.fillRect(this.x + 1, this.y - 3, 3, 2.2); // Right lens
+      ctx.beginPath();
+      ctx.moveTo(this.x - 1, this.y - 2);
+      ctx.lineTo(this.x + 1, this.y - 2); // Bridge
+      ctx.strokeStyle = "#1e293b";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      // 5. Draw nameplate
+      ctx.fillStyle = "#fbbf24";
+      ctx.font = "bold 8px Cinzel";
+      ctx.textAlign = "center";
+      ctx.fillText("CREG THE BANKER", this.x, this.y - this.radius - 12);
+      
+      // 6. Draw escape timer
+      const secondsLeft = (this.bankerTimer / 60).toFixed(1);
+      ctx.fillStyle = "#f87171";
+      ctx.font = "bold 7px Inter";
+      ctx.textAlign = "center";
+      ctx.fillText(`ESCAPE IN: ${secondsLeft}s`, this.x, this.y - this.radius - 3);
+      
+      // 7. Draw health bar
+      const barW = 32;
+      const barH = 2.5;
+      const pct = this.hp / this.maxHp;
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fillRect(this.x - barW/2, this.y - this.radius - 8, barW, barH);
+      ctx.fillStyle = "#10b981"; // Healthy reserves green
+      ctx.fillRect(this.x - barW/2, this.y - this.radius - 8, barW * pct, barH);
     }
     
     ctx.restore();
@@ -767,25 +890,47 @@ function playRipAudioFallback() {
   osc.stop(now + 0.25);
 }
 
-// Synchronize background and boss soundtrack state (CORS-safe browser Audio player)
+// Synchronize background, boss, and banker event soundtrack state (CORS-safe browser Audio player)
 function syncGameMusic() {
   if (gameMuted || currentGameState !== GameState.PLAY) {
     bgMusic.pause();
     bossMusic.pause();
+    if (typeof bankerMusic !== "undefined") bankerMusic.pause();
     return;
   }
   
-  if (activeApeBoss) {
-    // If boss is active and boss theme is paused, fade out normal music and play boss theme
+  const hasBanker = enemies.some(e => e.type === "banker");
+  
+  if (hasBanker) {
+    // If Banker is active, trigger banker chase soundtrack with graceful fallback
+    if (typeof bankerMusic !== "undefined" && bankerMusic.paused) {
+      bgMusic.pause();
+      bossMusic.pause();
+      bankerMusic.currentTime = 0;
+      
+      bankerMusic.play().catch(err => {
+        console.warn("Autoplay blocked or banker theme file banker-stash-dash.mp3 not found yet: " + err);
+        // Gracefully play boss music theme as fallback if banker track is absent
+        if (bossMusic.paused) {
+          bossMusic.currentTime = 0;
+          bossMusic.play().catch(e => console.log("Boss theme fallback autoplay failed: " + e));
+        }
+      });
+    }
+  }
+  else if (activeApeBoss) {
+    // If boss is active and boss theme is paused, fade out normal/banker music and play boss theme
+    if (typeof bankerMusic !== "undefined") bankerMusic.pause();
     if (bossMusic.paused) {
       bgMusic.pause();
       bossMusic.currentTime = 0;
       bossMusic.play().catch(err => console.log("Autoplay blocked boss music: " + err));
     }
   } else {
-    // If no boss active, ensure boss theme is paused and normal level music plays
+    // If no boss active, ensure boss theme and banker themes are paused and normal level music plays
+    if (typeof bankerMusic !== "undefined") bankerMusic.pause();
+    bossMusic.pause();
     if (bgMusic.paused) {
-      bossMusic.pause();
       bgMusic.play().catch(err => console.log("Autoplay blocked level music: " + err));
     }
   }
@@ -895,12 +1040,16 @@ function calculateNetWorthScore() {
 // 8. SERVERLESS LEADERBOARD MODULE (dreamlo integration)
 // ==========================================================================
 
+let currentLeaderboardTab = "topRuns"; // "topRuns" or "totalGrind"
+let leaderboardEntriesRaw = [];       // Cache raw records to prevent repeat API calls
+let guildBankerUnlocked = false;       // Set globally base on collective tax reserves
+let globalGuildTaxChaos = 0;
+
 async function loadDreamloLeaderboard() {
   const tbody = document.getElementById("leaderboardBody");
   if (!tbody) return;
   
   try {
-    // dreamlo API pulls json
     const response = await fetch(`https://dreamlo.com/lb/${DREAMLO_PUBLIC_KEY}/json`);
     if (!response.ok) throw new Error("Leaderboard API returned status: " + response.status);
     
@@ -910,37 +1059,236 @@ async function loadDreamloLeaderboard() {
     if (data && data.dreamlo && data.dreamlo.leaderboard && data.dreamlo.leaderboard.entry) {
       let entries = data.dreamlo.leaderboard.entry;
       
-      // If single entry returned, dreamlo returns object instead of array
+      // Normalize single record to array
       if (!Array.isArray(entries)) {
         entries = [entries];
       }
       
-      // Sort entries descending by score
-      entries.sort((a, b) => parseInt(b.score, 10) - parseInt(a.score, 10));
+      leaderboardEntriesRaw = entries;
       
-      entries.slice(0, 10).forEach((entry, idx) => {
-        const tr = document.createElement("tr");
-        
-        // score back into chaos
-        const worthInChaos = (parseInt(entry.score, 10) / 10).toFixed(1);
-        
-        // dreamlo "seconds" field is used to pass class type safely
-        const classType = entry.seconds ? entry.seconds : "Witch";
-        
-        tr.innerHTML = `
-          <td>#${idx + 1}</td>
-          <td>${escapeHtml(entry.name)}</td>
-          <td>${escapeHtml(classType)}</td>
-          <td class="text-gold">${worthInChaos}c</td>
-        `;
-        tbody.appendChild(tr);
-      });
+      // Process database records
+      renderActiveLeaderboard();
+      calculateCollectiveGuildTax();
+      
     } else {
       tbody.innerHTML = "<tr><td colspan='4' class='center-text text-gold-faded'>NO SCORES RECORDED. BE THE FIRST!</td></tr>";
+      updateGuildTaxReservesDisplay(0);
     }
   } catch (err) {
     console.error(err);
     tbody.innerHTML = "<tr><td colspan='4' class='center-text text-red'>FAILED TO LOAD LEADERBOARD ONLINE.</td></tr>";
+  }
+}
+
+// Calculate collective guild wealth tax in real-time from ALL scores
+function calculateCollectiveGuildTax() {
+  let overallGuildScore = 0;
+  let totalDeductionsScore = 0;
+  
+  leaderboardEntriesRaw.forEach(entry => {
+    const score = parseInt(entry.score, 10);
+    const rawName = entry.name;
+    const name = rawName.includes("-") ? rawName.split("-")[0] : rawName;
+    
+    // Separate valid player runs from CREG deduction entries
+    if (name.toUpperCase().startsWith("CREG") || score < 0) {
+      totalDeductionsScore += Math.abs(score);
+    } else {
+      overallGuildScore += score;
+    }
+  });
+  
+  // Convert scores back into Chaos: score = chaos * 10
+  const overallGuildChaos = overallGuildScore / 10;
+  const deductionsChaos = totalDeductionsScore / 10;
+  
+  // Guild Tax is exactly 15% of player runs, minus exact banker deductions taken live!
+  const reservesChaos = (overallGuildChaos * 0.15) - deductionsChaos;
+  
+  // Update reserves progress bar (gold)
+  updateGuildTaxReservesDisplay(reservesChaos);
+  
+  // Update cumulative grind goal progress bar (purple)
+  updateGuildGrindTotalDisplay(overallGuildChaos);
+}
+
+function updateGuildTaxReservesDisplay(taxChaos) {
+  // Convert Chaos to Exalted Orbs (at 15c = 1 Exalt)
+  const taxExalted = taxChaos / 15;
+  const progressPct = Math.min(100, (taxExalted / 100) * 100);
+  
+  const bar = document.getElementById("guildReservesBar");
+  const text = document.getElementById("guildReservesText");
+  const status = document.getElementById("guildReservesStatus");
+  
+  if (bar) bar.style.width = `${progressPct}%`;
+  if (text) text.textContent = `${taxExalted.toFixed(1)} / 100.0 EX`;
+  
+  if (status) {
+    if (taxExalted >= 100.0) {
+      guildBankerUnlocked = true;
+      status.textContent = "🔓 GUILD BANKER ACTIVE! (10% WAVE CHANCE)";
+      status.className = "reserves-status-subtext text-gold";
+    } else {
+      guildBankerUnlocked = false;
+      status.textContent = `🔒 GUILD BANKER LOCKED (NEED ${(100.0 - taxExalted).toFixed(1)} EX)`;
+      status.className = "reserves-status-subtext text-gold-faded";
+    }
+  }
+}
+
+function updateGuildGrindTotalDisplay(grindChaos) {
+  const text = document.getElementById("guildGrindTotalText");
+  const bar = document.getElementById("guildGrindBar");
+  const status = document.getElementById("guildGrindStatus");
+  
+  if (text) {
+    text.textContent = `${grindChaos.toFixed(1)} Chaos`;
+  }
+  
+  const targetGoal = 10000.0; // 10k Chaos guild goal
+  const progressPct = Math.min(100, (grindChaos / targetGoal) * 100);
+  
+  if (bar) {
+    bar.style.width = `${progressPct}%`;
+  }
+  
+  if (status) {
+    status.textContent = `GUILD GOAL: ${targetGoal.toLocaleString()}c (${progressPct.toFixed(1)}% hit)`;
+  }
+}
+
+// Submit negative score to dreamlo representing loot deducted from reserves
+async function submitBankerDeduction(chaosValue) {
+  const deductedScore = -Math.floor(chaosValue * 10);
+  const dbName = `CREG_DEDUCTION-${Date.now()}`;
+  const url = `https://dreamlo.com/lb/${DREAMLO_PRIVATE_KEY}/add/${encodeURIComponent(dbName)}/${deductedScore}/0/Banker`;
+  
+  console.log(`Submitting banker deduction of ${chaosValue}c (score: ${deductedScore}) to database...`);
+  
+  // Reset local variable immediately to prevent double submissions
+  bankerDeductedChaosThisRun = 0;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Database returned error status: " + response.status);
+    console.log("Banker deduction submitted successfully!");
+    
+    // Reload leaderboard and calculate new reserves live!
+    loadDreamloLeaderboard();
+  } catch (err) {
+    console.error("Failed to submit banker deduction: ", err);
+  }
+}
+
+// Banker escape portal animation, sound, and dialogue
+function triggerBankerEscape(x, y) {
+  // Portal blue shockwave ring
+  particleEffects.push({
+    isSlamRing: true, // Re-use slam ring expanding circle for portal blue ring
+    x: x,
+    y: y,
+    radius: 30,
+    age: 0,
+    maxAge: 30
+  });
+  
+  // Escape speech bubble text particle
+  particleEffects.push({
+    x: x,
+    y: y - 20,
+    text: "💬 Creg has logged out to save his pixels!",
+    color: "#f87171", // light red bubble text
+    age: 0,
+    maxAge: 120
+  });
+  
+  if (!gameMuted) playRipAudioFallback(); // escape portal warp beep
+  
+  // Submit negative score representing looted goods
+  if (bankerDeductedChaosThisRun > 0) {
+    submitBankerDeduction(bankerDeductedChaosThisRun);
+  }
+  
+  // Sync music back
+  setTimeout(() => {
+    syncGameMusic();
+  }, 100);
+}
+
+function renderActiveLeaderboard() {
+  const tbody = document.getElementById("leaderboardBody");
+  if (!tbody || leaderboardEntriesRaw.length === 0) return;
+  
+  tbody.innerHTML = "";
+  
+  // Filter out any entries related to Creg deductions or negative values to isolate player runs
+  const filteredEntries = leaderboardEntriesRaw.filter(entry => {
+    const rawName = entry.name;
+    const name = rawName.includes("-") ? rawName.split("-")[0] : rawName;
+    const score = parseInt(entry.score, 10);
+    return !name.toUpperCase().startsWith("CREG") && score > 0;
+  });
+  
+  if (currentLeaderboardTab === "topRuns") {
+    // 1. TOP RUNS MODE: Show top individual runs
+    const parsedRuns = filteredEntries.map(entry => {
+      const rawName = entry.name;
+      // Split out name from timestamp
+      const name = rawName.includes("-") ? rawName.split("-")[0] : rawName;
+      const score = parseInt(entry.score, 10);
+      const classType = entry.seconds ? entry.seconds : "Witch";
+      return { name, class: classType, score };
+    });
+    
+    // Sort descending by score
+    parsedRuns.sort((a, b) => b.score - a.score);
+    
+    parsedRuns.slice(0, 10).forEach((run, idx) => {
+      const tr = document.createElement("tr");
+      const worthInChaos = (run.score / 10).toFixed(1);
+      
+      tr.innerHTML = `
+        <td>#${idx + 1}</td>
+        <td>${escapeHtml(run.name)}</td>
+        <td>${escapeHtml(run.class)}</td>
+        <td class="text-gold">${worthInChaos}c</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } 
+  else {
+    // 2. TOTAL GRIND MODE: Sum all scores per unique handle
+    const cumulativeMap = {};
+    
+    filteredEntries.forEach(entry => {
+      const rawName = entry.name;
+      const name = rawName.includes("-") ? rawName.split("-")[0] : rawName;
+      const score = parseInt(entry.score, 10);
+      const classType = entry.seconds ? entry.seconds : "Witch";
+      
+      if (!cumulativeMap[name]) {
+        cumulativeMap[name] = { name: name, class: classType, score: 0 };
+      }
+      cumulativeMap[name].score += score;
+    });
+    
+    // Convert map to array and sort descending
+    const parsedGrinds = Object.values(cumulativeMap);
+    parsedGrinds.sort((a, b) => b.score - a.score);
+    
+    parsedGrinds.slice(0, 10).forEach((grind, idx) => {
+      const tr = document.createElement("tr");
+      const worthInChaos = (grind.score / 10).toFixed(1);
+      
+      tr.innerHTML = `
+        <td>#${idx + 1}</td>
+        <td>${escapeHtml(grind.name)}</td>
+        <td>${escapeHtml(grind.class)}</td>
+        <td class="text-gold">${worthInChaos}c</td>
+      `;
+      tbody.appendChild(tr);
+    });
   }
 }
 
@@ -956,7 +1304,7 @@ async function submitScoreToLeaderboard() {
   const rawName = nameInput.value.trim();
   
   // Clean alphanumeric name
-  const cleanName = rawName.replace(/[^a-zA-Z0-9_-]/g, "");
+  const cleanName = rawName.replace(/[^a-zA-Z0-9]/g, "");
   
   if (!cleanName || cleanName.length < 2) {
     statusMsg.textContent = "❌ Name must be at least 2 alphanumeric chars!";
@@ -976,10 +1324,11 @@ async function submitScoreToLeaderboard() {
   statusMsg.className = "status-msg success-text";
   
   try {
-    // dreamlo API submit: /add/PRIVATE_KEY/NAME/SCORE/SECONDS(use for class)
-    const url = `https://dreamlo.com/lb/${DREAMLO_PRIVATE_KEY}/add/${encodeURIComponent(cleanName)}/${score}/0/${encodeURIComponent(playerClass)}`;
+    // Append timestamp to name to treat every run as a separate unique record
+    const dbName = `${cleanName}-${Date.now()}`;
+    const url = `https://dreamlo.com/lb/${DREAMLO_PRIVATE_KEY}/add/${encodeURIComponent(dbName)}/${score}/0/${encodeURIComponent(playerClass)}`;
     
-    // API request (Fetch is CORS safe for dreamlo)
+    // API request
     await fetch(url);
     
     statusMsg.textContent = "🏆 SCORES UPLOADED SUCCESSFULLY!";
@@ -1176,6 +1525,37 @@ function handleEnemySpawning() {
         maxAge: 100
       });
     }
+    // Spawn Guild Banker Creg! (10% chance on wave spawn if unlocked & no active banker is alive)
+    const hasBanker = enemies.some(e => e.type === "banker");
+    if (guildBankerUnlocked && !hasBanker && Math.random() < 0.10 && wave >= 2) {
+      let sx, sy;
+      const border = Math.floor(Math.random() * 4);
+      if (border === 0) { sx = Math.random() * canvas.width; sy = -20; }
+      else if (border === 1) { sx = canvas.width + 20; sy = Math.random() * canvas.height; }
+      else if (border === 2) { sx = Math.random() * canvas.width; sy = canvas.height + 20; }
+      else { sx = -20; sy = Math.random() * canvas.height; }
+      
+      const bankerNPC = new Enemy(sx, sy, "banker");
+      enemies.push(bankerNPC);
+      
+      // Hype HUD alert
+      particleEffects.push({
+        x: canvas.width / 2,
+        y: 100,
+        text: "🚨 CREG THE GUILD BANKER HAS SPAWNED! CHASE HIM!",
+        color: "#fbbf24",
+        age: 0,
+        maxAge: 130
+      });
+      
+      // Reset banker deduction tracking for this event
+      bankerDeductedChaosThisRun = 0;
+      
+      // Trigger banker chase soundtrack
+      setTimeout(() => {
+        syncGameMusic();
+      }, 50);
+    }
     
     wave++;
     document.getElementById("gameWaveText").textContent = wave - 1;
@@ -1235,6 +1615,34 @@ function processGamePhysics() {
         // Hit!
         e.hp -= p.damage;
         
+        // Creg drops loot on hit!
+        if (e.type === "banker") {
+          const roll = Math.random();
+          let dropKey = null;
+          if (roll < 0.04) {
+            dropKey = "exalted"; // 4% chance of Exalted Orb!
+          } else if (roll < 0.008) {
+            dropKey = "divine";  // 0.8% chance of Divine Orb!
+          } else if (roll < 0.35) {
+            dropKey = "chaos";    // 30% chance of Chaos Orb!
+          } else if (roll < 0.60) {
+            dropKey = "alchemy";  // 25% chance of Alchemy!
+          } else if (roll < 0.82) {
+            dropKey = "transmute"; // 22% chance of Transmute!
+          } else {
+            dropKey = "scroll";    // 18% chance of Scroll!
+          }
+          
+          if (dropKey) {
+            const lootVal = CURRENCY_CONFIG[dropKey].worth;
+            bankerDeductedChaosThisRun += lootVal;
+            
+            const scatterX = e.x + (Math.random() * 20 - 10);
+            const scatterY = e.y + (Math.random() * 20 - 10);
+            groundLoot.push(new GroundLoot(scatterX, scatterY, dropKey));
+          }
+        }
+        
         // Spark breaks, arrow pierces
         if (p.isSpark) {
           p.active = false;
@@ -1258,15 +1666,44 @@ function processGamePhysics() {
           e.active = false;
           if (e.type === "ape") activeApeBoss = null;
           
-          // Roll drops!
-          rollMobLoot(e.x, e.y, e.isBoss);
-          
-          // Award XP
-          const xpGained = e.isBoss ? 45 : (e.type === "ghost" ? 15 : 6);
-          player.xp += xpGained;
-          
-          // Level up check
-          if (player.xp >= player.maxXp) {
+          if (e.type === "banker") {
+            // Defeat jackpot!
+            const jackpot = ["exalted", "exalted", "chaos", "chaos", "chaos", "alchemy", "alchemy", "divine"];
+            jackpot.forEach(k => {
+              const scatterX = e.x + (Math.random() * 30 - 15);
+              const scatterY = e.y + (Math.random() * 30 - 15);
+              groundLoot.push(new GroundLoot(scatterX, scatterY, k));
+              
+              const lootVal = CURRENCY_CONFIG[k].worth;
+              bankerDeductedChaosThisRun += lootVal;
+            });
+            
+            particleEffects.push({
+              x: e.x,
+              y: e.y - 20,
+              text: "💥 CREG DEFEATED! RESERVES LOOTED!",
+              color: "#fbbf24",
+              age: 0,
+              maxAge: 110
+            });
+            
+            if (bankerDeductedChaosThisRun > 0) {
+              submitBankerDeduction(bankerDeductedChaosThisRun);
+            }
+            
+            setTimeout(() => {
+              syncGameMusic();
+            }, 100);
+          } else {
+            // Roll normal drops!
+            rollMobLoot(e.x, e.y, e.isBoss);
+            
+            // Award XP
+            const xpGained = e.isBoss ? 45 : (e.type === "ghost" ? 15 : 6);
+            player.xp += xpGained;
+            
+            // Level up check
+            if (player.xp >= player.maxXp) {
             player.level++;
             player.xp -= player.maxXp;
             player.maxXp = Math.floor(player.maxXp * 1.35);
@@ -1557,8 +1994,15 @@ function resetGame() {
   // Reset and pause music tracks
   bgMusic.pause();
   bossMusic.pause();
+  if (typeof bankerMusic !== "undefined") {
+    bankerMusic.pause();
+    bankerMusic.currentTime = 0;
+  }
   bgMusic.currentTime = 0;
   bossMusic.currentTime = 0;
+
+  // Clear live banker deduction tally
+  bankerDeductedChaosThisRun = 0;
 
   // Clear entities
   projectiles = [];
