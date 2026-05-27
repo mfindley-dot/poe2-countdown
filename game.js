@@ -1774,14 +1774,20 @@ function processGamePhysics() {
     cameraShake.x = 0;
     cameraShake.y = 0;
   }
+
+  // Global death check (Triggers correctly regardless of damage source: lasers, slams, or contact)
+  if (player.hp <= 0 && currentGameState === GameState.PLAY) {
+    handlePlayerDeath();
+  }
 }
 
 function handlePlayerDeath() {
   currentGameState = GameState.GAMEOVER;
   
-  // Stop all active loop music immediately for dramatic silence!
-  bgMusic.pause();
-  bossMusic.pause();
+  // Stop all active loop music immediately safely
+  try { bgMusic.pause(); } catch(e){}
+  try { bossMusic.pause(); } catch(e){}
+  try { if (typeof bankerMusic !== "undefined") bankerMusic.pause(); } catch(e){}
   
   // Choose random Dark Souls death messages
   const deathMessages = [
