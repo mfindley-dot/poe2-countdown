@@ -179,8 +179,8 @@
         <div class="game-viewport-container">
           <canvas id="gameCanvas" width="640" height="400"></canvas>
           
-          <!-- UI Overlay (Health, XP, Stats) -->
-          <div class="game-ui-overlay">
+          <!-- UI Overlay (Health, XP, Stats) - Hidden by default until play starts -->
+          <div class="game-ui-overlay hidden">
             <div class="ui-left">
               <div class="health-bar-container">
                 <div class="health-bar" id="gameHealthBar"></div>
@@ -195,6 +195,42 @@
               <span class="ui-stat">WAVE: <strong id="gameWaveText" class="text-gold">1</strong></span>
               <span class="ui-stat">NET WORTH: <strong id="gameWorthText" class="text-gold">0c</strong></span>
             </div>
+          </div>
+
+          <!-- Start Screen Overlay -->
+          <div class="game-start-screen" id="startScreen">
+            <h2 class="start-title glow-gold">GLG GUILD ARCADE</h2>
+            <p class="start-subtitle text-gold-faded">GOOD LOOT GANG ARCHIVE</p>
+            
+            <div class="start-instructions border-gold">
+              <div class="instruction-item">
+                <span class="inst-icon">🧙‍♀️</span>
+                <div>
+                  <strong>Witch (Necromancer)</strong>: Auto-fires chaotic bouncing <strong>Sparks</strong> that seek out the closest targets.
+                </div>
+              </div>
+              <div class="instruction-item">
+                <span class="inst-icon">🏹</span>
+                <div>
+                  <strong>Ranger (Split Arrow)</strong>: Fires a piercing 3-arrow fan in the direction of your movement or nearest target.
+                </div>
+              </div>
+              <div class="instruction-item">
+                <span class="inst-icon">💀</span>
+                <div>
+                  <strong>Survivability</strong>: Avoid cold ghosts (freezing lasers) and the Act 2 Gorilla Boss's <strong>Pillar of Doom</strong> shockwaves!
+                </div>
+              </div>
+              <div class="instruction-item">
+                <span class="inst-icon">🪙</span>
+                <div>
+                  <strong>Guild Banker Event</strong>: Spawns when Reserves hit 100 EX! Hit Creg the Banker to beat currency out of him before he teleports!
+                </div>
+              </div>
+            </div>
+            
+            <p class="start-callout text-gold-hover">Choose your exile class above and begin the cooperational grind!</p>
+            <button class="gothic-btn border-gold start-btn-action" id="btnStartArcadeGame">START THE GRIND</button>
           </div>
 
           <!-- Death Screen Overlay (Dark Souls style) -->

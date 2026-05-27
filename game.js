@@ -1987,7 +1987,12 @@ function updateGame() {
 }
 
 function varColorText(cssVar, fallback) {
-  return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim() || fallback;
+  try {
+    const val = getComputedStyle(document.documentElement).getPropertyValue(cssVar);
+    return (val && val.trim()) ? val.trim() : fallback;
+  } catch (e) {
+    return fallback;
+  }
 }
 
 function resetGame() {
@@ -2037,8 +2042,14 @@ function resetGame() {
     setRangerClass();
   }
   
-  // Hide panels
+  // Hide panels & start screen overlay
   document.getElementById("deathScreen").classList.add("hidden");
+  const startScr = document.getElementById("startScreen");
+  if (startScr) startScr.classList.add("hidden");
+  
+  // Show active game HUD overlay
+  const hud = document.querySelector(".game-ui-overlay");
+  if (hud) hud.classList.remove("hidden");
   
   currentGameState = GameState.PLAY;
 }
@@ -2133,6 +2144,16 @@ document.addEventListener("DOMContentLoaded", () => {
         playLootClickAudio();
         // Sync active state music
         syncGameMusic();
+      }
+    });
+  }
+
+  // 4. Start Game Button Binding
+  const btnStartArcade = document.getElementById("btnStartArcadeGame");
+  if (btnStartArcade) {
+    btnStartArcade.addEventListener("click", () => {
+      if (currentGameState === GameState.SELECT) {
+        resetGame();
       }
     });
   }
