@@ -1328,6 +1328,10 @@ body {
   animation: deathFadeIn 0.8s ease-out forwards;
 }
 
+.game-death-screen.hidden {
+  display: none !important;
+}
+
 @keyframes deathFadeIn {
   from { background: rgba(0, 0, 0, 0); }
   to { background: rgba(0, 0, 0, 0.88); }
