@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wraeclast Patch Hype Countdown - Path of Exile 2</title>
+  <meta name="description" content="A silly, fun, interactive countdown for the next Path of Exile 2 patch with loot filter sounds, meme patch notes, and Discord guild broadcaster!">
+  
+  <!-- Open Graph / Discord Rich Embed Preview -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Wraeclast Patch Hype Countdown - PoE 2">
+  <meta property="og:description" content="Click the Divine Orb for dopamine drop sounds, check out funny mock patch notes, and broadcast live countdown hype to your Discord server!">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop">
+  <meta name="theme-color" content="#d4af37">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;700;800&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Gothic Canvas Background for Particle Effects -->
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <h1 class="gothic-title glow-gold">WRAECLAST CHRONICLES</h1>
+      <p class="subtitle text-gold-faded">The Unofficial Guild Patch Hype Indicator & Orb Clicker</p>
+      
+      <!-- Milestone Sigil Selector -->
+      <div class="milestone-selector-container">
+        <label for="milestoneSelect" class="sigil-label">CURRENT TARGET SIGIL:</label>
+        <div class="custom-select-wrapper">
+          <select id="milestoneSelect">
+            <option value="patch-050">Patch 0.5.0 "Return of the Ancients"</option>
+            <option value="league-1">PoE 2 League 1 "Wrath of the Karui"</option>
+            <option value="release-10">PoE 2 Full 1.0 Release</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-layout">
+      
+      <!-- Left Side: Days/Hours Globe (Styled like PoE Life Globe) -->
+      <section class="gauge-column left-gauge">
+        <div class="gauge-orb-wrapper">
+          <div class="gauge-orb life-globe" id="lifeGlobe">
+            <div class="fluid-wave red-fluid"></div>
+            <div class="fluid-wave wave-back red-fluid-back"></div>
+            <div class="orb-overlay"></div>
+            <div class="orb-content">
+              <span class="orb-value" id="daysValue">00</span>
+              <span class="orb-label">DAYS</span>
+            </div>
+          </div>
+          <div class="globe-pillar-base"></div>
+        </div>
+        <div class="gauge-stats">
+          <span class="label-gold" id="hoursSubtext">00 Hours Left</span>
+        </div>
+      </section>
+
+      <!-- Center: The Core Dopamine Divine Orb Clicker -->
+      <section class="center-content">
+        <!-- Interactive Clicker Area -->
+        <div class="clicker-section">
+          <div class="divine-orb-outer" id="divineClickerButton">
+            <!-- Glow background -->
+            <div class="divine-glow"></div>
+            
+            <!-- Divine Orb Inner Graphic (Can be customized by user with motion graphics later) -->
+            <div class="divine-orb-inner">
+              <svg viewBox="0 0 100 100" class="divine-svg">
+                <defs>
+                  <radialGradient id="goldGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#fff8d4" />
+                    <stop offset="25%" stop-color="#ffd700" />
+                    <stop offset="60%" stop-color="#b8860b" />
+                    <stop offset="100%" stop-color="#2a1a02" />
+                  </radialGradient>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <!-- Outer Gilded Rim -->
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#d4af37" stroke-width="2.5" />
+                <circle cx="50" cy="50" r="41" fill="none" stroke="#8b6508" stroke-width="1" stroke-dasharray="4 2" />
+                
+                <!-- Stylized Face / Runes (Vaguely mirroring Divine/Chaos orb geometry) -->
+                <!-- Central Orb Sphere -->
+                <circle cx="50" cy="50" r="30" fill="url(#goldGrad)" filter="url(#glow)" />
+                
+                <!-- Mystical Eyes & Mouth (Path of Exile 2 style) -->
+                <!-- Left Eye Slot -->
+                <path d="M 38 43 Q 43 40 45 46 Q 40 48 38 43 Z" fill="#000" opacity="0.8" />
+                <circle cx="42" cy="44" r="1.5" fill="#00ffff" class="eye-glow" />
+                <!-- Right Eye Slot -->
+                <path d="M 62 43 Q 57 40 55 46 Q 60 48 62 43 Z" fill="#000" opacity="0.8" />
+                <circle cx="58" cy="44" r="1.5" fill="#00ffff" class="eye-glow" />
+                
+                <!-- Gilded Rune Overlays -->
+                <path d="M 50 15 L 50 30 M 50 70 L 50 85 M 15 50 L 30 50 M 70 50 L 85 50" stroke="#d4af37" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+                <path d="M 33 60 C 37 68, 63 68, 67 60" fill="none" stroke="#2a1a02" stroke-width="3" stroke-linecap="round" />
+              </svg>
+              <!-- Interactive Click Tag -->
+              <span class="click-tag">CLICK FOR DOPAMINE</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Countdown Text Overlay -->
+        <div class="countdown-main-card">
+          <div class="milestone-title-badge text-gold" id="milestoneName">Patch 0.5.0 "Return of the Ancients"</div>
+          <div class="clock-display">
+            <span class="time-block" id="displayDays">00d</span> : 
+            <span class="time-block" id="displayHours">00h</span> : 
+            <span class="time-block" id="displayMinutes">00m</span> : 
+            <span class="time-block" id="displaySeconds">00s</span>
+          </div>
+          <div class="time-status-message" id="timeStatusMessage">CALCULATING CORRELATION WITH THE COSMOS...</div>
+        </div>
+      </section>
+
+      <!-- Right Side: Minutes/Seconds Globe (Styled like PoE Mana Globe) -->
+      <section class="gauge-column right-gauge">
+        <div class="gauge-orb-wrapper">
+          <div class="gauge-orb mana-globe" id="manaGlobe">
+            <div class="fluid-wave blue-fluid"></div>
+            <div class="fluid-wave wave-back blue-fluid-back"></div>
+            <div class="orb-overlay"></div>
+            <div class="orb-content">
+              <span class="orb-value" id="minsValue">00</span>
+              <span class="orb-label">MINUTES</span>
+            </div>
+          </div>
+          <div class="globe-pillar-base"></div>
+        </div>
+        <div class="gauge-stats">
+          <span class="label-gold" id="secsSubtext">00 Seconds Left</span>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Interactive Tray: Loot Filter & Patch Notes -->
+    <section class="interactive-bottom-shelf">
+      
+      <!-- Left Panel: Loot Filter Soundboard -->
+      <div class="bottom-panel soundboard-panel">
+        <h2 class="panel-title text-gold">LOOT FILTER SOUNDBOARD</h2>
+        <div class="soundboard-grid">
+          <button class="sound-btn border-gold" id="soundBtnMirror" data-sound="mirror">
+            <span class="btn-shine"></span>
+            <span class="btn-text">🪞 Mirror of Kalandra</span>
+          </button>
+          <button class="sound-btn border-gold" id="soundBtnDivine" data-sound="divine">
+            <span class="btn-shine"></span>
+            <span class="btn-text">🪙 Divine Orb</span>
+          </button>
+          <button class="sound-btn border-gold" id="soundBtnExalted" data-sound="exalted">
+            <span class="btn-shine"></span>
+            <span class="btn-text">👑 Exalted Orb</span>
+          </button>
+          <button class="sound-btn border-gold" id="soundBtnChaos" data-sound="chaos">
+            <span class="btn-shine"></span>
+            <span class="btn-text">🌀 Chaos Orb</span>
+          </button>
+          <button class="sound-btn border-gold" id="soundBtnMemeRip" data-sound="rip">
+            <span class="btn-shine"></span>
+            <span class="btn-text">💀 Hype Guild RIP</span>
+          </button>
+          <button class="sound-btn border-gold" id="soundBtnSane" data-sound="sane">
+            <span class="btn-shine"></span>
+            <span class="btn-text">🗣️ "Still Sane, Exile?"</span>
+          </button>
+        </div>
+        <div class="dopamine-counter text-gold-faded">
+          Dopamine Injections Count: <span id="clickCountDisplay" class="text-gold">0</span> Orbs clicked
+        </div>
+      </div>
+
+      <!-- Right Panel: Mock Patch Notes & Scuttlebutt Updates -->
+      <div class="bottom-panel patch-notes-panel">
+        <h2 class="panel-title text-gold">MEME PATCH NOTES GENERATOR</h2>
+        <div class="patch-notes-box" id="patchNotesBox">
+          <div class="patch-note-card">
+            <span class="patch-note-version">PATCH 0.5.0 PREDICTION:</span>
+            <p class="patch-note-text">"Cyclone AOE radius reduced by another 12% to maintain historic melee despair traditions."</p>
+          </div>
+        </div>
+        <button class="gothic-btn border-gold" id="nextPatchNoteBtn">
+          <span class="btn-shine"></span>
+          <span>ROLL FOR MORE COPING</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- Drawer Trigger: Discord Guild Broadcaster Integration -->
+    <footer class="app-footer">
+      <button class="gothic-btn border-gold" id="toggleDiscordBtn">
+        <span class="btn-shine"></span>
+        <span>⚡ OPEN GUILD DISCORD WEBHOOK INTEGRATION ⚡</span>
+      </button>
+      
+      <!-- Discord Modal Drawer -->
+      <div class="discord-drawer hidden" id="discordDrawer">
+        <div class="drawer-header">
+          <h3 class="drawer-title text-gold">DISCORD GUILD BROADCASTER</h3>
+          <button class="close-drawer-btn" id="closeDiscordBtn">&times;</button>
+        </div>
+        <div class="drawer-body">
+          <p class="drawer-instructions text-gold-faded">
+            Create a free Webhook in your Discord Channel Settings (Integrations -> Webhooks) and paste it below. 
+            Your guild mates can then trigger live styled countdown announcements directly into your text channel!
+          </p>
+          
+          <div class="input-group">
+            <label for="webhookUrl" class="text-gold-faded">Discord Webhook URL:</label>
+            <input type="password" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." class="border-gold">
+            <button class="btn-toggle-visibility" id="btnToggleWebhookVisibility">👁️</button>
+          </div>
+
+          <div class="webhook-actions">
+            <button class="gothic-btn border-gold" id="btnSendTestWebhook">
+              <span class="btn-shine"></span>
+              <span>BROADCAST HYPE MESSAGE</span>
+            </button>
+            <button class="gothic-btn danger border-red" id="btnClearWebhook">
+              <span>WIPE WEBHOOK</span>
+            </button>
+          </div>
+          <div id="webhookStatusMessage" class="status-msg"></div>
+        </div>
+      </div>
+
+      <div class="copyright-notice text-gold-faded">
+        This is an unofficial fan app built in honor of Grinding Gear Games. All PoE assets, lore, and loot filter sound styles belong to GGG. Made with 🪙 and 💀.
+      </div>
+    </footer>
+  </div>
+
+  <!-- Audio Context Warning Notification -->
+  <div class="audio-banner hidden" id="audioBanner">
+    <p>🧙‍♂️ Tap anywhere to synchronize your Loot Filter and activate sound effects!</p>
+  </div>
+
+  <!-- Core Javascript -->
+  <script src="app.js"></script>
+</body>
+</html>
