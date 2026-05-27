@@ -3,6 +3,7 @@
  * Auto-Shooter Action Game (PoE2 Style)
  */
 
+(() => {
 // ==========================================================================
 // 1. GAME SETUP, CONSTANTS & STASH TAB CONFIG
 // ==========================================================================
@@ -2177,3 +2178,4 @@ if (document.readyState !== "loading") {
 } else {
   document.addEventListener("DOMContentLoaded", initGameEngine);
 }
+})();
