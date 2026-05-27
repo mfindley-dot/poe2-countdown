@@ -22,6 +22,14 @@ const GameState = {
   GAMEOVER: "gameover"
 };
 
+// Dynamic Game Music Soundtracks (Google Flow Music generated)
+const bgMusic = new Audio("music/the-grind-begins.mp3");
+const bossMusic = new Audio("music/monkey-boss-smash.mp3");
+bgMusic.loop = true;
+bossMusic.loop = true;
+bgMusic.volume = 0.28;  // balanced background volume
+bossMusic.volume = 0.32; // slightly louder for boss fight intensity
+
 let currentGameState = GameState.SELECT;
 let gameMuted = false;
 let gameScoreSubmitted = false;
@@ -759,6 +767,30 @@ function playRipAudioFallback() {
   osc.stop(now + 0.25);
 }
 
+// Synchronize background and boss soundtrack state (CORS-safe browser Audio player)
+function syncGameMusic() {
+  if (gameMuted || currentGameState !== GameState.PLAY) {
+    bgMusic.pause();
+    bossMusic.pause();
+    return;
+  }
+  
+  if (activeApeBoss) {
+    // If boss is active and boss theme is paused, fade out normal music and play boss theme
+    if (bossMusic.paused) {
+      bgMusic.pause();
+      bossMusic.currentTime = 0;
+      bossMusic.play().catch(err => console.log("Autoplay blocked boss music: " + err));
+    }
+  } else {
+    // If no boss active, ensure boss theme is paused and normal level music plays
+    if (bgMusic.paused) {
+      bossMusic.pause();
+      bgMusic.play().catch(err => console.log("Autoplay blocked level music: " + err));
+    }
+  }
+}
+
 
 // ==========================================================================
 // 7. THE INTERACTIVE STASH TAB COMPONENT
@@ -1308,6 +1340,10 @@ function processGamePhysics() {
 function handlePlayerDeath() {
   currentGameState = GameState.GAMEOVER;
   
+  // Stop all active loop music immediately for dramatic silence!
+  bgMusic.pause();
+  bossMusic.pause();
+  
   // Choose random Dark Souls death messages
   const deathMessages = [
     "FUCK YOU, CREG",
@@ -1495,6 +1531,9 @@ function updateGame() {
     // Physics and updates
     processGamePhysics();
     
+    // Sync level & boss soundtracks
+    syncGameMusic();
+    
     // Draw scenes
     drawGamePlayScreen();
     drawHUD();
@@ -1515,6 +1554,12 @@ function varColorText(cssVar, fallback) {
 }
 
 function resetGame() {
+  // Reset and pause music tracks
+  bgMusic.pause();
+  bossMusic.pause();
+  bgMusic.currentTime = 0;
+  bossMusic.currentTime = 0;
+
   // Clear entities
   projectiles = [];
   enemies = [];
@@ -1635,10 +1680,15 @@ document.addEventListener("DOMContentLoaded", () => {
       if (gameMuted) {
         muteBtn.textContent = "SOUND: OFF";
         muteBtn.classList.add("muted");
+        // Pause all active loops immediately
+        bgMusic.pause();
+        bossMusic.pause();
       } else {
         muteBtn.textContent = "SOUND: ON";
         muteBtn.classList.remove("muted");
         playLootClickAudio();
+        // Sync active state music
+        syncGameMusic();
       }
     });
   }

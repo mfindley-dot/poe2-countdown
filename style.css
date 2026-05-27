@@ -34,6 +34,10 @@
   padding: 0;
 }
 
+.hidden {
+  display: none !important;
+}
+
 body {
   background-color: var(--bg-dark);
   color: #e2e8f0;
