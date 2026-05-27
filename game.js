@@ -2086,7 +2086,7 @@ canvas.addEventListener("click", () => {
 // 12. INITIALIZATION EVENT CONTROLLERS
 // ==========================================================================
 
-document.addEventListener("DOMContentLoaded", () => {
+function initGameEngine() {
   
   // 1. Selector bindings
   const btnWitch = document.getElementById("btnSelectWitch");
@@ -2168,4 +2168,11 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Start drawing canvas engine loop
   requestAnimationFrame(updateGame);
-});
+}
+
+// Bulletproof execution trigger to prevent DOMContentLoaded race conditions on fast/local page loads
+if (document.readyState !== "loading") {
+  initGameEngine();
+} else {
+  document.addEventListener("DOMContentLoaded", initGameEngine);
+}

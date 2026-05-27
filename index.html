@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Global Runtime Debugger for local diagnostic checks -->
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      alert("⚠️ GLG ARCADE RUNTIME ERROR:\n\n" + message + "\n\nLine: " + lineno + "\nSource: " + source);
+      return false;
+    };
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wraeclast Patch Hype Countdown - Path of Exile 2</title>
