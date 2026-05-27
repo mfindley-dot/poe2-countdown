@@ -1725,8 +1725,9 @@ function processGamePhysics() {
           }
         }
       }
-    });
+    }
   });
+});
 
   // 2. ENEMY VS PLAYER COLLISIONS
   const now = Date.now();
