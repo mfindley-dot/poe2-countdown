@@ -893,9 +893,9 @@ function playRipAudioFallback() {
 // Synchronize background, boss, and banker event soundtrack state (CORS-safe browser Audio player)
 function syncGameMusic() {
   if (gameMuted || currentGameState !== GameState.PLAY) {
-    bgMusic.pause();
-    bossMusic.pause();
-    if (typeof bankerMusic !== "undefined") bankerMusic.pause();
+    try { bgMusic.pause(); } catch(e){}
+    try { bossMusic.pause(); } catch(e){}
+    try { if (typeof bankerMusic !== "undefined") bankerMusic.pause(); } catch(e){}
     return;
   }
   
@@ -904,15 +904,15 @@ function syncGameMusic() {
   if (hasBanker) {
     // If Banker is active, trigger banker chase soundtrack with graceful fallback
     if (typeof bankerMusic !== "undefined" && bankerMusic.paused) {
-      bgMusic.pause();
-      bossMusic.pause();
-      bankerMusic.currentTime = 0;
+      try { bgMusic.pause(); } catch(e){}
+      try { bossMusic.pause(); } catch(e){}
+      try { bankerMusic.currentTime = 0; } catch(e){}
       
       bankerMusic.play().catch(err => {
         console.warn("Autoplay blocked or banker theme file banker-stash-dash.mp3 not found yet: " + err);
         // Gracefully play boss music theme as fallback if banker track is absent
         if (bossMusic.paused) {
-          bossMusic.currentTime = 0;
+          try { bossMusic.currentTime = 0; } catch(e){}
           bossMusic.play().catch(e => console.log("Boss theme fallback autoplay failed: " + e));
         }
       });
@@ -920,16 +920,16 @@ function syncGameMusic() {
   }
   else if (activeApeBoss) {
     // If boss is active and boss theme is paused, fade out normal/banker music and play boss theme
-    if (typeof bankerMusic !== "undefined") bankerMusic.pause();
+    try { if (typeof bankerMusic !== "undefined") bankerMusic.pause(); } catch(e){}
     if (bossMusic.paused) {
-      bgMusic.pause();
-      bossMusic.currentTime = 0;
+      try { bgMusic.pause(); } catch(e){}
+      try { bossMusic.currentTime = 0; } catch(e){}
       bossMusic.play().catch(err => console.log("Autoplay blocked boss music: " + err));
     }
   } else {
     // If no boss active, ensure boss theme and banker themes are paused and normal level music plays
-    if (typeof bankerMusic !== "undefined") bankerMusic.pause();
-    bossMusic.pause();
+    try { if (typeof bankerMusic !== "undefined") bankerMusic.pause(); } catch(e){}
+    try { bossMusic.pause(); } catch(e){}
     if (bgMusic.paused) {
       bgMusic.play().catch(err => console.log("Autoplay blocked level music: " + err));
     }
@@ -1996,15 +1996,17 @@ function varColorText(cssVar, fallback) {
 }
 
 function resetGame() {
-  // Reset and pause music tracks
-  bgMusic.pause();
-  bossMusic.pause();
-  if (typeof bankerMusic !== "undefined") {
-    bankerMusic.pause();
-    bankerMusic.currentTime = 0;
-  }
-  bgMusic.currentTime = 0;
-  bossMusic.currentTime = 0;
+  // Reset and pause music tracks safely
+  try { bgMusic.pause(); } catch(e){}
+  try { bossMusic.pause(); } catch(e){}
+  try {
+    if (typeof bankerMusic !== "undefined") {
+      bankerMusic.pause();
+      bankerMusic.currentTime = 0;
+    }
+  } catch(e){}
+  try { bgMusic.currentTime = 0; } catch(e){}
+  try { bossMusic.currentTime = 0; } catch(e){}
 
   // Clear live banker deduction tally
   bankerDeductedChaosThisRun = 0;
