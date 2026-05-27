@@ -2063,6 +2063,9 @@ window.addEventListener("keydown", (e) => {
   if (["w", "a", "s", "d", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
     keys[e.key] = true;
     
+    // Prevent browser from scrolling up/down when arrow keys or WASD are pressed!
+    e.preventDefault();
+    
     // Auto-awaken game on movements click
     if (currentGameState === GameState.SELECT) {
       resetGame();
