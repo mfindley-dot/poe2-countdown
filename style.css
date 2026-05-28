@@ -1643,6 +1643,10 @@ body {
   border-radius: 3px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85);
   overflow: hidden;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  aspect-ratio: 1;
 }
 
 /* Layer the wooden frame asset on top of the grid elements! Clicks will pass through. */
