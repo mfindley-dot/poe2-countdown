@@ -2529,12 +2529,53 @@ let leaderboardEntriesRaw = [];       // Cache raw records to prevent repeat API
 let guildBankerUnlocked = false;       // Set globally base on collective tax reserves
 let globalGuildTaxChaos = 0;
 
+// Default premium gothic/PoE themed local mock entries as offline fallback
+const defaultMockEntries = [
+  { name: "ChrisWilson-1716912000", score: "50000", seconds: "Witch" },
+  { name: "GoodLootGuy-1716912100", score: "32000", seconds: "Ranger" },
+  { name: "Neon-1716912200", score: "25000", seconds: "Ranger" },
+  { name: "Mathil-1716912300", score: "18000", seconds: "Witch" },
+  { name: "Zizaran-1716912400", score: "15000", seconds: "Ranger" },
+  { name: "Octavian-1716912500", score: "12000", seconds: "Witch" },
+  { name: "StillSaneExile-1716912600", score: "8500", seconds: "Witch" },
+  { name: "CregTheBanker-1716912700", score: "-5000", seconds: "Banker" },
+  { name: "NoCregsAllowed-1716912800", score: "4500", seconds: "Ranger" },
+  { name: "WraeclastEnjoyer-1716912900", score: "3200", seconds: "Witch" }
+];
+
+// Read cached leaderboards or initialize with defaults
+function getLeaderboardCache() {
+  try {
+    const cached = localStorage.getItem("poe_guild_leaderboard_cache");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to read leaderboard cache:", e);
+  }
+  
+  try {
+    localStorage.setItem("poe_guild_leaderboard_cache", JSON.stringify(defaultMockEntries));
+  } catch (e) {
+    console.error("Failed to save default mock leaderboard:", e);
+  }
+  return defaultMockEntries;
+}
+
 async function loadDreamloLeaderboard() {
   const tbody = document.getElementById("leaderboardBody");
   if (!tbody) return;
   
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 seconds timeout
+  
   try {
-    const response = await fetch(`https://dreamlo.com/lb/${DREAMLO_PUBLIC_KEY}/json`);
+    const response = await fetch(`https://dreamlo.com/lb/${DREAMLO_PUBLIC_KEY}/json`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
     if (!response.ok) throw new Error("Leaderboard API returned status: " + response.status);
     
     const data = await response.json();
@@ -2550,6 +2591,13 @@ async function loadDreamloLeaderboard() {
       
       leaderboardEntriesRaw = entries;
       
+      // Cache entries locally in localStorage
+      try {
+        localStorage.setItem("poe_guild_leaderboard_cache", JSON.stringify(entries));
+      } catch (e) {
+        console.error("Failed to update local leaderboard cache:", e);
+      }
+      
       // Process database records
       renderActiveLeaderboard();
       calculateCollectiveGuildTax();
@@ -2559,8 +2607,22 @@ async function loadDreamloLeaderboard() {
       updateGuildTaxReservesDisplay(0);
     }
   } catch (err) {
-    console.error(err);
-    tbody.innerHTML = "<tr><td colspan='4' class='center-text text-red'>FAILED TO LOAD LEADERBOARD ONLINE.</td></tr>";
+    clearTimeout(timeoutId);
+    console.warn("Dreamlo online fetch failed or timed out. Falling back to local cache/mock data.", err);
+    
+    // Load fallback data from local storage
+    const cachedEntries = getLeaderboardCache();
+    leaderboardEntriesRaw = cachedEntries;
+    
+    tbody.innerHTML = "";
+    renderActiveLeaderboard();
+    calculateCollectiveGuildTax();
+    
+    // Append a subtle indicator that we're showing offline data
+    const statusLabel = document.getElementById("guildGrindStatus");
+    if (statusLabel && !statusLabel.textContent.includes("(OFFLINE)")) {
+      statusLabel.textContent += " (OFFLINE)";
+    }
   }
 }
 
@@ -2657,15 +2719,47 @@ async function submitBankerDeduction(chaosValue) {
   // Reset local variable immediately to prevent double submissions
   bankerDeductedChaosThisRun = 0;
   
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout
+  
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
     if (!response.ok) throw new Error("Database returned error status: " + response.status);
     console.log("Banker deduction submitted successfully!");
+    
+    // Add locally to raw entries immediately
+    const newEntry = { name: dbName, score: deductedScore.toString(), seconds: "Banker" };
+    leaderboardEntriesRaw.push(newEntry);
+    try {
+      localStorage.setItem("poe_guild_leaderboard_cache", JSON.stringify(leaderboardEntriesRaw));
+    } catch (e) {
+      console.error(e);
+    }
     
     // Reload leaderboard and calculate new reserves live!
     loadDreamloLeaderboard();
   } catch (err) {
-    console.error("Failed to submit banker deduction: ", err);
+    clearTimeout(timeoutId);
+    console.warn("Failed to submit banker deduction online. Saving locally.", err);
+    
+    // Offline local storage update
+    const dbName = `CREG_DEDUCTION-${Date.now()}`;
+    const newEntry = { name: dbName, score: deductedScore.toString(), seconds: "Banker" };
+    
+    const cachedEntries = getLeaderboardCache();
+    cachedEntries.push(newEntry);
+    
+    try {
+      localStorage.setItem("poe_guild_leaderboard_cache", JSON.stringify(cachedEntries));
+    } catch (e) {
+      console.error(e);
+    }
+    
+    leaderboardEntriesRaw = cachedEntries;
+    renderActiveLeaderboard();
+    calculateCollectiveGuildTax();
   }
 }
 
@@ -2816,11 +2910,26 @@ async function submitScoreToLeaderboard() {
     const dbName = `${cleanName}-${Date.now()}`;
     const url = `https://dreamlo.com/lb/${DREAMLO_PRIVATE_KEY}/add/${encodeURIComponent(dbName)}/${score}/0/${encodeURIComponent(playerClass)}`;
     
-    // API request
-    await fetch(url);
+    // API request with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout
+    
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) throw new Error("Submitting score returned status: " + response.status);
     
     statusMsg.textContent = "🏆 SCORES UPLOADED SUCCESSFULLY!";
     statusMsg.className = "status-msg success-text";
+    
+    // Add locally to raw entries immediately
+    const newEntry = { name: dbName, score: score.toString(), seconds: playerClass };
+    leaderboardEntriesRaw.push(newEntry);
+    try {
+      localStorage.setItem("poe_guild_leaderboard_cache", JSON.stringify(leaderboardEntriesRaw));
+    } catch (e) {
+      console.error(e);
+    }
     
     // Reload leaderboard board
     loadDreamloLeaderboard();
@@ -2831,12 +2940,36 @@ async function submitScoreToLeaderboard() {
     }
     
   } catch (err) {
-    console.error(err);
-    statusMsg.textContent = "❌ SUBMISSION FAILED. Connection error!";
-    statusMsg.className = "status-msg error-text";
-    submitBtn.disabled = false;
-    nameInput.disabled = false;
-    gameScoreSubmitted = false;
+    clearTimeout(timeoutId);
+    console.warn("Online score submission failed/timed out. Saving to local cache.", err);
+    
+    // Offline / Blocked fallback logic!
+    const dbName = `${cleanName}-${Date.now()}`;
+    const newEntry = { name: dbName, score: score.toString(), seconds: playerClass };
+    
+    // Load current cache and push the new entry
+    const cachedEntries = getLeaderboardCache();
+    cachedEntries.push(newEntry);
+    
+    try {
+      localStorage.setItem("poe_guild_leaderboard_cache", JSON.stringify(cachedEntries));
+    } catch (e) {
+      console.error("Failed to write to local storage leaderboard:", e);
+    }
+    
+    leaderboardEntriesRaw = cachedEntries;
+    
+    statusMsg.textContent = "🏆 OFFLINE HYPE: LOOT RECORDED LOCALLY!";
+    statusMsg.className = "status-msg success-text";
+    
+    // Re-render and calculate based on new entries
+    renderActiveLeaderboard();
+    calculateCollectiveGuildTax();
+    
+    // Trigger click explosion
+    if (typeof window.triggerClickExplosion === "function") {
+      window.triggerClickExplosion();
+    }
   }
 }
 
