@@ -452,7 +452,7 @@ body {
 }
 
 .gauge-stats {
-  margin-top: 8px;
+  margin-top: -16px !important;
   text-align: center;
   font-family: var(--font-header);
   font-weight: bold;
@@ -1850,9 +1850,9 @@ body {
 
 .stash-count {
   position: absolute;
-  top: 2px; /* Shifted slightly to clear dividers */
-  left: 4px; /* Shifted slightly to clear dividers */
-  font-size: 0.6rem; /* slightly larger for readability in top-left */
+  top: 6px; /* Shifted slightly to clear dividers */
+  left: 8px; /* Shifted slightly to clear dividers */
+  font-size: 0.85rem; /* larger for outstanding readability in top-left */
   font-weight: bold;
   color: #fff !important; /* Authentic PoE white numbers! */
   text-shadow: 

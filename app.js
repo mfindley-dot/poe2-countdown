@@ -124,7 +124,7 @@ function updateClock(diff) {
   const pad = (num) => String(num).padStart(2, '0');
   
   // Update Displays
-  document.getElementById("daysValue").textContent = pad(days);
+  document.getElementById("daysValue").textContent = pad(hours);
   document.getElementById("minsValue").textContent = pad(minutes);
   
   document.getElementById("displayDays").textContent = `${days}d`;
@@ -132,30 +132,29 @@ function updateClock(diff) {
   document.getElementById("displayMinutes").textContent = `${pad(minutes)}m`;
   document.getElementById("displaySeconds").textContent = `${pad(seconds)}s`;
   
-  document.getElementById("hoursSubtext").textContent = `${hours} Hours Left`;
+  document.getElementById("hoursSubtext").textContent = `${days} Days Left`;
   document.getElementById("secsSubtext").textContent = `${seconds} Seconds Left`;
   
   // Dynamically slosh Life and Mana fluid based on percentage of completion
-  // For aesthetics: Life globe ticks with Days/Hours, Mana globe ticks with Mins/Secs
-  // Let's map 0-100 days to life globe (0% to 90% fluid height)
+  // For aesthetics: Life globe ticks with Hours, Mana globe ticks with Minutes
+  // Let's map 0-24 hours to life globe (0% to 90% fluid height)
   // And 0-60 minutes to mana globe (0% to 90% fluid height)
   
-  const lifePercentage = Math.min(95, Math.max(5, (days / 100) * 90 + 5));
+  const lifePercentage = Math.min(95, Math.max(5, (hours / 24) * 90 + 5));
   const manaPercentage = Math.min(95, Math.max(5, (minutes / 60) * 90 + 5));
   
   updateFluidGlobe("lifeGlobe", lifePercentage);
   updateFluidGlobe("manaGlobe", manaPercentage);
 }
-
+ 
 function updateFluidGlobe(globeId, percentage) {
   const globe = document.getElementById(globeId);
   if (!globe) return;
   
   // The waves are animated using rotate/translate in CSS.
-  // Translating -100% is full, 0% is empty (due to geometry, translate values must be calibrated)
-  // Let's set standard variable level
-  // 100% liquid is translateY(-75%), 0% liquid is translateY(10%)
-  const yValue = 10 - (percentage * 0.85); // maps 0-100 to 10 to -75
+  // We want the solid liquid at the bottom and empty space (air/wave) at the top of the globe.
+  // 100% full is translateY(-15%), 0% full is translateY(100%)
+  const yValue = 100 - (percentage * 1.15); // maps 0-100% to 100% to -15%
   
   const mainWave = globe.querySelector(".fluid-wave:not(.wave-back)");
   const backWave = globe.querySelector(".fluid-wave.wave-back");

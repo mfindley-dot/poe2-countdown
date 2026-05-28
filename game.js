@@ -2424,79 +2424,67 @@ function updateStashTabUI() {
   document.getElementById("stashNetWorth").textContent = stashLabelText;
   
   // Dedicated PoE-style slot coordinate mapping for our 11 currencies (row, col in 12x12 grid)
+  // Each printed gold box is represented by a 2x2 span centered symmetrically in the 12x12 grid.
   const CURRENCY_SLOTS = {
-    // Top Row (5 boxes: Columns 3 to 7)
-    scroll: { row: 2, col: 3 },
-    transmute: { row: 2, col: 4 },
-    augmentation: { row: 2, col: 5 },
-    alchemy: { row: 2, col: 6 },
-    regal: { row: 2, col: 7 },
+    // Top Row (5 boxes)
+    scroll: { row: 4, col: 2, rSpan: 2, cSpan: 2 },
+    transmute: { row: 4, col: 4, rSpan: 2, cSpan: 2 },
+    augmentation: { row: 4, col: 6, rSpan: 2, cSpan: 2 },
+    alchemy: { row: 4, col: 8, rSpan: 2, cSpan: 2 },
+    regal: { row: 4, col: 10, rSpan: 2, cSpan: 2 },
 
-    // Middle Row (5 boxes: Columns 3 to 7)
-    chaos: { row: 3, col: 3 },
-    vaal: { row: 3, col: 4 },
-    annulment: { row: 3, col: 5 },
-    exalted: { row: 3, col: 6 },
-    divine: { row: 3, col: 7 },
+    // Middle Row (5 boxes)
+    chaos: { row: 6, col: 2, rSpan: 2, cSpan: 2 },
+    vaal: { row: 6, col: 4, rSpan: 2, cSpan: 2 },
+    annulment: { row: 6, col: 6, rSpan: 2, cSpan: 2 },
+    exalted: { row: 6, col: 8, rSpan: 2, cSpan: 2 },
+    divine: { row: 6, col: 10, rSpan: 2, cSpan: 2 },
 
-    // Bottom Row (1 centered box: Column 5)
-    mirror: { row: 4, col: 5 }
+    // Bottom Row (1 centered box)
+    mirror: { row: 8, col: 6, rSpan: 2, cSpan: 2 }
   };
 
-  // 2. Render all 144 slots in the 12x12 grid
-  for (let r = 0; r < 12; r++) {
-    for (let c = 0; c < 12; c++) {
-      // Check if this grid cell belongs to any currency
-      let keyForThisSlot = null;
-      for (const key of Object.keys(CURRENCY_SLOTS)) {
-        if (CURRENCY_SLOTS[key].row === r && CURRENCY_SLOTS[key].col === c) {
-          keyForThisSlot = key;
-          break;
-        }
-      }
+  // 2. Render all 11 active currency slots placed explicitly on 2x2 grid areas
+  Object.keys(CURRENCY_SLOTS).forEach(keyForThisSlot => {
+    const slotConf = CURRENCY_SLOTS[keyForThisSlot];
+    const qty = activeCounts[keyForThisSlot] || 0;
+    const conf = CURRENCY_CONFIG[keyForThisSlot];
+    const img = CurrencyImages[keyForThisSlot];
 
-      const cell = document.createElement("div");
+    const cell = document.createElement("div");
+    cell.className = "stash-grid-cell active-slot";
+    cell.title = `${conf.name} ${qty > 0 ? `(Qty: ${qty})` : '(Empty Slot)'}`;
+    
+    // Explicit 2x2 placement in CSS Grid (using 1-based index)
+    cell.style.gridColumn = `${slotConf.col} / span ${slotConf.cSpan}`;
+    cell.style.gridRow = `${slotConf.row} / span ${slotConf.rSpan}`;
 
-      if (keyForThisSlot) {
-        const qty = activeCounts[keyForThisSlot] || 0;
-        const conf = CURRENCY_CONFIG[keyForThisSlot];
-        const img = CurrencyImages[keyForThisSlot];
-
-        cell.className = "stash-grid-cell active-slot";
-        cell.title = `${conf.name} ${qty > 0 ? `(Qty: ${qty})` : '(Empty Slot)'}`;
-
-        // Create currency image element (active or ghosted)
-        const iconImg = document.createElement("img");
-        if (img && img.complete && img.naturalWidth > 0) {
-          iconImg.src = img.src;
-        } else {
-          // Fallback if image not loaded
-          iconImg.src = `assets/images/currency/item_${keyForThisSlot}.png`;
-        }
-        iconImg.alt = conf.name;
-
-        if (qty > 0) {
-          iconImg.className = "stash-image-icon";
-          cell.appendChild(iconImg);
-
-          // Render quantity label
-          const qtyLabel = document.createElement("span");
-          qtyLabel.className = "stash-count";
-          qtyLabel.textContent = formatStashQty(qty);
-          cell.appendChild(qtyLabel);
-        } else {
-          // GHOSTED VERSION of the currency
-          iconImg.className = "stash-image-icon ghosted-icon";
-          cell.appendChild(iconImg);
-        }
-      } else {
-        // Completely empty slot (invisible spacer to let wooden stash frame show through!)
-        cell.className = "stash-grid-cell empty-slot";
-      }
-
-      grid.appendChild(cell);
+    // Create currency image element (active or ghosted)
+    const iconImg = document.createElement("img");
+    if (img && img.complete && img.naturalWidth > 0) {
+      iconImg.src = img.src;
+    } else {
+      iconImg.src = `assets/images/currency/item_${keyForThisSlot}.png`;
     }
-  }
+    iconImg.alt = conf.name;
+
+    if (qty > 0) {
+      iconImg.className = "stash-image-icon";
+      cell.appendChild(iconImg);
+
+      // Render quantity label
+      const qtyLabel = document.createElement("span");
+      qtyLabel.className = "stash-count";
+      qtyLabel.textContent = formatStashQty(qty);
+      cell.appendChild(qtyLabel);
+    } else {
+      // GHOSTED VERSION of the currency
+      iconImg.className = "stash-image-icon ghosted-icon";
+      cell.appendChild(iconImg);
+    }
+
+    grid.appendChild(cell);
+  });
   
   // 3. Text Summary panel items
   summaryBox.innerHTML = "";
