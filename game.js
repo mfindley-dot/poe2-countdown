@@ -20,8 +20,12 @@ const DREAMLO_PRIVATE_KEY = "uK1WlH9CPE-XjFskW0R4Agz7r510_lMEC6t3fXGZwt_A";
 const GameState = {
   SELECT: "select",
   PLAY: "play",
+  LEVEL_UP: "levelup",
   GAMEOVER: "gameover"
 };
+
+let levelUpChoices = [];
+let mousePos = { x: 0, y: 0 };
 
 // Dynamic Game Music Soundtracks (Google Flow Music generated)
 const bgMusic = new Audio("music/the-grind-begins.mp3");
@@ -462,6 +466,15 @@ class Enemy {
       
       // Enrage state
       this.enraged = false;
+
+      // Cinematic intro and Combo State Machine
+      this.introActive = true;
+      this.introHPProgress = 0;
+      this.comboState = "idle";
+      this.comboTimer = 0;
+      this.comboStep = 0;
+      this.currentCombo = null;
+      this.lastComboTime = Date.now() + 2000; // wait 2s after intro
     }
     else if (type === "banker") {
       // Creg the Guild Banker!
@@ -543,6 +556,44 @@ class Enemy {
     else if (this.type === "ape") {
       const now = Date.now();
       
+      // 0. Cinematic Intro check
+      if (this.introActive) {
+        this.introHPProgress += 0.015;
+        
+        // Walk down from offscreen spawn to (canvas.width / 2, 80)
+        const targetX = canvas.width / 2;
+        const targetY = 80;
+        const dx = targetX - this.x;
+        const dy = targetY - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 2) {
+          this.x += (dx / dist) * this.speed * 1.5;
+          this.y += (dy / dist) * this.speed * 1.5;
+        }
+        
+        if (this.introHPProgress >= 1.0) {
+          this.introHPProgress = 1.0;
+          this.introActive = false;
+          this.lastComboTime = now;
+          
+          if (!gameMuted) {
+            try {
+              playSynthRoarSound();
+            } catch (e) {}
+          }
+          
+          particleEffects.push({
+            x: this.x,
+            y: this.y - 30,
+            text: "🔥 DESTRUCTION BEGINS! 🔥",
+            color: "#fbbf24",
+            age: 0,
+            maxAge: 80
+          });
+        }
+        return; // Skip standard AI updates while in intro!
+      }
+      
       // 1. Enrage state check (starts moving 25% faster when <= 1/3 HP)
       if (this.hp <= this.maxHp / 3 && !this.enraged) {
         this.enraged = true;
@@ -564,6 +615,139 @@ class Enemy {
           } catch (e) {
             console.log("Synth roar error:", e);
           }
+        }
+      }
+
+      // 1.5 Combo Controller
+      if (this.comboState === "active") {
+        if (this.currentCombo === "doubleslam") {
+          if (!this.slamCharging && !this.isRolling) {
+            if (this.comboStep === 0) {
+              this.slamCharging = true;
+              this.slamChargeTimer = 0;
+              this.slamTargetX = player.x;
+              this.slamTargetY = player.y;
+              this.comboStep = 1;
+              particleEffects.push({
+                x: this.x, y: this.y - 30,
+                text: "⚠️ COMBO: DOUBLE SLAM (1/2)!",
+                color: "#f59e0b", age: 0, maxAge: 50
+              });
+            } else if (this.comboStep === 1) {
+              this.slamCharging = true;
+              this.slamChargeTimer = 0;
+              this.slamTargetX = player.x;
+              this.slamTargetY = player.y;
+              this.comboStep = 2;
+              particleEffects.push({
+                x: this.x, y: this.y - 30,
+                text: "⚠️ COMBO: DOUBLE SLAM (2/2)!",
+                color: "#ef4444", age: 0, maxAge: 50
+              });
+            } else {
+              this.comboState = "idle";
+              this.currentCombo = null;
+              this.lastComboTime = now;
+            }
+          }
+        }
+        else if (this.currentCombo === "rollslam") {
+          if (!this.isRolling && !this.slamCharging) {
+            if (this.comboStep === 0) {
+              this.isRolling = true;
+              this.rollTimer = 45;
+              this.lastRollTime = now;
+              const rollSpeed = this.speed * 3.0;
+              this.rollVx = (dx / dist) * rollSpeed;
+              this.rollVy = (dy / dist) * rollSpeed;
+              this.comboStep = 1;
+              particleEffects.push({
+                x: this.x, y: this.y - 30,
+                text: "🌀 COMBO: ROLL & SLAM (ROLLING)!",
+                color: "#3b82f6", age: 0, maxAge: 50
+              });
+            } else if (this.comboStep === 1) {
+              this.slamCharging = true;
+              this.slamChargeTimer = 0;
+              this.slamTargetX = player.x;
+              this.slamTargetY = player.y;
+              this.comboStep = 2;
+              particleEffects.push({
+                x: this.x, y: this.y - 30,
+                text: "💥 COMBO: ROLL & SLAM (SLAM!)!",
+                color: "#ef4444", age: 0, maxAge: 50
+              });
+            } else {
+              this.comboState = "idle";
+              this.currentCombo = null;
+              this.lastComboTime = now;
+            }
+          }
+        }
+        else if (this.currentCombo === "tripleroll") {
+          if (!this.isRolling) {
+            if (this.comboStep === 0) {
+              this.isRolling = true;
+              this.rollTimer = 35;
+              this.lastRollTime = now;
+              const rollSpeed = this.speed * 3.2;
+              this.rollVx = (dx / dist) * rollSpeed;
+              this.rollVy = (dy / dist) * rollSpeed;
+              this.comboStep = 1;
+              this.comboTimer = 20;
+              particleEffects.push({
+                x: this.x, y: this.y - 30,
+                text: "🏃 COMBO: TRIPLE ROLL (1/3)!",
+                color: "#f59e0b", age: 0, maxAge: 40
+              });
+            } else if (this.comboStep === 1) {
+              this.comboTimer--;
+              if (this.comboTimer <= 0) {
+                this.isRolling = true;
+                this.rollTimer = 35;
+                this.lastRollTime = now;
+                const rollSpeed = this.speed * 3.2;
+                this.rollVx = (dx / dist) * rollSpeed;
+                this.rollVy = (dy / dist) * rollSpeed;
+                this.comboStep = 2;
+                this.comboTimer = 20;
+                particleEffects.push({
+                  x: this.x, y: this.y - 30,
+                  text: "🏃 COMBO: TRIPLE ROLL (2/3)!",
+                  color: "#f59e0b", age: 0, maxAge: 40
+                });
+              }
+            } else if (this.comboStep === 2) {
+              this.comboTimer--;
+              if (this.comboTimer <= 0) {
+                this.isRolling = true;
+                this.rollTimer = 35;
+                this.lastRollTime = now;
+                const rollSpeed = this.speed * 3.2;
+                this.rollVx = (dx / dist) * rollSpeed;
+                this.rollVy = (dy / dist) * rollSpeed;
+                this.comboStep = 3;
+                particleEffects.push({
+                  x: this.x, y: this.y - 30,
+                  text: "🔥 COMBO: TRIPLE ROLL (3/3)!",
+                  color: "#ef4444", age: 0, maxAge: 40
+                });
+              }
+            } else {
+              this.comboState = "idle";
+              this.currentCombo = null;
+              this.lastComboTime = now;
+            }
+          }
+        }
+      }
+      else {
+        if (now - this.lastComboTime > 8000 && !this.isRolling && !this.slamCharging) {
+          const comboOptions = ["doubleslam", "rollslam", "tripleroll"];
+          this.currentCombo = comboOptions[Math.floor(Math.random() * comboOptions.length)];
+          this.comboState = "active";
+          this.comboStep = 0;
+          this.comboTimer = 0;
         }
       }
       
@@ -1265,6 +1449,172 @@ function playChaosAudioFallback() {
   gain.connect(gameAudioCtx.destination);
   osc.start(now);
   osc.stop(now + 0.3);
+}
+
+function awardXp(amount) {
+  if (currentGameState !== GameState.PLAY) return;
+  player.xp += amount;
+  if (player.xp >= player.maxXp) {
+    player.level++;
+    player.xp -= player.maxXp;
+    player.maxXp = Math.floor(player.maxXp * 1.35);
+    triggerLevelUp();
+  }
+}
+
+function triggerLevelUp() {
+  currentGameState = GameState.LEVEL_UP;
+  
+  if (!gameMuted) {
+    try {
+      playLevelUpChime();
+    } catch (e) {
+      playDivineAudioFallback();
+    }
+  }
+  
+  particleEffects.push({
+    x: player.x,
+    y: player.y - 15,
+    text: `LEVEL UP! LEVEL ${player.level}!`,
+    color: "#10b981",
+    age: 0,
+    maxAge: 70
+  });
+
+  const allChoices = [
+    { type: "damage", title: "ATTACK DAMAGE", desc: "+3 base damage", icon: "⚔️", standard: "+3 DMG", exalted: "+6 DMG" },
+    { type: "firerate", title: "ATTACK SPEED", desc: "-10% shot cooldown", icon: "⚡", standard: "-10% CD", exalted: "-20% CD" },
+    { type: "speed", title: "MOVE SPEED", desc: "+15% movement velocity", icon: "🏃", standard: "+0.45 Speed", exalted: "+0.90 Speed" },
+    { type: "maxhp", title: "MAX HEALTH", desc: "+20 Max HP & Heal", icon: "❤️", standard: "+20 HP", exalted: "+40 HP" }
+  ];
+  
+  const shuffled = allChoices.sort(() => 0.5 - Math.random());
+  levelUpChoices = shuffled.slice(0, 3);
+}
+
+function playLevelUpChime() {
+  initGameAudio();
+  if (!gameAudioCtx || gameMuted) return;
+  const now = gameAudioCtx.currentTime;
+  
+  const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+  notes.forEach((freq, index) => {
+    const time = now + index * 0.08;
+    const osc = gameAudioCtx.createOscillator();
+    const gain = gameAudioCtx.createGain();
+    
+    osc.type = index % 2 === 0 ? "triangle" : "sine";
+    osc.frequency.setValueAtTime(freq, time);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, time + 0.12);
+    
+    gain.gain.setValueAtTime(0.12, time);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.3);
+    
+    osc.connect(gain);
+    gain.connect(gameAudioCtx.destination);
+    
+    osc.start(time);
+    osc.stop(time + 0.35);
+  });
+}
+
+function handleLevelUpClick(clickX, clickY) {
+  const cardW = 160;
+  const cardH = 220;
+  const y = 110;
+  const spacing = 30;
+  const startX = (640 - (3 * cardW + 2 * spacing)) / 2;
+  
+  for (let i = 0; i < levelUpChoices.length; i++) {
+    const choice = levelUpChoices[i];
+    const x = startX + i * (cardW + spacing);
+    
+    const btnStdX = x + 15;
+    const btnStdY = y + 120;
+    const btnStdW = cardW - 30;
+    const btnStdH = 32;
+    
+    if (clickX >= btnStdX && clickX <= btnStdX + btnStdW && clickY >= btnStdY && clickY <= btnStdY + btnStdH) {
+      applyUpgrade(choice.type, false);
+      return;
+    }
+    
+    const btnExX = x + 15;
+    const btnExY = y + 165;
+    const btnExW = cardW - 30;
+    const btnExH = 35;
+    
+    if (playerStash.exalted >= 10 && clickX >= btnExX && clickX <= btnExX + btnExW && clickY >= btnExY && clickY <= btnExY + btnExH) {
+      playerStash.exalted -= 10;
+      applyUpgrade(choice.type, true);
+      return;
+    }
+  }
+}
+
+function applyUpgrade(type, isExalted) {
+  const multiplier = isExalted ? 2 : 1;
+  
+  if (type === "damage") {
+    player.damage += 3 * multiplier;
+    particleEffects.push({
+      x: player.x,
+      y: player.y - 25,
+      text: `+${3 * multiplier} ATTACK DMG!`,
+      color: "#ef4444",
+      age: 0,
+      maxAge: 60
+    });
+  } 
+  else if (type === "firerate") {
+    const cooldownMultiplier = isExalted ? 0.80 : 0.90;
+    player.shotCooldown = Math.max(100, player.shotCooldown * cooldownMultiplier);
+    particleEffects.push({
+      x: player.x,
+      y: player.y - 25,
+      text: `${isExalted ? "-20%" : "-10%"} SHOT COOLDOWN!`,
+      color: "#3b82f6",
+      age: 0,
+      maxAge: 60
+    });
+  } 
+  else if (type === "speed") {
+    player.speed += 0.15 * multiplier;
+    particleEffects.push({
+      x: player.x,
+      y: player.y - 25,
+      text: `+${(isExalted ? 30 : 15)}% MOVE SPEED!`,
+      color: "#fbbf24",
+      age: 0,
+      maxAge: 60
+    });
+  } 
+  else if (type === "maxhp") {
+    player.maxHp += 20 * multiplier;
+    player.hp = Math.min(player.maxHp, player.hp + 20 * multiplier);
+    particleEffects.push({
+      x: player.x,
+      y: player.y - 25,
+      text: `+${20 * multiplier} MAX HEALTH!`,
+      color: "#10b981",
+      age: 0,
+      maxAge: 60
+    });
+  }
+  
+  player.hp = player.maxHp;
+  
+  if (!gameMuted) {
+    try {
+      playLootClickAudio();
+      setTimeout(() => {
+        playDivineAudioFallback();
+      }, 100);
+    } catch (e) {}
+  }
+  
+  currentGameState = GameState.PLAY;
 }
 
 function playDivineAudioFallback() {
@@ -2104,6 +2454,11 @@ function executePlayerAutoShooting() {
 function handleEnemySpawning() {
   const now = Date.now();
   
+  if (activeApeBoss) {
+    lastWaveSpawnTime = now; // keep resetting timer so waves don't tick while boss is active!
+    return;
+  }
+  
   // Spawn every 4.5 seconds
   if (now - lastWaveSpawnTime > 4500) {
     lastWaveSpawnTime = now;
@@ -2383,29 +2738,7 @@ function processGamePhysics() {
             
             // Award XP (Ape Boss awards massive XP)
             const xpGained = e.type === "ape" ? 50 : 6;
-            player.xp += xpGained;
-            
-            // Level up check
-            if (player.xp >= player.maxXp) {
-              player.level++;
-              player.xp -= player.maxXp;
-              player.maxXp = Math.floor(player.maxXp * 1.35);
-              player.damage += 3;
-              player.maxHp += 10;
-              player.hp = player.maxHp; // Heal to full on level up!
-              
-              // Level up splash
-              particleEffects.push({
-                x: player.x,
-                y: player.y - 15,
-                text: `LEVEL UP! LEVEL ${player.level}!`,
-                color: "#10b981",
-                age: 0,
-                maxAge: 70
-              });
-              
-              if (!gameMuted) playDivineAudioFallback(); // glorious ding
-            }
+            awardXp(xpGained);
           } 
           else {
             e.active = false;
@@ -2451,29 +2784,7 @@ function processGamePhysics() {
               
               // Award XP
               const xpGained = e.isBoss ? 45 : (e.type === "ghost" ? 15 : 6);
-              player.xp += xpGained;
-              
-              // Level up check
-              if (player.xp >= player.maxXp) {
-                player.level++;
-                player.xp -= player.maxXp;
-                player.maxXp = Math.floor(player.maxXp * 1.35);
-                player.damage += 3;
-                player.maxHp += 10;
-                player.hp = player.maxHp; // Heal to full on level up!
-                
-                // Level up splash
-                particleEffects.push({
-                  x: player.x,
-                  y: player.y - 15,
-                  text: `LEVEL UP! LEVEL ${player.level}!`,
-                  color: "#10b981",
-                  age: 0,
-                  maxAge: 70
-                });
-                
-                if (!gameMuted) playDivineAudioFallback(); // glorious ding
-              }
+              awardXp(xpGained);
             }
           }
         }
@@ -2645,6 +2956,56 @@ function drawGamePlayScreen() {
   // 6. Render Particle animations
   drawParticles();
 
+  // 7. Render Epic Boss Health Bar if activeApeBoss is alive!
+  if (activeApeBoss && activeApeBoss.hp > 0 && !activeApeBoss.isDead) {
+    ctx.save();
+    
+    const barX = 120;
+    const barY = 25;
+    const barW = 400;
+    const barH = 12;
+    
+    // Draw background panel
+    ctx.fillStyle = "rgba(10, 8, 5, 0.75)";
+    ctx.strokeStyle = "rgba(217, 119, 6, 0.4)";
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.strokeRect(barX, barY, barW, barH);
+    
+    // Draw HP Fill (Red/Gold glow)
+    const ratio = activeApeBoss.introActive ? activeApeBoss.introHPProgress : (activeApeBoss.hp / activeApeBoss.maxHp);
+    const fillW = barW * Math.min(1.0, Math.max(0.0, ratio));
+    
+    const grad = ctx.createLinearGradient(barX, barY, barX, barY + barH);
+    grad.addColorStop(0, "#ef4444");
+    grad.addColorStop(0.5, "#b91c1c");
+    grad.addColorStop(1, "#7f1d1d");
+    
+    ctx.fillStyle = grad;
+    ctx.fillRect(barX, barY, fillW, barH);
+    
+    // Draw segmented grid markers (for PoE boss look!)
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 10; i++) {
+      const segX = barX + (barW / 10) * i;
+      ctx.beginPath();
+      ctx.moveTo(segX, barY);
+      ctx.lineTo(segX, barY + barH);
+      ctx.stroke();
+    }
+    
+    // Draw name and subtitle
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "bold 9px Cinzel";
+    ctx.textAlign = "center";
+    
+    const subtitle = activeApeBoss.introActive ? "🚨 PREPARING DESTRUCTION..." : (activeApeBoss.enraged ? "🔥 ENRAGED BOSS COMBOS ACTIVE! 🔥" : "Wielder of Seismic Slams");
+    ctx.fillText(`OLE-APE PILLAR DEMON - ${subtitle}`, canvas.width / 2, barY - 6);
+    
+    ctx.restore();
+  }
+
   ctx.restore();
 }
 
@@ -2787,6 +3148,123 @@ function drawHUD() {
   document.getElementById("gameXpText").textContent = `XP: Level ${player.level} (${Math.floor(xpPct)}%)`;
 }
 
+function drawLevelUpScreen() {
+  ctx.save();
+  
+  // 1. Semi-transparent dark gold frosted overlay
+  ctx.fillStyle = "rgba(10, 8, 5, 0.88)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // 2. Inner glow border
+  ctx.strokeStyle = "rgba(217, 119, 6, 0.35)";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+  
+  // 3. Header title
+  ctx.fillStyle = "#ffd700";
+  ctx.font = "bold 24px Cinzel";
+  ctx.textAlign = "center";
+  ctx.fillText("CHOOSE YOUR REWARD EXILE", canvas.width / 2, 55);
+  
+  ctx.fillStyle = "#cbd5e1";
+  ctx.font = "10px Inter";
+  ctx.fillText("Select a stat to level up. Or spend 10 Exalted Orbs for a double boost!", canvas.width / 2, 80);
+  
+  // 4. Draw Cards
+  const cardW = 160;
+  const cardH = 220;
+  const y = 110;
+  const spacing = 30;
+  const startX = (640 - (3 * cardW + 2 * spacing)) / 2;
+  
+  for (let i = 0; i < levelUpChoices.length; i++) {
+    const choice = levelUpChoices[i];
+    const x = startX + i * (cardW + spacing);
+    
+    // Save coordinate anchors for click registration
+    choice.x = x;
+    choice.y = y;
+    choice.w = cardW;
+    choice.h = cardH;
+    
+    const isHovered = (mousePos.x >= x && mousePos.x <= x + cardW && mousePos.y >= y && mousePos.y <= y + cardH);
+    
+    // Draw Card Background
+    ctx.fillStyle = isHovered ? "rgba(45, 26, 8, 0.95)" : "rgba(21, 13, 4, 0.9)";
+    ctx.strokeStyle = isHovered ? "#fbbf24" : "#d97706";
+    ctx.lineWidth = isHovered ? 2.5 : 1.5;
+    
+    ctx.fillRect(x, y, cardW, cardH);
+    ctx.strokeRect(x, y, cardW, cardH);
+    
+    // Card Icon / Title
+    ctx.font = "28px Arial";
+    ctx.fillText(choice.icon, x + cardW / 2, y + 45);
+    
+    ctx.fillStyle = isHovered ? "#fff" : "#fbbf24";
+    ctx.font = "bold 13px Cinzel";
+    ctx.fillText(choice.title, x + cardW / 2, y + 80);
+    
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "9px Inter";
+    ctx.fillText(choice.desc, x + cardW / 2, y + 102);
+    
+    // 5. Draw Standard Option Button
+    const btnStdX = x + 15;
+    const btnStdY = y + 120;
+    const btnStdW = cardW - 30;
+    const btnStdH = 32;
+    
+    const isHoveredStd = (mousePos.x >= btnStdX && mousePos.x <= btnStdX + btnStdW && mousePos.y >= btnStdY && mousePos.y <= btnStdY + btnStdH);
+    ctx.fillStyle = isHoveredStd ? "rgba(16, 185, 129, 0.25)" : "rgba(0,0,0,0.5)";
+    ctx.strokeStyle = isHoveredStd ? "#10b981" : "#059669";
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(btnStdX, btnStdY, btnStdW, btnStdH);
+    ctx.strokeRect(btnStdX, btnStdY, btnStdW, btnStdH);
+    
+    ctx.fillStyle = isHoveredStd ? "#34d399" : "#a7f3d0";
+    ctx.font = "bold 9.5px Cinzel";
+    ctx.fillText(`STANDARD: ${choice.standard}`, btnStdX + btnStdW / 2, btnStdY + 20);
+    
+    // 6. Draw Exalted Option Button
+    const btnExX = x + 15;
+    const btnExY = y + 165;
+    const btnExW = cardW - 30;
+    const btnExH = 35;
+    
+    const hasExalts = (playerStash.exalted >= 10);
+    const isHoveredEx = (hasExalts && mousePos.x >= btnExX && mousePos.x <= btnExX + btnExW && mousePos.y >= btnExY && mousePos.y <= btnExY + btnExH);
+    
+    if (hasExalts) {
+      ctx.fillStyle = isHoveredEx ? "rgba(245, 158, 11, 0.35)" : "rgba(67, 20, 7, 0.65)";
+      ctx.strokeStyle = isHoveredEx ? "#fbbf24" : "#f97316";
+    } else {
+      ctx.fillStyle = "rgba(40, 40, 40, 0.4)";
+      ctx.strokeStyle = "#4b5563";
+    }
+    ctx.lineWidth = hasExalts && isHoveredEx ? 2 : 1.5;
+    ctx.fillRect(btnExX, btnExY, btnExW, btnExH);
+    ctx.strokeRect(btnExX, btnExY, btnExW, btnExH);
+    
+    if (hasExalts) {
+      ctx.fillStyle = isHoveredEx ? "#fff" : "#fdba74";
+      ctx.font = "bold 9.5px Cinzel";
+      ctx.fillText(`EXALTED: ${choice.exalted}`, btnExX + btnExW / 2, btnExY + 15);
+      ctx.fillStyle = "#fbbf24";
+      ctx.font = "bold 8px Inter";
+      ctx.fillText("COSTS 10 👑 ORBS", btnExX + btnExW / 2, btnExY + 27);
+    } else {
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "bold 9.5px Cinzel";
+      ctx.fillText("EXALTED LOCKED", btnExX + btnExW / 2, btnExY + 15);
+      ctx.font = "8px Inter";
+      ctx.fillText(`NEEDS 10 👑 (HAVE ${playerStash.exalted})`, btnExX + btnExW / 2, btnExY + 26);
+    }
+  }
+  
+  ctx.restore();
+}
+
 
 // ==========================================================================
 // 11. GAME LOOPS MANAGERS & RESETS
@@ -2838,6 +3316,11 @@ function updateGame() {
     drawGamePlayScreen();
     drawHUD();
   } 
+  else if (currentGameState === GameState.LEVEL_UP) {
+    drawGamePlayScreen();
+    drawHUD();
+    drawLevelUpScreen();
+  }
   else if (currentGameState === GameState.GAMEOVER) {
     // Keep rendering background but frosted over
     drawGamePlayScreen();
@@ -3083,6 +3566,10 @@ function triggerPlayerSpreadshot() {
 
 // Bind keyboard
 window.addEventListener("keydown", (e) => {
+  if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) {
+    return;
+  }
+
   if (e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
     triggerPlayerDodgeRoll();
@@ -3105,16 +3592,42 @@ window.addEventListener("keydown", (e) => {
 });
 
 window.addEventListener("keyup", (e) => {
+  if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) {
+    return;
+  }
+
   if (["w", "a", "s", "d", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
     keys[e.key] = false;
   }
 });
 
-// Canvas click also starts game
-canvas.addEventListener("click", () => {
+// Canvas click also starts game or selects level-up options
+canvas.addEventListener("click", (e) => {
   if (currentGameState === GameState.SELECT) {
     resetGame();
+    return;
   }
+  
+  if (currentGameState === GameState.LEVEL_UP) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+    
+    handleLevelUpClick(clickX, clickY);
+  }
+});
+
+// Canvas mousemove tracks hover states inside level-up UI
+canvas.addEventListener("mousemove", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  
+  mousePos.x = (e.clientX - rect.left) * scaleX;
+  mousePos.y = (e.clientY - rect.top) * scaleY;
 });
 
 

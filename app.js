@@ -1004,4 +1004,209 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", dismissAudioBanner);
     document.addEventListener("keydown", dismissAudioBanner);
   }
+
+  // ==========================================================================
+  // STACKING BLUR CHALLENGE & REFILLING MUG RENDERER (5-Row Spritesheet System)
+  // ==========================================================================
+  let blurStacks = 0;
+  const MAX_BLUR_STACKS = 3;
+  const BLUR_PIXELS_PER_STACK = 4.5;
+  const STACK_DURATION = 5000; // 5 seconds
+  
+  // Mug Animation State
+  let steinState = "FULL"; // "FULL", "DRINKING", "EMPTY", "REFILLING"
+  let steinFrame = 0;
+  let steinTick = 0;
+  let lastClickTime = 0;
+  
+  // Load spritesheet asset
+  const mugSpritesheet = new Image();
+  mugSpritesheet.src = "assets/images/interactive/barcade-mug_spritesheet.png";
+  
+  function initSteinAleChallenge() {
+    const btnStein = document.getElementById("btnSteinAle");
+    const steinCanvas = document.getElementById("steinCanvas");
+    if (!btnStein || !steinCanvas) return;
+    
+    const steinCtx = steinCanvas.getContext("2d");
+    
+    // Mouse Event: Click to drink beer and stack blur
+    btnStein.addEventListener("click", () => {
+      if (blurStacks < MAX_BLUR_STACKS) {
+        blurStacks++;
+        lastClickTime = Date.now();
+        
+        // Enter DRINKING animation sequence
+        steinState = "DRINKING";
+        steinFrame = 0;
+        steinTick = 0;
+        
+        // Update styling
+        btnStein.classList.add("drinking-active");
+        updateSiteBlur();
+        
+        // Synthesize dynamic glug sound
+        playSynthAleGlugChime();
+        
+        // Schedule decay after 5 seconds
+        setTimeout(() => {
+          if (blurStacks > 0) {
+            blurStacks--;
+            updateSiteBlur();
+          }
+        }, STACK_DURATION);
+      }
+    });
+    
+    // Start Mug Canvas draw tick (12 FPS animation frame rate)
+    function animateMugCanvas() {
+      steinCtx.clearRect(0, 0, steinCanvas.width, steinCanvas.height);
+      
+      const frameW = 64;
+      const frameH = 57.2; // 286 / 5 rows
+      
+      let activeRow = 0; // Row 1: Full froth loop (index 0)
+      let activeCol = 0;
+      
+      const now = Date.now();
+      
+      if (steinState === "FULL") {
+        activeRow = 0;
+        steinTick++;
+        if (steinTick >= 5) { // Slow loop rate for smooth foam
+          steinTick = 0;
+          steinFrame = (steinFrame + 1) % 8;
+        }
+        activeCol = steinFrame;
+      } 
+      else if (steinState === "DRINKING") {
+        activeRow = 1; // Row 2: Drinking/draining (index 1)
+        steinTick++;
+        if (steinTick >= 3) { // Rapid draining frames
+          steinTick = 0;
+          steinFrame++;
+          if (steinFrame >= 8) {
+            // Drink completed! Go empty/refilling immediately
+            steinFrame = 0;
+            steinState = "REFILLING";
+          }
+        }
+        activeCol = Math.min(7, steinFrame);
+      } 
+      else if (steinState === "EMPTY") {
+        activeRow = 2; // Row 3: Empty dry glass (index 2)
+        activeCol = 7;
+      } 
+      else if (steinState === "REFILLING") {
+        activeRow = 3; // Row 4: Refilling pouring frames (index 3)
+        const elapsed = now - lastClickTime;
+        const ratio = Math.min(1.0, elapsed / STACK_DURATION);
+        
+        // Map 0.0-1.0 filling progress to 0-7 frame indices
+        activeCol = Math.min(7, Math.floor(ratio * 8));
+        
+        if (ratio >= 1.0) {
+          // Glass is fully refilled and overflowing with froth!
+          steinState = "FULL";
+          steinFrame = 0;
+          steinTick = 0;
+        }
+      }
+      
+      const srcX = activeCol * frameW;
+      const srcY = activeRow * frameH;
+      
+      // Draw slice accurately
+      if (mugSpritesheet.complete && mugSpritesheet.naturalWidth > 0) {
+        steinCtx.drawImage(
+          mugSpritesheet,
+          srcX, srcY,
+          frameW, frameH,
+          0, 0,
+          steinCanvas.width, steinCanvas.height
+        );
+      } else {
+        // Fallback: draw text emoji inside canvas until loaded
+        steinCtx.fillStyle = "#fbbf24";
+        steinCtx.font = "24px Arial";
+        steinCtx.textAlign = "center";
+        steinCtx.textBaseline = "middle";
+        steinCtx.fillText(steinState === "FULL" ? "🍺" : "🍻", steinCanvas.width / 2, steinCanvas.height / 2);
+      }
+      
+      requestAnimationFrame(animateMugCanvas);
+    }
+    
+    // Start loops
+    requestAnimationFrame(animateMugCanvas);
+  }
+  
+  function updateSiteBlur() {
+    const appContainer = document.querySelector(".app-container");
+    if (!appContainer) return;
+    
+    const blurVal = blurStacks * BLUR_PIXELS_PER_STACK;
+    appContainer.style.setProperty("--site-blur", `${blurVal}px`);
+    
+    const btnStein = document.getElementById("btnSteinAle");
+    if (btnStein) {
+      if (blurStacks > 0) {
+        btnStein.classList.add("drinking-active");
+        btnStein.querySelector(".stein-text-content").textContent = `ALE DRUNK: ${blurStacks}x STACKS!`;
+        btnStein.querySelector(".stein-subtext").innerHTML = `<span style="color: #ef4444 !important; font-weight: bold;">Blurring active! Refill in progress...</span>`;
+      } else {
+        btnStein.classList.remove("drinking-active");
+        btnStein.querySelector(".stein-text-content").textContent = "DRINK GUILD ALE";
+        btnStein.querySelector(".stein-subtext").innerHTML = `(Click to add Blur Challenge! Stacks up to 3x)`;
+      }
+    }
+  }
+  
+  function playSynthAleGlugChime() {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContextClass();
+      const now = ctx.currentTime;
+      
+      // 1. Dynamic pop bubble-glug sound!
+      for (let i = 0; i < 4; i++) {
+        const bubbleTime = now + i * 0.12;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(150 + i * 40, bubbleTime);
+        osc.frequency.exponentialRampToValueAtTime(450 + i * 80, bubbleTime + 0.08);
+        
+        gain.gain.setValueAtTime(0.08, bubbleTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, bubbleTime + 0.09);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(bubbleTime);
+        osc.stop(bubbleTime + 0.1);
+      }
+      
+      // 2. High-pitched clinking glass bell ding!
+      const clinkTime = now + 0.48;
+      const oscClink = ctx.createOscillator();
+      const gainClink = ctx.createGain();
+      oscClink.type = "triangle";
+      oscClink.frequency.setValueAtTime(1600, clinkTime);
+      oscClink.frequency.exponentialRampToValueAtTime(800, clinkTime + 0.15);
+      
+      gainClink.gain.setValueAtTime(0.12, clinkTime);
+      gainClink.gain.exponentialRampToValueAtTime(0.0001, clinkTime + 0.2);
+      
+      oscClink.connect(gainClink);
+      gainClink.connect(ctx.destination);
+      oscClink.start(clinkTime);
+      oscClink.stop(clinkTime + 0.25);
+    } catch (e) {
+      console.warn("Ale synth audio fail:", e);
+    }
+  }
+
+  // Trigger init on DOM load
+  initSteinAleChallenge();
 });

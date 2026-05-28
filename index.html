@@ -129,7 +129,9 @@
          GLG GUILD ARCADE (Vampire Survivors PoE2 Style Minigame)
          ========================================================================== -->
     <section class="arcade-section border-gold" id="arcadeSection">
-      <h2 class="gothic-title glow-gold center-text">🎮 GLG GUILD HALL ARCADE 🎮</h2>
+      <div class="arcade-logo-container">
+        <img src="assets/images/logos/GLG_barcade_logo.png" alt="GLG BARCADE" class="arcade-logo-img" />
+      </div>
       <p class="subtitle text-gold-faded center-text">Defeat hordes of Wraeclast monsters, loot currency, and fill your guild stash!</p>
       
       <!-- Character Selection & Controls -->
@@ -147,79 +149,92 @@
       <!-- Main Game Board layout -->
       <div class="arcade-game-grid">
         
-        <!-- Left: Game Play screen -->
-        <div class="game-viewport-container">
-          <canvas id="gameCanvas" width="640" height="400"></canvas>
+        <!-- Left: Game Play screen wrapper -->
+        <div class="game-viewport-wrapper">
+          <div class="game-viewport-container">
+            <canvas id="gameCanvas" width="640" height="400"></canvas>
+            
+            <!-- UI Overlay (Health, XP, Stats) - Hidden by default until play starts -->
+            <div class="game-ui-overlay hidden">
+              <div class="ui-left">
+                <div class="health-bar-container">
+                  <div class="health-bar" id="gameHealthBar"></div>
+                  <span class="bar-text" id="gameHealthText">HP: 100/100</span>
+                </div>
+                <div class="xp-bar-container">
+                  <div class="xp-bar" id="gameXpBar"></div>
+                  <span class="bar-text" id="gameXpText">XP: Level 1 (0%)</span>
+                </div>
+              </div>
+              <div class="ui-right">
+                <span class="ui-stat">WAVE: <strong id="gameWaveText" class="text-gold">1</strong></span>
+                <span class="ui-stat">NET WORTH: <strong id="gameWorthText" class="text-gold">0c</strong></span>
+              </div>
+            </div>
+
+            <!-- Start Screen Overlay -->
+            <div class="game-start-screen" id="startScreen">
+              <h2 class="start-title glow-gold">GLG GUILD ARCADE</h2>
+              <p class="start-subtitle text-gold-faded">GOOD LOOT GANG ARCHIVE</p>
+              
+              <div class="start-instructions border-gold">
+                <div class="instruction-item">
+                  <span class="inst-icon">🧙‍♀️</span>
+                  <div>
+                    <strong>Witch (Necromancer)</strong>: Auto-fires chaotic bouncing <strong>Sparks</strong> that seek out the closest targets.
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <span class="inst-icon">🏹</span>
+                  <div>
+                    <strong>Ranger (Split Arrow)</strong>: Fires a piercing 3-arrow fan in the direction of your movement or nearest target.
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <span class="inst-icon">💀</span>
+                  <div>
+                    <strong>Survivability</strong>: Avoid cold ghosts (freezing lasers) and the Act 2 Gorilla Boss's <strong>Pillar of Doom</strong> shockwaves!
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <span class="inst-icon">🪙</span>
+                  <div>
+                    <strong>Guild Banker Event</strong>: Spawns when Reserves hit 100 EX! Hit Creg the Banker to beat currency out of him before he teleports!
+                  </div>
+                </div>
+              </div>
+              
+              <p class="start-callout text-gold-hover">Choose your exile class above and begin the cooperational grind!</p>
+              <button class="gothic-btn border-gold start-btn-action" id="btnStartArcadeGame">START THE GRIND</button>
+            </div>
+
+            <!-- Death Screen Overlay (Dark Souls style) -->
+            <div class="game-death-screen hidden" id="deathScreen">
+              <h2 class="death-title text-red" id="deathMessage">FUCK YOU, CREG</h2>
+              <p class="death-subtitle">YOUR SOUL HAS RETURNED TO WRAECLAST</p>
+              
+              <div class="score-submission-form">
+                <label for="playerNameInput" class="text-gold-faded">Enter Guild Handle for Leaderboard:</label>
+                <div class="input-group-row">
+                  <input type="text" id="playerNameInput" maxlength="15" placeholder="PlayerName" class="border-gold">
+                  <button class="gothic-btn border-gold" id="btnSubmitScore">SUBMIT LOOT</button>
+                </div>
+                <div id="submitStatusMsg" class="status-msg"></div>
+              </div>
+              
+              <button class="gothic-btn border-gold restart-btn" id="btnRestartGame">TRY AGAIN</button>
+            </div>
+          </div>
           
-          <!-- UI Overlay (Health, XP, Stats) - Hidden by default until play starts -->
-          <div class="game-ui-overlay hidden">
-            <div class="ui-left">
-              <div class="health-bar-container">
-                <div class="health-bar" id="gameHealthBar"></div>
-                <span class="bar-text" id="gameHealthText">HP: 100/100</span>
+          <!-- Stein of Ale Stacking Blur Challenge Button -->
+          <div class="stein-ale-container">
+            <button id="btnSteinAle" class="gothic-btn border-gold stein-btn">
+              <div class="stein-canvas-container">
+                <canvas id="steinCanvas" width="64" height="57"></canvas>
               </div>
-              <div class="xp-bar-container">
-                <div class="xp-bar" id="gameXpBar"></div>
-                <span class="bar-text" id="gameXpText">XP: Level 1 (0%)</span>
-              </div>
-            </div>
-            <div class="ui-right">
-              <span class="ui-stat">WAVE: <strong id="gameWaveText" class="text-gold">1</strong></span>
-              <span class="ui-stat">NET WORTH: <strong id="gameWorthText" class="text-gold">0c</strong></span>
-            </div>
-          </div>
-
-          <!-- Start Screen Overlay -->
-          <div class="game-start-screen" id="startScreen">
-            <h2 class="start-title glow-gold">GLG GUILD ARCADE</h2>
-            <p class="start-subtitle text-gold-faded">GOOD LOOT GANG ARCHIVE</p>
-            
-            <div class="start-instructions border-gold">
-              <div class="instruction-item">
-                <span class="inst-icon">🧙‍♀️</span>
-                <div>
-                  <strong>Witch (Necromancer)</strong>: Auto-fires chaotic bouncing <strong>Sparks</strong> that seek out the closest targets.
-                </div>
-              </div>
-              <div class="instruction-item">
-                <span class="inst-icon">🏹</span>
-                <div>
-                  <strong>Ranger (Split Arrow)</strong>: Fires a piercing 3-arrow fan in the direction of your movement or nearest target.
-                </div>
-              </div>
-              <div class="instruction-item">
-                <span class="inst-icon">💀</span>
-                <div>
-                  <strong>Survivability</strong>: Avoid cold ghosts (freezing lasers) and the Act 2 Gorilla Boss's <strong>Pillar of Doom</strong> shockwaves!
-                </div>
-              </div>
-              <div class="instruction-item">
-                <span class="inst-icon">🪙</span>
-                <div>
-                  <strong>Guild Banker Event</strong>: Spawns when Reserves hit 100 EX! Hit Creg the Banker to beat currency out of him before he teleports!
-                </div>
-              </div>
-            </div>
-            
-            <p class="start-callout text-gold-hover">Choose your exile class above and begin the cooperational grind!</p>
-            <button class="gothic-btn border-gold start-btn-action" id="btnStartArcadeGame">START THE GRIND</button>
-          </div>
-
-          <!-- Death Screen Overlay (Dark Souls style) -->
-          <div class="game-death-screen hidden" id="deathScreen">
-            <h2 class="death-title text-red" id="deathMessage">FUCK YOU, CREG</h2>
-            <p class="death-subtitle">YOUR SOUL HAS RETURNED TO WRAECLAST</p>
-            
-            <div class="score-submission-form">
-              <label for="playerNameInput" class="text-gold-faded">Enter Guild Handle for Leaderboard:</label>
-              <div class="input-group-row">
-                <input type="text" id="playerNameInput" maxlength="15" placeholder="PlayerName" class="border-gold">
-                <button class="gothic-btn border-gold" id="btnSubmitScore">SUBMIT LOOT</button>
-              </div>
-              <div id="submitStatusMsg" class="status-msg"></div>
-            </div>
-            
-            <button class="gothic-btn border-gold restart-btn" id="btnRestartGame">TRY AGAIN</button>
+              <span class="stein-text-content">DRINK GUILD ALE</span>
+              <span class="stein-subtext">(Click to add Blur Challenge! Stacks up to 3x)</span>
+            </button>
           </div>
         </div>
 
