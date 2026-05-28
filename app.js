@@ -153,8 +153,8 @@ function updateFluidGlobe(globeId, percentage) {
   
   // The waves are animated using rotate/translate in CSS.
   // We want the solid liquid at the bottom and empty space (air/wave) at the top of the globe.
-  // 100% full is translateY(-15%), 0% full is translateY(100%)
-  const yValue = 100 - (percentage * 1.15); // maps 0-100% to 100% to -15%
+  // 100% full is translateY(-3.8%), 0% full is translateY(77%)
+  const yValue = 77 - (percentage * 0.808); // maps 0-100% to 77% to -3.8%
   
   const mainWave = globe.querySelector(".fluid-wave:not(.wave-back)");
   const backWave = globe.querySelector(".fluid-wave.wave-back");

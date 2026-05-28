@@ -2427,11 +2427,11 @@ function updateStashTabUI() {
   // Each printed gold box is represented by a 2x2 span centered symmetrically in the 12x12 grid.
   const CURRENCY_SLOTS = {
     // Top Row (5 boxes)
-    scroll: { row: 4, col: 2, rSpan: 2, cSpan: 2 },
-    transmute: { row: 4, col: 4, rSpan: 2, cSpan: 2 },
-    augmentation: { row: 4, col: 6, rSpan: 2, cSpan: 2 },
-    alchemy: { row: 4, col: 8, rSpan: 2, cSpan: 2 },
-    regal: { row: 4, col: 10, rSpan: 2, cSpan: 2 },
+    scroll: { row: 2, col: 2, rSpan: 2, cSpan: 2 },
+    transmute: { row: 2, col: 4, rSpan: 2, cSpan: 2 },
+    augmentation: { row: 2, col: 6, rSpan: 2, cSpan: 2 },
+    alchemy: { row: 2, col: 8, rSpan: 2, cSpan: 2 },
+    regal: { row: 2, col: 10, rSpan: 2, cSpan: 2 },
 
     // Middle Row (5 boxes)
     chaos: { row: 6, col: 2, rSpan: 2, cSpan: 2 },
@@ -2441,7 +2441,7 @@ function updateStashTabUI() {
     divine: { row: 6, col: 10, rSpan: 2, cSpan: 2 },
 
     // Bottom Row (1 centered box)
-    mirror: { row: 8, col: 6, rSpan: 2, cSpan: 2 }
+    mirror: { row: 10, col: 6, rSpan: 2, cSpan: 2 }
   };
 
   // 2. Render all 11 active currency slots placed explicitly on 2x2 grid areas

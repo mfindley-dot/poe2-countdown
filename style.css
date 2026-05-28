@@ -310,10 +310,10 @@ body {
 /* Fluid Animation Layers */
 .fluid-wave {
   position: absolute;
-  bottom: 0;
+  bottom: -60%; /* Extend far below the bottom boundary */
   left: -50%;
   width: 200%;
-  height: 200%;
+  height: 260%; /* Significantly taller rounded square to keep bottom solid */
   border-radius: 38%;
   transition: transform 1.5s cubic-bezier(0.1, 0.8, 0.3, 1);
   transform: translateY(100%) rotate(0deg); /* height managed by JS */
@@ -457,6 +457,8 @@ body {
   font-family: var(--font-header);
   font-weight: bold;
   letter-spacing: 1.5px;
+  position: relative;
+  z-index: 10; /* Render on top of pillar base to prevent occlusion */
 }
 
 .label-gold {
