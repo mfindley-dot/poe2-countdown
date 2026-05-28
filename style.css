@@ -74,7 +74,7 @@ body {
   max-width: 1280px;
   margin: 40px auto;
   padding: 30px;
-  background: radial-gradient(circle at center, hsla(20, 10%, 10%, 0.88) 0%, hsla(20, 12%, 4%, 0.96) 100%);
+  background: radial-gradient(circle at center, hsla(20, 10%, 10%, 0.20) 0%, hsla(20, 12%, 4%, 0.32) 100%);
   border: 2px solid #27221e; /* Heavy hand-hammered rustic dark iron plate border */
   border-radius: var(--border-radius-gothic);
   box-shadow: 
@@ -514,25 +514,26 @@ body {
 
 .click-tag {
   position: absolute;
-  bottom: 12px;
+  bottom: 22px; /* pulled up slightly so it is perfectly aligned inside the coin's bottom recess */
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--font-header);
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 1.5px;
-  color: var(--gold-primary);
-  text-shadow: 0 1px 4px #000;
+  color: #ffffff; /* White for outstanding readability! */
+  text-shadow: 0 2px 5px #000; /* heavy black drop shadow to pop against the gold orb */
   z-index: 4;
-  opacity: 0.7;
-  transition: opacity var(--transition-speed), color var(--transition-speed);
+  opacity: 0.8;
+  white-space: nowrap; /* prevent awkward multi-line wrapping */
+  transition: opacity var(--transition-speed), color var(--transition-speed), text-shadow var(--transition-speed);
   text-transform: uppercase;
 }
 
 .divine-orb-outer:hover .click-tag {
   opacity: 1;
-  color: var(--gold-hover);
-  text-shadow: 0 0 8px var(--gold-glow);
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 2px 6px #000;
 }
 
 /* Clicking Shaking Animation */

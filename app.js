@@ -1062,54 +1062,51 @@ document.addEventListener("DOMContentLoaded", () => {
     function animateMugCanvas() {
       steinCtx.clearRect(0, 0, steinCanvas.width, steinCanvas.height);
       
-      const frameW = 64;
-      const frameH = 57.2; // 286 / 5 rows
+      const frameW = mugSpritesheet.naturalWidth / 8;
+      const frameH = mugSpritesheet.naturalHeight / 4; // Exactly 4 rows!
       
-      let activeRow = 0; // Row 1: Full froth loop (index 0)
+      let activeRow = 0; // Row 1: Full Mug (index 0)
       let activeCol = 0;
       
       const now = Date.now();
       
       if (steinState === "FULL") {
-        activeRow = 0;
-        steinTick++;
-        if (steinTick >= 5) { // Slow loop rate for smooth foam
-          steinTick = 0;
-          steinFrame = (steinFrame + 1) % 8;
-        }
-        activeCol = steinFrame;
+        activeRow = 0; // Row 1: Full Mug
+        activeCol = 0; // Static full mug frame
       } 
       else if (steinState === "DRINKING") {
-        activeRow = 1; // Row 2: Drinking/draining (index 1)
+        activeRow = 1; // Row 2: Drinking sequence
         steinTick++;
-        if (steinTick >= 3) { // Rapid draining frames
+        if (steinTick >= 4) { // Draining frame duration (4 ticks/frame ~ 67ms)
           steinTick = 0;
           steinFrame++;
           if (steinFrame >= 8) {
-            // Drink completed! Go empty/refilling immediately
+            // Drink completed! Start refilling sequence immediately
             steinFrame = 0;
             steinState = "REFILLING";
+            lastClickTime = now; // Anchor the refilling timer exactly now!
           }
         }
         activeCol = Math.min(7, steinFrame);
       } 
       else if (steinState === "EMPTY") {
-        activeRow = 2; // Row 3: Empty dry glass (index 2)
-        activeCol = 7;
+        activeRow = 2; // Row 3: Empty Mug
+        activeCol = 0; // Static empty mug frame
       } 
       else if (steinState === "REFILLING") {
-        activeRow = 3; // Row 4: Refilling pouring frames (index 3)
+        activeRow = 3; // Row 4: Refilling sequence
         const elapsed = now - lastClickTime;
-        const ratio = Math.min(1.0, elapsed / STACK_DURATION);
+        const ratio = Math.min(1.0, elapsed / (STACK_DURATION - 400)); // offset by drinking duration for smooth sync
         
-        // Map 0.0-1.0 filling progress to 0-7 frame indices
+        // Map 0.0-1.0 refilling progress to 0-7 frame indices
         activeCol = Math.min(7, Math.floor(ratio * 8));
         
         if (ratio >= 1.0) {
-          // Glass is fully refilled and overflowing with froth!
+          // Glass is fully refilled!
           steinState = "FULL";
           steinFrame = 0;
           steinTick = 0;
+          btnStein.classList.remove("drinking-active");
         }
       }
       
