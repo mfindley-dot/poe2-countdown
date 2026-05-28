@@ -57,7 +57,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 998;
+  z-index: 1; /* Render behind boxes and interactive buttons to prevent occlusion overflows */
   pointer-events: none;
 }
 

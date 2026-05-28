@@ -306,8 +306,10 @@ function setWitchClass() {
   player.damage = 12;
   player.shotCooldown = 480;
   
-  document.getElementById("btnSelectWitch").classList.add("active-class");
-  document.getElementById("btnSelectRanger").classList.remove("active-class");
+  const btnWitch = document.getElementById("btnSelectWitch");
+  const btnRanger = document.getElementById("btnSelectRanger");
+  if (btnWitch) btnWitch.classList.add("active-class");
+  if (btnRanger) btnRanger.classList.remove("active-class");
 }
 
 function setRangerClass() {
@@ -318,8 +320,10 @@ function setRangerClass() {
   player.damage = 8;
   player.shotCooldown = 280;
   
-  document.getElementById("btnSelectRanger").classList.add("active-class");
-  document.getElementById("btnSelectWitch").classList.remove("active-class");
+  const btnWitch = document.getElementById("btnSelectWitch");
+  const btnRanger = document.getElementById("btnSelectRanger");
+  if (btnRanger) btnRanger.classList.add("active-class");
+  if (btnWitch) btnWitch.classList.remove("active-class");
 }
 
 // ==========================================================================

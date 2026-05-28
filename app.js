@@ -238,8 +238,48 @@ function playSoundWithFallback(filename, synthesizerFn) {
     });
 }
 
-// Synthesize: Divine Orb sound (Clean glass bell + metallic echo)
+// Synthesize: Divine Orb sound (Hollow metallic clang / cymbal crash)
 function playDivineSound() {
+  playSoundWithFallback("AlertSound1.mp3", () => {
+    if (!audioCtx) return;
+    
+    const now = audioCtx.currentTime;
+    
+    const osc = audioCtx.createOscillator();
+    const subOsc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(450, now + 0.1); // pitch bend up
+    
+    subOsc.type = "sawtooth";
+    subOsc.frequency.setValueAtTime(160, now);
+    
+    gainNode.gain.setValueAtTime(0.001, now);
+    gainNode.gain.linearRampToValueAtTime(0.28, now + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+    
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(380, now);
+    filter.frequency.exponentialRampToValueAtTime(500, now + 0.5);
+    filter.Q.value = 3;
+    
+    osc.connect(filter);
+    subOsc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.start(now);
+    subOsc.start(now);
+    osc.stop(now + 1.0);
+    subOsc.stop(now + 1.0);
+  });
+}
+
+// Synthesize: Exalted Orb sound (Clean glass bell + metallic echo)
+function playExaltedSound() {
   playSoundWithFallback("AlertSound16.mp3", () => {
     if (!audioCtx) return;
     
@@ -292,46 +332,6 @@ function playDivineSound() {
     transientGain.connect(audioCtx.destination);
     transientOsc.start(now);
     transientOsc.stop(now + 0.1);
-  });
-}
-
-// Synthesize: Exalted Orb sound (Hollow metallic clang)
-function playExaltedSound() {
-  playSoundWithFallback("AlertSound1.mp3", () => {
-    if (!audioCtx) return;
-    
-    const now = audioCtx.currentTime;
-    
-    const osc = audioCtx.createOscillator();
-    const subOsc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.exponentialRampToValueAtTime(450, now + 0.1); // pitch bend up
-    
-    subOsc.type = "sawtooth";
-    subOsc.frequency.setValueAtTime(160, now);
-    
-    gainNode.gain.setValueAtTime(0.001, now);
-    gainNode.gain.linearRampToValueAtTime(0.28, now + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
-    
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.setValueAtTime(380, now);
-    filter.frequency.exponentialRampToValueAtTime(500, now + 0.5);
-    filter.Q.value = 3;
-    
-    osc.connect(filter);
-    subOsc.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
-    osc.start(now);
-    subOsc.start(now);
-    osc.stop(now + 1.0);
-    subOsc.stop(now + 1.0);
   });
 }
 
