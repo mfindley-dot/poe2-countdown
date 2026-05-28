@@ -1716,11 +1716,11 @@ body {
   position: relative;
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: 2px;
+  gap: 0px !important; /* Zero gap to align perfectly with wood frame grid windows */
   background-color: #0b0806 !important; /* Rich dark wooden interior background */
-  border: 3px solid var(--gold-primary);
-  padding: 6px;
-  border-radius: 3px;
+  border: none !important; /* Let the wood frame asset's borders frame the grid! */
+  padding: 0px !important; /* No padding shift, grid spans 100% of container content-box */
+  border-radius: 6px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85);
   overflow: hidden;
   width: 100%;
@@ -1778,8 +1778,8 @@ body {
 
 /* Ghosted empty slot icon styling */
 .stash-image-icon.ghosted-icon {
-  width: 95%;
-  height: 95%;
+  width: 82%; /* Compacted size to fit perfectly inside frame grid windows */
+  height: 82%;
   object-fit: contain;
   filter: grayscale(100%) opacity(0.18) brightness(0.6); /* Translucent and desaturated ghost */
   image-rendering: pixelated;
@@ -1787,8 +1787,8 @@ body {
 }
 
 .stash-image-icon {
-  width: 95%;
-  height: 95%;
+  width: 82%; /* Compacted size to fit perfectly inside frame grid windows */
+  height: 82%;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.75));
   transition: transform var(--transition-speed);
@@ -1812,9 +1812,9 @@ body {
 
 .stash-count {
   position: absolute;
-  top: 1px;
-  left: 2px;
-  font-size: 0.58rem; /* slightly larger for readability in top-left */
+  top: 2px; /* Shifted slightly to clear dividers */
+  left: 4px; /* Shifted slightly to clear dividers */
+  font-size: 0.6rem; /* slightly larger for readability in top-left */
   font-weight: bold;
   color: #fff !important; /* Authentic PoE white numbers! */
   text-shadow: 
