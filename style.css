@@ -1750,15 +1750,15 @@ body {
   gap: 0px !important; /* Zero gap to align perfectly with wood frame grid windows */
   background-color: #0b0806 !important; /* Rich dark wooden interior background */
   border: none !important; /* Let the wood frame asset's borders frame the grid! */
-  padding: 12.5% 6.1% 6.1% 12.5% !important; /* Shift grid cells to match asymmetrical borders of wood frame asset */
+  padding: 10.5% 8.1% 8.1% 10.5% !important; /* Fine-tune asymmetrical shift to fit slot etchings precisely */
   box-sizing: border-box !important;
   border-radius: 6px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85);
   overflow: hidden;
   width: 82% !important;       /* Shrink and center outer borders to match panel layout */
-  height: 78% !important;      
+  height: auto !important;     /* Auto height breaks circular vertical loops on load */
   margin: 11% auto 0 auto !important; /* Push down past the top header elements */
-  aspect-ratio: 1 !important; /* Lock to perfect square aspect ratio */
+  aspect-ratio: 1 / 1 !important; /* Force strict stable square layout */
 }
 
 /* Layer the wooden frame asset on top of the grid elements! Clicks will pass through. */
