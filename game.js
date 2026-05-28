@@ -4475,6 +4475,18 @@ window.addEventListener("keydown", (e) => {
     return;
   }
 
+  if (e.key === "t" || e.key === "T") {
+    e.preventDefault();
+    toggleTheatreMode();
+    return;
+  }
+
+  if (e.key === "f" || e.key === "F") {
+    e.preventDefault();
+    toggleFullscreenMode();
+    return;
+  }
+
   if (e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
     if (gamePaused) return;
@@ -4704,6 +4716,30 @@ function toggleAnimations() {
   animationsEnabled = !animationsEnabled;
   saveAnimationsPreference();
   updateAnimationsState();
+}
+
+function toggleTheatreMode() {
+  const isTheatre = document.body.classList.toggle("theatre-mode-active");
+  const btn = document.getElementById("btnToggleTheatre");
+  if (btn) {
+    btn.textContent = isTheatre ? "🎬 THEATRE: ON" : "🎬 THEATRE: OFF";
+    btn.classList.toggle("active-theatre", isTheatre);
+  }
+}
+
+function toggleFullscreenMode() {
+  const container = document.querySelector(".game-viewport-container");
+  if (!container) return;
+  
+  if (!document.fullscreenElement) {
+    container.requestFullscreen().catch(err => {
+      console.error(`Error attempting to enable fullscreen: ${err.message}`);
+    });
+  } else {
+    document.exitFullscreen().catch(err => {
+      console.error(`Error attempting to exit fullscreen: ${err.message}`);
+    });
+  }
 }
 
 // Pause game engine state toggler
@@ -4960,6 +4996,38 @@ function initGameEngine() {
       toggleGamePause();
     });
   }
+
+  // 6a. Theatre Mode Toggle button Click Handler
+  const btnTheatre = document.getElementById("btnToggleTheatre");
+  if (btnTheatre) {
+    btnTheatre.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleTheatreMode();
+    });
+  }
+
+  // 6b. Fullscreen Mode Toggle button Click Handler
+  const btnFullscreen = document.getElementById("btnToggleFullscreen");
+  if (btnFullscreen) {
+    btnFullscreen.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleFullscreenMode();
+    });
+  }
+
+  // 6c. Fullscreen state change listener to update HUD styling dynamically
+  document.addEventListener("fullscreenchange", () => {
+    const btnFs = document.getElementById("btnToggleFullscreen");
+    if (btnFs) {
+      if (document.fullscreenElement) {
+        btnFs.textContent = "🖥️ EXIT FULLSCREEN";
+        btnFs.classList.add("active-fullscreen");
+      } else {
+        btnFs.textContent = "🖥️ FULLSCREEN";
+        btnFs.classList.remove("active-fullscreen");
+      }
+    }
+  });
 
   // 7. Mobile Action Buttons Click Handlers
   const btnMobileDodge = document.getElementById("btnMobileDodge");
