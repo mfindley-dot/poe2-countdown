@@ -36,7 +36,7 @@
   <div class="app-container">
     <!-- Header -->
     <header class="app-header">
-      <h1 class="gothic-title glow-gold">GLG GUILD HALL</h1>
+      <img src="assets/images/logos/GLG_guild-hall_logo.png" alt="GLG GUILD HALL" class="header-logo-img" />
       <p class="subtitle text-gold-faded">GOOD LOOT GANG</p>
       
       <!-- Milestone Sigil Selector -->
@@ -84,42 +84,7 @@
             
             <!-- Divine Orb Inner Graphic (Can be customized by user with motion graphics later) -->
             <div class="divine-orb-inner">
-              <svg viewBox="0 0 100 100" class="divine-svg">
-                <defs>
-                  <radialGradient id="goldGrad" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#fff8d4" />
-                    <stop offset="25%" stop-color="#ffd700" />
-                    <stop offset="60%" stop-color="#b8860b" />
-                    <stop offset="100%" stop-color="#2a1a02" />
-                  </radialGradient>
-                  <filter id="glow">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                    <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                </defs>
-                <!-- Outer Gilded Rim -->
-                <circle cx="50" cy="50" r="45" fill="none" stroke="#d4af37" stroke-width="2.5" />
-                <circle cx="50" cy="50" r="41" fill="none" stroke="#8b6508" stroke-width="1" stroke-dasharray="4 2" />
-                
-                <!-- Stylized Face / Runes (Vaguely mirroring Divine/Chaos orb geometry) -->
-                <!-- Central Orb Sphere -->
-                <circle cx="50" cy="50" r="30" fill="url(#goldGrad)" filter="url(#glow)" />
-                
-                <!-- Mystical Eyes & Mouth (Path of Exile 2 style) -->
-                <!-- Left Eye Slot -->
-                <path d="M 38 43 Q 43 40 45 46 Q 40 48 38 43 Z" fill="#000" opacity="0.8" />
-                <circle cx="42" cy="44" r="1.5" fill="#00ffff" class="eye-glow" />
-                <!-- Right Eye Slot -->
-                <path d="M 62 43 Q 57 40 55 46 Q 60 48 62 43 Z" fill="#000" opacity="0.8" />
-                <circle cx="58" cy="44" r="1.5" fill="#00ffff" class="eye-glow" />
-                
-                <!-- Gilded Rune Overlays -->
-                <path d="M 50 15 L 50 30 M 50 70 L 50 85 M 15 50 L 30 50 M 70 50 L 85 50" stroke="#d4af37" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
-                <path d="M 33 60 C 37 68, 63 68, 67 60" fill="none" stroke="#2a1a02" stroke-width="3" stroke-linecap="round" />
-              </svg>
+              <img id="dopamineOrbImg" src="assets/images/currency/item_divine.png" class="divine-svg" style="image-rendering: pixelated; width: 100%; height: 100%; object-fit: contain; transform: scale(0.9); margin-top: -10px;" />
               <!-- Interactive Click Tag -->
               <span class="click-tag">CLICK FOR DOPAMINE</span>
             </div>
@@ -171,11 +136,11 @@
       <div class="arcade-controls-row">
         <div class="class-selector">
           <span class="text-gold-faded">CHOOSE YOUR EXILE:</span>
-          <button class="gothic-btn active-class" id="btnSelectWitch">🧙‍♀️ WITCH (Spark)</button>
-          <button class="gothic-btn" id="btnSelectRanger">🏹 RANGER (Split Arrow)</button>
+          <!-- <button class="gothic-btn" id="btnSelectWitch">🧙‍♀️ WITCH (Spark)</button> -->
+          <button class="gothic-btn active-class" id="btnSelectRanger">🏹 RANGER (Split Arrow)</button>
         </div>
-        <div class="game-instructions text-gold-faded">
-          ⌨️ Move: <strong>WASD / Arrow Keys</strong> | 🎯 Firing: <strong>Auto-Aim</strong> | 🔇 <button id="btnToggleMute" class="mute-btn border-gold">SOUND: ON</button>
+        <div class="game-instructions text-gold-faded" style="font-size: 8.5px; line-height: 1.4;">
+          ⌨️ Move: <strong>WASD / Arrow Keys</strong> | 🌀 Dodge Roll: <strong>Spacebar (1s CD)</strong> | 🏹 Spreadshot: <strong>E Key (1.5s CD)</strong> | 🔇 <button id="btnToggleMute" class="mute-btn border-gold" style="padding: 1px 4px; font-size: 8px;">SOUND: ON</button>
         </div>
       </div>
 

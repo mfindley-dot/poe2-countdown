@@ -81,11 +81,22 @@ body {
   backdrop-filter: blur(8px);
 }
 
-/* Header & Titles */
 .app-header {
   text-align: center;
   margin-bottom: 40px;
   position: relative;
+}
+
+.header-logo-img {
+  max-width: 420px;
+  width: 90%;
+  height: auto;
+  max-height: 140px;
+  object-fit: contain;
+  margin: 0 auto 10px;
+  display: block;
+  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.25));
+  animation: pulseGlow 4s ease-in-out infinite;
 }
 
 .app-header::after {
@@ -1438,20 +1449,23 @@ body {
 
 .death-title {
   font-family: var(--font-header-deco);
-  font-size: 3.2rem;
-  letter-spacing: 8px;
+  font-size: 1.6rem;
+  letter-spacing: 4px;
   color: #dc2626;
   text-shadow: 
     0 0 10px rgba(220, 38, 38, 0.4),
     0 0 30px rgba(220, 38, 38, 0.8);
-  margin-bottom: 5px;
+  margin-bottom: 8px;
   animation: deathScaleUp 3s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
   text-transform: uppercase;
+  text-align: center;
+  max-width: 90%;
+  line-height: 1.25;
 }
 
 @keyframes deathScaleUp {
-  from { transform: scale(0.9); opacity: 0; letter-spacing: 2px; }
-  to { transform: scale(1); opacity: 1; letter-spacing: 8px; }
+  from { transform: scale(0.92); opacity: 0; letter-spacing: 2px; }
+  to { transform: scale(1); opacity: 1; letter-spacing: 4px; }
 }
 
 .death-subtitle {

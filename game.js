@@ -262,17 +262,17 @@ let player = {
   y: 200,
   vx: 0,
   vy: 0,
-  speed: 2.8,
+  speed: 3.1,
   radius: 12,
-  class: "Witch",
+  class: "Ranger",
   hp: 100,
   maxHp: 100,
   level: 1,
   xp: 0,
   maxXp: 100,
   lastShotTime: 0,
-  shotCooldown: 480, // ms
-  damage: 10,
+  shotCooldown: 280, // ms
+  damage: 8,
   frozen: false,
   freezeTimer: 0,
   
@@ -284,7 +284,11 @@ let player = {
   rollVy: 0,
   lastRollTime: 0,
   rollCooldown: 1000, // 1.0 second cooldown
-  rollSpeedMultiplier: 1.95
+  rollSpeedMultiplier: 1.95,
+  
+  // Active Spreadshot ability (E Key)
+  lastSpreadshotTime: 0,
+  spreadshotCooldown: 1500 // 1.5 second cooldown
 };
 
 // Keyboard state
@@ -1423,6 +1427,27 @@ function playSynthSlamSound() {
     osc.start(now);
     osc.stop(now + 0.55);
   });
+}
+
+// High-pitch chime sound for E key Spreadshot
+function playSynthSpreadshotSound() {
+  initGameAudio();
+  if (!gameAudioCtx || gameMuted) return;
+  const now = gameAudioCtx.currentTime;
+  const osc = gameAudioCtx.createOscillator();
+  const gain = gameAudioCtx.createGain();
+  
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(440, now);
+  osc.frequency.exponentialRampToValueAtTime(1200, now + 0.12);
+  
+  gain.gain.setValueAtTime(0.2, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  
+  osc.connect(gain);
+  gain.connect(gameAudioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 0.2);
 }
 
 // Synchronize background, boss, and banker event soundtrack state (CORS-safe browser Audio player)
@@ -2980,11 +3005,89 @@ function triggerPlayerDodgeRoll() {
   }
 }
 
+// Trigger Ranger's active Spreadshot ability (E Key, 1.5s Cooldown)
+function triggerPlayerSpreadshot() {
+  if (currentGameState !== GameState.PLAY || player.frozen || player.hp <= 0 || player.class !== "Ranger") return;
+  
+  const now = Date.now();
+  if (now - player.lastSpreadshotTime < player.spreadshotCooldown) return;
+  
+  // Find target angle based on closest active enemy
+  let angle = 0;
+  let closestEnemy = null;
+  let closestDist = Infinity;
+  enemies.forEach(e => {
+    if (e.isDead || !e.active) return;
+    const dx = e.x - player.x;
+    const dy = e.y - player.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestEnemy = e;
+    }
+  });
+  
+  if (closestEnemy) {
+    angle = Math.atan2(closestEnemy.y - player.y, closestEnemy.x - player.x);
+  } else {
+    angle = Math.atan2(player.vy, player.vx);
+    if (player.vx === 0 && player.vy === 0) angle = -Math.PI/2; // shoots up if still
+  }
+  
+  player.lastSpreadshotTime = now;
+  player.lastShotTime = now; // sync animation visual triggers
+  
+  const speed = 7.0;
+  const numArrows = 8;
+  
+  // Fire 8 arrows in a wide spread fan!
+  for (let i = 0; i < numArrows; i++) {
+    const ang = angle - 0.7 + (i / (numArrows - 1)) * 1.4;
+    const vx = Math.cos(ang) * speed;
+    const vy = Math.sin(ang) * speed;
+    projectiles.push(new GameProjectile(player.x, player.y, vx, vy, "#eab308", player.damage * 1.25, false));
+  }
+  
+  // Visual ability splash text particle above player
+  particleEffects.push({
+    x: player.x,
+    y: player.y - 18,
+    text: "🏹 SPREADSHOT!",
+    color: "#f59e0b",
+    age: 0,
+    maxAge: 40
+  });
+  
+  // Fancy ability sparkles
+  for (let i = 0; i < 6; i++) {
+    particleEffects.push({
+      x: player.x + (Math.random() * 16 - 8),
+      y: player.y + (Math.random() * 16 - 8),
+      isTrail: true,
+      color: "rgba(245, 158, 11, 0.42)",
+      age: 0,
+      maxAge: 16
+    });
+  }
+  
+  if (!gameMuted) {
+    try {
+      playSynthSpreadshotSound();
+    } catch(err){}
+  }
+}
+
 // Bind keyboard
 window.addEventListener("keydown", (e) => {
   if (e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
     triggerPlayerDodgeRoll();
+    return;
+  }
+  
+  if (e.key === "e" || e.key === "E") {
+    e.preventDefault();
+    triggerPlayerSpreadshot();
     return;
   }
   

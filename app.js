@@ -47,6 +47,13 @@ const STATUS_MESSAGES = [
 let activeMilestoneId = "";
 let countdownInterval = null;
 
+// Core Dopamine clicker currencies list and active cycle index
+const dopamineCurrencies = [
+  "divine", "scroll", "transmute", "augmentation", "alchemy", 
+  "regal", "chaos", "vaal", "annulment", "exalted", "mirror"
+];
+let currentDopamineCurrencyIndex = 0;
+
 // Determine target date and auto-rollover
 function initializeMilestone() {
   const now = new Date();
@@ -868,8 +875,32 @@ document.addEventListener("DOMContentLoaded", () => {
       // Update counters
       incrementClicks();
       
-      // Synthesis Drop Sound
-      playDivineSound();
+      // Cycle currency image
+      currentDopamineCurrencyIndex = (currentDopamineCurrencyIndex + 1) % dopamineCurrencies.length;
+      const nextCurrency = dopamineCurrencies[currentDopamineCurrencyIndex];
+      
+      const orbImg = document.getElementById("dopamineOrbImg");
+      if (orbImg) {
+        let fileName = `item_${nextCurrency}.png`;
+        if (nextCurrency === "alchemy") fileName = "orb_alchemy.png";
+        else if (nextCurrency === "transmute") fileName = "item_transmutation.png";
+        
+        orbImg.src = `assets/images/currency/${fileName}`;
+      }
+      
+      // Play appropriate synthesis drop sound for the current currency!
+      if (nextCurrency === "mirror") {
+        try { playMirrorSound(); } catch (err) { playDivineSound(); }
+      } else if (nextCurrency === "divine") {
+        playDivineSound();
+      } else if (nextCurrency === "exalted" || nextCurrency === "annulment") {
+        try { playExaltedSound(); } catch (err) { playDivineSound(); }
+      } else if (nextCurrency === "chaos" || nextCurrency === "vaal" || nextCurrency === "regal") {
+        try { playChaosSound(); } catch (err) { playDivineSound(); }
+      } else {
+        // scroll, transmute, augmentation, alchemy
+        try { playRipSound(); } catch (err) { playDivineSound(); }
+      }
       
       // Physics Currency Rain
       triggerClickExplosion(e);
