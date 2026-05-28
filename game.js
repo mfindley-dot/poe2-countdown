@@ -4491,10 +4491,87 @@ function animateKeybindPreviews() {
 
 
 // ==========================================================================
+// 12a. GLOBAL PAGE VIDEO ANIMATIONS TOGGLE ENGINE
+// ==========================================================================
+
+let animationsEnabled = true;
+
+function loadAnimationsPreference() {
+  try {
+    const saved = localStorage.getItem("GLG_ANIMATIONS_ENABLED");
+    if (saved !== null) {
+      animationsEnabled = saved === "true";
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  updateAnimationsState();
+}
+
+function saveAnimationsPreference() {
+  try {
+    localStorage.setItem("GLG_ANIMATIONS_ENABLED", animationsEnabled.toString());
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function updateAnimationsState() {
+  const btn = document.getElementById("btnFloatingAnimToggle");
+  const bgVideo = document.getElementById("bgVideoLoop");
+  const headerVideo = document.getElementById("headerLogoVideo");
+  const wrapper = document.getElementById("backgroundOverlayWrapper");
+  
+  if (animationsEnabled) {
+    if (bgVideo) {
+      bgVideo.play().catch(err => console.log("Video play pending interaction:", err));
+      bgVideo.classList.remove("hidden");
+    }
+    if (headerVideo) {
+      headerVideo.play().catch(err => console.log("Header video play pending interaction:", err));
+    }
+    if (wrapper) {
+      wrapper.style.backgroundImage = "none";
+    }
+    if (btn) {
+      btn.classList.remove("disabled");
+      btn.innerHTML = "🎬"; // Play symbol clapper board
+      btn.title = "Pause Background & Sign Animations";
+    }
+  } else {
+    if (bgVideo) {
+      bgVideo.pause();
+      bgVideo.classList.add("hidden");
+    }
+    if (headerVideo) {
+      headerVideo.pause();
+      headerVideo.currentTime = 0;
+    }
+    if (wrapper) {
+      wrapper.style.backgroundImage = "url('assets/images/backgrounds/GLG_guild-hall_background-image.png')";
+    }
+    if (btn) {
+      btn.classList.add("disabled");
+      btn.innerHTML = "⏸️"; // Paused matching emoji indicator
+      btn.title = "Play Background & Sign Animations";
+    }
+  }
+}
+
+function toggleAnimations() {
+  animationsEnabled = !animationsEnabled;
+  saveAnimationsPreference();
+  updateAnimationsState();
+}
+
+
+// ==========================================================================
 // 12. INITIALIZATION EVENT CONTROLLERS
 // ==========================================================================
 
 function initGameEngine() {
+  // Load background and header sign animation state preference
+  loadAnimationsPreference();
   
   // 1. Selector bindings
   const btnWitch = document.getElementById("btnSelectWitch");
@@ -4573,6 +4650,14 @@ function initGameEngine() {
         floatMute.classList.remove("muted");
         floatMute.innerHTML = "🎵";
       }
+    });
+  }
+
+  // 3d. Floating Animations Toggle Button
+  const floatAnim = document.getElementById("btnFloatingAnimToggle");
+  if (floatAnim) {
+    floatAnim.addEventListener("click", () => {
+      toggleAnimations();
     });
   }
 

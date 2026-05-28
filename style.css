@@ -2263,6 +2263,54 @@ body {
     inset 0 0 10px rgba(0, 0, 0, 0.8);
 }
 
+/* Floating Animations Play/Pause Medallion */
+.floating-anim-btn {
+  position: fixed;
+  bottom: 25px;
+  right: 85px; /* Sits directly next to the mute button (shifted by 60px) */
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3d2b1f 0%, #1c110a 100%);
+  border: 2px solid #5c4033; /* Symmetrical bronze border */
+  color: #d4af37; /* Bronze gold color */
+  font-size: 1.4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.7),
+    inset 0 0 10px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(212, 175, 55, 0.15);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  user-select: none;
+}
+
+.floating-anim-btn:hover {
+  transform: scale(1.08) rotate(-10deg); /* Symmetrical opposite rotation */
+  border-color: var(--gold-hover);
+  color: #fff;
+  box-shadow: 
+    0 6px 15px rgba(0, 0, 0, 0.8),
+    inset 0 0 10px rgba(0, 0, 0, 0.6),
+    0 0 15px var(--gold-glow);
+}
+
+.floating-anim-btn:active {
+  transform: scale(0.95);
+}
+
+.floating-anim-btn.disabled {
+  color: #6b7280; /* greyed out when disabled */
+  border-color: #374151;
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.5),
+    inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
 /* ==========================================================================
    SUNPRISM SPACE CAT SUMMON UPGRADES
    ========================================================================== */

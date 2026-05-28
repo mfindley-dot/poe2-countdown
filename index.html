@@ -30,11 +30,18 @@
 </head>
 <body>
 
+  <!-- Full Screen Loop Video Background Wrapper -->
+  <div class="background-overlay-wrapper" id="backgroundOverlayWrapper">
+    <video id="bgVideoLoop" class="bg-video-loop" autoplay loop muted playsinline poster="assets/images/backgrounds/GLG_guild-hall_background-image.png">
+      <source src="assets/animations/GLG_guild-hall-bg_(looped).webm" type="video/webm">
+    </video>
+  </div>
+
   <!-- Gothic Canvas Background for Particle Effects -->
   <canvas id="particleCanvas"></canvas>
 
   <!-- Guild Sign logo hanging from absolute top of page (seamless animated loop with static fallback) -->
-  <video class="header-logo-img" autoplay loop muted playsinline poster="assets/images/logos/GLG_guild-hall_logo.png">
+  <video id="headerLogoVideo" class="header-logo-img" autoplay loop muted playsinline poster="assets/images/logos/GLG_guild-hall_logo.png">
     <source src="assets/animations/GLG-sign_swinging_animated.webm" type="video/webm">
     <!-- Static image fallback if video formats are unsupported -->
     <img src="assets/images/logos/GLG_guild-hall_logo.png" alt="GLG GUILD HALL" class="header-logo-img" />
@@ -470,6 +477,11 @@
   <div class="audio-banner hidden" id="audioBanner">
     <p>🧙‍♂️ Tap anywhere to synchronize your Loot Filter and activate sound effects!</p>
   </div>
+
+  <!-- Floating Animations Play/Pause Medallion -->
+  <button id="btnFloatingAnimToggle" class="floating-anim-btn" title="Pause Background & Sign Animations">
+    🎬
+  </button>
 
   <!-- Floating Music Mute Medallion -->
   <button id="btnFloatingMute" class="floating-mute-btn" title="Toggle Tavern & Game Music">
