@@ -1566,21 +1566,64 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
+/* Stash View selectors styling */
+.stash-view-selector {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid #1a1410;
+  padding: 3px;
+  border-radius: var(--border-radius-gothic);
+}
+
+.gothic-tab-btn {
+  flex: 1;
+  background: #0c0805;
+  border: 1px solid #201813;
+  color: #887864;
+  font-family: 'Cinzel', serif;
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 6px 2px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.gothic-tab-btn:hover {
+  color: #d4af37;
+  border-color: #4a3c30;
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.gothic-tab-btn.active {
+  background: #150f0c;
+  color: #ffd700;
+  border-color: #d4af37;
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.2);
+  text-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
+}
+
 .stash-grid-visualizer {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 2px;
-  background: #000;
-  border: 2px solid #110e0c;
-  padding: 2px;
-  border-radius: 2px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+  background-color: #000;
+  background-image: url('assets/images/currency/stash-tab_frame.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border: 3px solid var(--gold-primary);
+  padding: 6px;
+  border-radius: 3px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85);
 }
 
 .stash-grid-cell {
   aspect-ratio: 1;
-  background: #0e0a07;
-  border: 1px solid rgba(212, 175, 55, 0.04);
+  background: rgba(14, 10, 7, 0.55);
+  border: 1px solid rgba(212, 175, 55, 0.05);
   position: relative;
   display: flex;
   justify-content: center;
@@ -1590,8 +1633,22 @@ body {
 }
 
 .stash-grid-cell:hover {
-  background: rgba(212, 175, 55, 0.08);
-  border-color: rgba(212, 175, 55, 0.2);
+  background: rgba(212, 175, 55, 0.18);
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: inset 0 0 5px rgba(212, 175, 55, 0.15);
+}
+
+.stash-image-icon {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.75));
+  transition: transform var(--transition-speed);
+  image-rendering: pixelated;
+}
+
+.stash-grid-cell:hover .stash-image-icon {
+  transform: scale(1.15) rotate(2deg);
 }
 
 .stash-icon {

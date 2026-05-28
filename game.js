@@ -41,27 +41,217 @@ let currentGameState = GameState.SELECT;
 let gameMuted = false;
 let gameScoreSubmitted = false;
 
-// Currency items configuration
+// Custom 16-Bit Graphics Preloader & Cache
+const CurrencyImages = {};
+const currencyListKeys = [
+  "scroll", "transmute", "augmentation", "alchemy", "regal", 
+  "chaos", "vaal", "annulment", "exalted", "divine", "mirror"
+];
+
+currencyListKeys.forEach(key => {
+  const img = new Image();
+  let fileName = `item_${key}.png`;
+  if (key === "alchemy") fileName = "orb_alchemy.png";
+  else if (key === "transmute") fileName = "item_transmutation.png";
+  
+  img.src = `assets/images/currency/${fileName}`;
+  CurrencyImages[key] = img;
+});
+
+// Preload Stash Frame visual texture background
+const stashFrameImg = new Image();
+stashFrameImg.src = "assets/images/currency/stash-tab_frame.png";
+
+// Preload Player Character Sprites
+const PlayerSprites = {
+  ranger: new Image()
+};
+PlayerSprites.ranger.src = "assets/images/characters/ranger_spritesheet.png";
+
+// Preload Enemy Character Sprites
+const EnemySprites = {
+  zombie: new Image(),
+  ape: new Image()
+};
+EnemySprites.zombie.src = "assets/images/enemies/zombie_spritesheet.png";
+EnemySprites.ape.src = "assets/images/bosses/ape_boss_spritesheet.png";
+
+// Runtime offscreen scaling canvas to solve "Sprite Math Trap" of 57.2px height per frame
+let processedApeImg = null;
+function getProcessedApeImg() {
+  if (processedApeImg) return processedApeImg;
+  const rawImg = EnemySprites.ape;
+  if (!rawImg.complete || rawImg.naturalWidth === 0) return null;
+  
+  const originalW = rawImg.naturalWidth;
+  const originalH = rawImg.naturalHeight;
+  
+  // Find a height that is a multiple of 5 close to originalH
+  // For 286px height, Math.round(286 / 5) * 5 = 285px (5 rows * 57px each)!
+  const targetH = Math.round(originalH / 5) * 5;
+  
+  // Create offscreen canvas
+  const canvas = document.createElement("canvas");
+  canvas.width = originalW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext("2d");
+  
+  // Disable image smoothing to preserve pixel art crispness
+  ctx.imageSmoothingEnabled = false;
+  ctx.mozImageSmoothingEnabled = false;
+  ctx.webkitImageSmoothingEnabled = false;
+  ctx.msImageSmoothingEnabled = false;
+  
+  // Scale raw image onto the integer-aligned canvas
+  ctx.drawImage(rawImg, 0, 0, originalW, originalH, 0, 0, originalW, targetH);
+  
+  processedApeImg = canvas;
+  return processedApeImg;
+}
+
+// Preload Terrain Tiles
+const TerrainTiles = {
+  grass1: new Image(),
+  grass2: new Image(),
+  grass3: new Image(),
+  grass4: new Image(),
+  dirt1: new Image(),
+  dirt2: new Image()
+};
+TerrainTiles.grass1.src = "assets/images/terrain/grass/grass-tile_1.jpg";
+TerrainTiles.grass2.src = "assets/images/terrain/grass/grass-tile_2.jpg";
+TerrainTiles.grass3.src = "assets/images/terrain/grass/grass-tile_3.jpg";
+TerrainTiles.grass4.src = "assets/images/terrain/grass/grass-tile_4.jpg";
+TerrainTiles.dirt1.src = "assets/images/terrain/dirt/dirt-tile_1.jpg";
+TerrainTiles.dirt2.src = "assets/images/terrain/dirt/dirt-tile_2.jpg";
+
+const terrainMap = [];
+const mapCols = 16;
+const mapRows = 10;
+
+function generateTerrainMap() {
+  for (let r = 0; r < mapRows; r++) {
+    terrainMap[r] = [];
+    for (let c = 0; c < mapCols; c++) {
+      const roll = Math.random() * 100;
+      let tileKey = "grass1";
+      if (roll < 45) tileKey = "grass1";
+      else if (roll < 70) tileKey = "grass2";
+      else if (roll < 80) tileKey = "grass3";
+      else if (roll < 88) tileKey = "grass4";
+      else if (roll < 94) tileKey = "dirt1";
+      else tileKey = "dirt2";
+      
+      terrainMap[r][c] = tileKey;
+    }
+  }
+}
+
+// Player Sprite Sheet animation state variables
+let playerAnimFrame = 0;
+let playerAnimTick = 0;
+let lastPlayerDirectionRow = 0;
+
+// Currency items configuration (Extended to 11 currencies)
 const CURRENCY_CONFIG = {
   scroll: { name: "Scroll of Wisdom", char: "📜", worth: 0.1, color: "#e2e8f0", border: "#78716c", bg: "#1c1917" },
   transmute: { name: "Orb of Transmutation", char: "🔵", worth: 0.2, color: "#3b82f6", border: "#2563eb", bg: "#1e3a8a" },
+  augmentation: { name: "Orb of Augmentation", char: "🔧", worth: 0.15, color: "#93c5fd", border: "#3b82f6", bg: "#172554" },
   alchemy: { name: "Orb of Alchemy", char: "🟡", worth: 0.5, color: "#eab308", border: "#ca8a04", bg: "#422006" },
+  regal: { name: "Regal Orb", char: "👑", worth: 0.8, color: "#d97706", border: "#b45309", bg: "#451a03" },
   chaos: { name: "Chaos Orb", char: "🌀", worth: 1.0, color: "#ffd700", border: "#ffd700", bg: "#2a2100", sound: "AlertSound2.mp3" },
+  vaal: { name: "Vaal Orb", char: "🔴", worth: 2.0, color: "#ef4444", border: "#dc2626", bg: "#450a0a" },
+  annulment: { name: "Orb of Annulment", char: "🧿", worth: 5.0, color: "#a855f7", border: "#7e22ce", bg: "#3b0764" },
   exalted: { name: "Exalted Orb", char: "👑", worth: 15.0, color: "#f97316", border: "#ea580c", bg: "#431407", sound: "AlertSound1.mp3" },
   divine: { name: "Divine Orb", char: "🪙", worth: 150.0, color: "#fff", border: "#ffd700", bg: "#422006", sound: "AlertSound16.mp3" },
   mirror: { name: "Mirror of Kalandra", char: "🪞", worth: 40000.0, color: "#fff", border: "#dc2626", bg: "#450a0a", sound: "AlertSound16.mp3", special: true }
 };
 
-// Guild Stash Tab state
+// Guild Stash Tab state (Active run)
 let playerStash = {
   scroll: 0,
   transmute: 0,
+  augmentation: 0,
   alchemy: 0,
+  regal: 0,
   chaos: 0,
+  vaal: 0,
+  annulment: 0,
   exalted: 0,
   divine: 0,
   mirror: 0
 };
+
+// Player's Lifetime Inventory (Persistent local storage)
+let lifetimeStash = {
+  scroll: 0,
+  transmute: 0,
+  augmentation: 0,
+  alchemy: 0,
+  regal: 0,
+  chaos: 0,
+  vaal: 0,
+  annulment: 0,
+  exalted: 0,
+  divine: 0,
+  mirror: 0
+};
+
+// Active stash UI tab state
+let activeStashView = "run"; // "run", "lifetime", "guild"
+let globalOverallGuildChaos = 0; // Derived mathematically from online dreamlo entries
+
+function loadLifetimeStash() {
+  try {
+    const data = localStorage.getItem("GLG_LIFETIME_STASH");
+    if (data) {
+      const parsed = JSON.parse(data);
+      Object.keys(lifetimeStash).forEach(key => {
+        if (typeof parsed[key] === "number") {
+          lifetimeStash[key] = parsed[key];
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Failed to load lifetime stash:", err);
+  }
+}
+
+function saveLifetimeStash() {
+  try {
+    localStorage.setItem("GLG_LIFETIME_STASH", JSON.stringify(lifetimeStash));
+  } catch (err) {
+    console.error("Failed to save lifetime stash:", err);
+  }
+}
+
+function formatStashQty(qty) {
+  if (qty >= 1000000) {
+    return (qty / 1000000).toFixed(1) + "M";
+  }
+  if (qty >= 1000) {
+    return (qty / 1000).toFixed(1) + "K";
+  }
+  return qty;
+}
+
+function updateActiveStashTabHighlight() {
+  const btns = {
+    run: document.getElementById("btnStashViewRun"),
+    lifetime: document.getElementById("btnStashViewLifetime"),
+    guild: document.getElementById("btnStashViewGuild")
+  };
+  
+  Object.keys(btns).forEach(key => {
+    const btn = btns[key];
+    if (!btn) return;
+    if (key === activeStashView) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+}
 
 // ==========================================================================
 // 2. PLAYER CLASSES & STATS
@@ -84,7 +274,17 @@ let player = {
   shotCooldown: 480, // ms
   damage: 10,
   frozen: false,
-  freezeTimer: 0
+  freezeTimer: 0,
+  
+  // Dodge Roll properties (Spacebar dash)
+  isRolling: false,
+  rollTimer: 0,
+  rollDuration: 14,
+  rollVx: 0,
+  rollVy: 0,
+  lastRollTime: 0,
+  rollCooldown: 1000, // 1.0 second cooldown
+  rollSpeedMultiplier: 1.95
 };
 
 // Keyboard state
@@ -203,6 +403,12 @@ class Enemy {
     this.vy = 0;
     this.active = true;
     
+    // Sprite animation states
+    this.animFrame = 0;
+    this.animTick = 0;
+    this.isDead = false;
+    this.deathTimer = 0;
+    
     // Stats base on types
     if (type === "spider") {
       this.radius = 9;
@@ -238,6 +444,16 @@ class Enemy {
       this.slamTargetY = 0;
       this.slamChargeTimer = 0;
       this.isBoss = true;
+      
+      // Roll charge states
+      this.isRolling = false;
+      this.rollTimer = 0;
+      this.lastRollTime = 0;
+      this.rollVx = 0;
+      this.rollVy = 0;
+      
+      // Enrage state
+      this.enraged = false;
     }
     else if (type === "banker") {
       // Creg the Guild Banker!
@@ -253,6 +469,23 @@ class Enemy {
   }
 
   update() {
+    if (this.isDead) {
+      this.vx = 0;
+      this.vy = 0;
+      this.deathTimer--;
+      if (this.deathTimer <= 0) {
+        this.active = false;
+      }
+      return;
+    }
+    
+    // Sprite animation tick
+    this.animTick++;
+    if (this.animTick >= 6) {
+      this.animTick = 0;
+      this.animFrame = (this.animFrame + 1) % 8;
+    }
+
     // Frozen player? They still move towards player
     const dx = player.x - this.x;
     const dy = player.y - this.y;
@@ -302,7 +535,92 @@ class Enemy {
     else if (this.type === "ape") {
       const now = Date.now();
       
-      if (this.slamCharging) {
+      // 1. Enrage state check (starts moving 25% faster when <= 1/3 HP)
+      if (this.hp <= this.maxHp / 3 && !this.enraged) {
+        this.enraged = true;
+        this.speed = 0.75 * 1.25; // 0.9375 speed (25% faster)
+        
+        // Hype enraged text particle
+        particleEffects.push({
+          x: this.x,
+          y: this.y - 30,
+          text: "🚨 ENRAGED!",
+          color: "#ef4444",
+          age: 0,
+          maxAge: 60
+        });
+        
+        if (!gameMuted) {
+          try {
+            playSynthRoarSound();
+          } catch (e) {
+            console.log("Synth roar error:", e);
+          }
+        }
+      }
+      
+      // 2. State Machine: Roll Charge vs Slam Charge vs Normal Walk
+      if (this.isRolling) {
+        this.rollTimer--;
+        
+        // Locked rolling charge movement (ignores player dynamic vector updates)
+        this.x += this.rollVx;
+        this.y += this.rollVy;
+        
+        // Boundaries clamp to stay within grid clearing
+        this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+        
+        // Spawn dirt/dust trail particles
+        if (this.rollTimer % 3 === 0) {
+          particleEffects.push({
+            x: this.x + (Math.random() * 20 - 10),
+            y: this.y + 18 + (Math.random() * 8 - 4),
+            text: "💨",
+            color: "#d97706",
+            age: 0,
+            maxAge: 20
+          });
+        }
+        
+        // Hit check player during roll
+        const rDx = player.x - this.x;
+        const rDy = player.y - this.y;
+        const rDist = Math.sqrt(rDx * rDx + rDy * rDy);
+        
+        if (rDist < this.radius + player.radius) {
+          if (player.hp > 0 && currentGameState === GameState.PLAY && !player.isRolling && !player.frozen) {
+            // Player hit by direct rolling charge!
+            player.hp = Math.max(0, player.hp - 20);
+            
+            // Heavy knockback from roll impact!
+            player.x += (rDx / rDist) * 22;
+            player.y += (rDy / rDist) * 22;
+            
+            particleEffects.push({
+              x: player.x,
+              y: player.y - 12,
+              text: "CHARGED!",
+              color: "#ef4444",
+              age: 0,
+              maxAge: 40
+            });
+            
+            triggerCameraShake();
+            if (!gameMuted) playRipAudioFallback(); // crash sound
+            
+            if (player.hp <= 0) {
+              handlePlayerDeath();
+            }
+          }
+        }
+        
+        if (this.rollTimer <= 0) {
+          this.isRolling = false;
+          this.lastRollTime = now;
+        }
+      }
+      else if (this.slamCharging) {
         this.slamChargeTimer++;
         this.vx = 0;
         this.vy = 0;
@@ -316,15 +634,50 @@ class Enemy {
           executeApeSlam(this.slamTargetX, this.slamTargetY);
         }
       } 
-      else if (now - this.lastSlamTime > 4500 && dist < 180) { // Slam trigger
-        this.slamCharging = true;
-        this.slamChargeTimer = 0;
-        this.slamTargetX = player.x;
-        this.slamTargetY = player.y;
-      } 
       else {
+        // Normal walking movement towards player
         this.x += this.vx;
         this.y += this.vy;
+        
+        this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+        
+        // Decide to roll or slam
+        // Roll: Mid-range distance (130px to 280px) and roll cooldown (6.0s) has elapsed
+        if (now - this.lastRollTime > 6000 && dist > 130 && dist < 280) {
+          this.isRolling = true;
+          this.rollTimer = 45; // 0.75 seconds charge
+          this.lastRollTime = now;
+          
+          const rollSpeed = this.speed * 3.0; // Moves at 3x speed during roll!
+          this.rollVx = (dx / dist) * rollSpeed;
+          this.rollVy = (dy / dist) * rollSpeed;
+          
+          // Start-rolling burst particles
+          for (let i = 0; i < 5; i++) {
+            particleEffects.push({
+              x: this.x + (Math.random() * 24 - 12),
+              y: this.y + (Math.random() * 24 - 12),
+              text: "💨",
+              color: "#fbbf24",
+              age: 0,
+              maxAge: 25
+            });
+          }
+          
+          if (!gameMuted) {
+            try {
+              playSynthRollSound();
+            } catch (e) {}
+          }
+        }
+        // Slam: Melee range (dist < 150px) and slam cooldown (4.5s) has elapsed
+        else if (now - this.lastSlamTime > 4500 && dist < 150) {
+          this.slamCharging = true;
+          this.slamChargeTimer = 0;
+          this.slamTargetX = player.x;
+          this.slamTargetY = player.y;
+        }
       }
     }
     else if (this.type === "banker") {
@@ -375,14 +728,119 @@ class Enemy {
   draw() {
     ctx.save();
     
-    // Draw body
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    ctx.fill();
-    ctx.stroke();
+    let drewSprite = false;
+    const img = EnemySprites.zombie;
+    
+    if (this.type === "spider" && img && img.complete && img.naturalWidth > 0) {
+      const cols = 8;
+      const rows = 3;
+      const frameW = img.naturalWidth / cols;
+      const frameH = img.naturalHeight / rows;
+      
+      let activeRow = 0; // Default Row 1: Walk (index 0)
+      
+      if (this.isDead) {
+        activeRow = 2; // Row 3: Death (index 2)
+      } else {
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < this.radius + player.radius + 8) {
+          activeRow = 1; // Row 2: Arm Swing Attack (index 1)
+        }
+      }
+      
+      let activeCol = this.animFrame;
+      if (this.isDead) {
+        // Splat / Collapse frame progression maps sequentially to timer ticking
+        activeCol = Math.min(7, 7 - Math.floor(this.deathTimer / 6));
+      }
+      
+      const srcX = activeCol * frameW;
+      const srcY = activeRow * frameH;
+      
+      // Underfoot perspective shadow
+      ctx.beginPath();
+      ctx.ellipse(this.x, this.y + 9, 7, 2.5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.fill();
+      
+      // Render zombie sprite frame
+      const drawW = 32;
+      const drawH = drawW * (frameH / frameW);
+      ctx.drawImage(
+        img,
+        srcX, srcY,
+        frameW, frameH,
+        this.x - drawW / 2, this.y - drawH / 2,
+        drawW, drawH
+      );
+      
+      drewSprite = true;
+    } 
+    else if (this.type === "ape") {
+      const apeImg = getProcessedApeImg();
+      if (apeImg) {
+        const cols = 8;
+        const rows = 5;
+        const frameW = apeImg.width / cols;
+        const frameH = apeImg.height / rows;
+        
+        let activeRow = 0; // Row 1: Walk (index 0)
+        
+        if (this.isDead) {
+          activeRow = 4; // Row 5: Death (index 4)
+        } else if (this.slamCharging) {
+          activeRow = 2; // Row 3: Pill Slam (index 2)
+        } else if (this.isRolling) {
+          activeRow = 1; // Row 2: Roll (index 1)
+        } else if (this.enraged) {
+          activeRow = 3; // Row 4: Enrage (index 3)
+        }
+        
+        let activeCol = this.animFrame;
+        if (this.isDead) {
+          // Death collapse frame progression
+          activeCol = Math.min(7, 7 - Math.floor(this.deathTimer / 6));
+        } else if (this.slamCharging) {
+          // Slam charge progress animation synced to 60-frame charge
+          activeCol = Math.min(7, Math.floor((this.slamChargeTimer / 60) * 8));
+        }
+        
+        const srcX = activeCol * frameW;
+        const srcY = activeRow * frameH;
+        
+        // Underfoot perspective shadow for the giant boss
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y + 20, 24, 7, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fill();
+        
+        // Render boss sprite frame
+        const drawW = 90;
+        const drawH = drawW * (frameH / frameW);
+        ctx.drawImage(
+          apeImg,
+          srcX, srcY,
+          frameW, frameH,
+          this.x - drawW / 2, this.y - drawH / 2,
+          drawW, drawH
+        );
+        
+        drewSprite = true;
+      }
+    }
+    
+    if (!drewSprite) {
+      // Standard vector circle fallback
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+    }
     
     // Draw charging indicator lines
     if (this.type === "ghost" && this.beamCharging) {
@@ -522,6 +980,8 @@ class GroundLoot {
     
     // Update player stash tab counts
     playerStash[this.key]++;
+    lifetimeStash[this.key]++;
+    saveLifetimeStash();
     updateStashTabUI();
     
     // Particle effect feedback
@@ -571,21 +1031,29 @@ class GroundLoot {
       ctx.stroke();
     }
     
-    // Pulsing circle highlight
-    const scale = 1 + Math.sin(this.pulseAge * 0.08) * 0.12;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius * scale, 0, Math.PI * 2);
-    ctx.fillStyle = this.config.bg;
-    ctx.strokeStyle = this.config.border;
-    ctx.lineWidth = 1.5;
-    ctx.fill();
-    ctx.stroke();
-    
-    // Draw Icon text
-    ctx.font = "9px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(this.config.char, this.x, this.y);
+    // Render custom image sprite if loaded and ready
+    const img = CurrencyImages[this.key];
+    if (img && img.complete && img.naturalWidth > 0) {
+      const scale = 1 + Math.sin(this.pulseAge * 0.08) * 0.08;
+      const drawSize = this.key === "mirror" ? 22 : this.key === "divine" || this.key === "exalted" ? 18 : 16;
+      ctx.drawImage(img, this.x - (drawSize * scale)/2, this.y - (drawSize * scale)/2, drawSize * scale, drawSize * scale);
+    } else {
+      // Pulsing circle highlight (fallback)
+      const scale = 1 + Math.sin(this.pulseAge * 0.08) * 0.12;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius * scale, 0, Math.PI * 2);
+      ctx.fillStyle = this.config.bg;
+      ctx.strokeStyle = this.config.border;
+      ctx.lineWidth = 1.5;
+      ctx.fill();
+      ctx.stroke();
+      
+      // Draw Icon text
+      ctx.font = "9px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(this.config.char, this.x, this.y);
+    }
     
     // Floating Text Nameplate styled like PoE ground filters!
     const paddingX = 4;
@@ -643,6 +1111,8 @@ function fireFreezeBeam(x, y, angle) {
   const dist = getDistanceToSegment(player.x, player.y, x, y, endX, endY);
   
   if (dist < player.radius + 3) {
+    if (player.hp <= 0 || currentGameState === GameState.GAMEOVER) return;
+    
     // Freeze player!
     player.frozen = true;
     player.freezeTimer = 70; // 1.2 seconds frozen
@@ -664,38 +1134,22 @@ function fireFreezeBeam(x, y, angle) {
 
 // Ape Pillar of Doom Slam
 function executeApeSlam(tx, ty) {
-  // Shockwave particle
+  // Shockwave particle - expands dynamically and is dodge-rollable!
   particleEffects.push({
     isSlamRing: true,
     x: tx,
     y: ty,
-    radius: 45,
+    radius: 120, // Boss-sized epic expanding shockwave
     age: 0,
-    maxAge: 35
+    maxAge: 45,
+    hasHitPlayer: false
   });
   
-  // Check distance
-  const dx = player.x - tx;
-  const dy = player.y - ty;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  
-  if (dist < player.radius + 45) {
-    player.hp = Math.max(0, player.hp - 35);
-    
-    // Red flash particle
-    particleEffects.push({
-      x: player.x,
-      y: player.y,
-      text: "PILLAR SLAMMED!",
-      color: "#ef4444",
-      age: 0,
-      maxAge: 50
-    });
-    
-    // Shake camera
-    triggerCameraShake();
-    
-    if (!gameMuted) playRipAudioFallback(); // Boom impact
+  if (!gameMuted) {
+    playRipAudioFallback(); // Boom impact sound
+    try {
+      playSynthSlamSound(); // Seismic rumble sound
+    } catch (e) {}
   }
 }
 
@@ -731,27 +1185,39 @@ function rollMobLoot(x, y, isBoss = false) {
     const roll = Math.random() * 100;
     let lootKey = "scroll";
     
-    // Crunched satisfying drop weights:
-    // Mirror: 0.01%
-    // Divine: 1.5%
-    // Exalted: 4%
-    // Chaos: 15%
-    // Alchemy: 20%
-    // Transmute: 25%
+    // Satisfying drop weights for all 11 currencies:
+    // Mirror: 0.005%
+    // Divine: 0.8%
+    // Exalted: 2%
+    // Annulment: 3%
+    // Vaal: 5%
+    // Chaos: 12%
+    // Regal: 10%
+    // Alchemy: 15%
+    // Transmute: 15%
+    // Augmentation: 15%
     // Scroll: Rest
     
-    if (roll < 0.01) {
+    if (roll < 0.005) {
       lootKey = "mirror";
-    } else if (roll < 1.5) {
+    } else if (roll < 0.805) {
       lootKey = "divine";
-    } else if (roll < 5.5) {
+    } else if (roll < 2.805) {
       lootKey = "exalted";
-    } else if (roll < 20.5) {
+    } else if (roll < 5.805) {
+      lootKey = "annulment";
+    } else if (roll < 10.805) {
+      lootKey = "vaal";
+    } else if (roll < 22.805) {
       lootKey = "chaos";
-    } else if (roll < 40.5) {
+    } else if (roll < 32.805) {
+      lootKey = "regal";
+    } else if (roll < 47.805) {
       lootKey = "alchemy";
-    } else if (roll < 65.5) {
+    } else if (roll < 62.805) {
       lootKey = "transmute";
+    } else if (roll < 77.805) {
+      lootKey = "augmentation";
     } else {
       lootKey = "scroll";
     }
@@ -891,6 +1357,74 @@ function playRipAudioFallback() {
   osc.stop(now + 0.25);
 }
 
+// Low growl/roar sound for Ape Boss enrage
+function playSynthRoarSound() {
+  initGameAudio();
+  if (!gameAudioCtx || gameMuted) return;
+  const now = gameAudioCtx.currentTime;
+  
+  const osc = gameAudioCtx.createOscillator();
+  const gain = gameAudioCtx.createGain();
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(100, now);
+  osc.frequency.linearRampToValueAtTime(160, now + 0.15);
+  osc.frequency.linearRampToValueAtTime(80, now + 0.45);
+  
+  gain.gain.setValueAtTime(0.35, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+  
+  osc.connect(gain);
+  gain.connect(gameAudioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 0.55);
+}
+
+// Rapid sweeping swoosh for Ape Boss roll
+function playSynthRollSound() {
+  initGameAudio();
+  if (!gameAudioCtx || gameMuted) return;
+  const now = gameAudioCtx.currentTime;
+  
+  const osc = gameAudioCtx.createOscillator();
+  const gain = gameAudioCtx.createGain();
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(60, now);
+  osc.frequency.linearRampToValueAtTime(140, now + 0.35);
+  osc.frequency.linearRampToValueAtTime(50, now + 0.7);
+  
+  gain.gain.setValueAtTime(0.3, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+  
+  osc.connect(gain);
+  gain.connect(gameAudioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 0.75);
+}
+
+// Deep seismic rumble slam sound for Pill Slam
+function playSynthSlamSound() {
+  initGameAudio();
+  if (!gameAudioCtx || gameMuted) return;
+  const now = gameAudioCtx.currentTime;
+  
+  const freqs = [90, 45]; // deep bass combination
+  freqs.forEach((freq, idx) => {
+    const osc = gameAudioCtx.createOscillator();
+    const gain = gameAudioCtx.createGain();
+    osc.type = idx === 0 ? "sawtooth" : "square";
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.linearRampToValueAtTime(freq / 2.5, now + 0.45);
+    
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+    
+    osc.connect(gain);
+    gain.connect(gameAudioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.55);
+  });
+}
+
 // Synchronize background, boss, and banker event soundtrack state (CORS-safe browser Audio player)
 function syncGameMusic() {
   if (gameMuted || currentGameState !== GameState.PLAY) {
@@ -950,45 +1484,101 @@ function updateStashTabUI() {
   
   grid.innerHTML = "";
   
-  // Calculate stash Net Worth in Chaos Orbs
+  // 1. Determine active counts map based on tab state
+  let activeCounts = {};
+  let stashLabelText = "WORTH: 0c";
   let totalNetWorth = 0;
   
-  // 1. Grid Visualizer slots (12x12 = 144 squares)
-  // Fill squares with items we have
   const currencyKeys = Object.keys(CURRENCY_CONFIG);
+  
+  if (activeStashView === "run") {
+    activeCounts = { ...playerStash };
+    currencyKeys.forEach(key => {
+      totalNetWorth += activeCounts[key] * CURRENCY_CONFIG[key].worth;
+    });
+    stashLabelText = `RUN WORTH: ${totalNetWorth.toFixed(1)}c`;
+    document.getElementById("gameWorthText").textContent = `${totalNetWorth.toFixed(1)}c`;
+  } 
+  else if (activeStashView === "lifetime") {
+    activeCounts = { ...lifetimeStash };
+    currencyKeys.forEach(key => {
+      totalNetWorth += activeCounts[key] * CURRENCY_CONFIG[key].worth;
+    });
+    stashLabelText = `MY LIFETIME: ${totalNetWorth.toFixed(1)}c`;
+  } 
+  else {
+    // Guild Vault - derived mathematically from globalOverallGuildChaos!
+    const c = globalOverallGuildChaos;
+    activeCounts = {
+      mirror: Math.floor(c / 40000),
+      divine: Math.floor(c / 150),
+      exalted: Math.floor(c / 15),
+      annulment: Math.floor(c / 5),
+      vaal: Math.floor(c / 2),
+      chaos: Math.floor(c / 1),
+      regal: Math.floor(c / 0.8),
+      alchemy: Math.floor(c / 0.5),
+      transmute: Math.floor(c / 0.2),
+      augmentation: Math.floor(c / 0.15),
+      scroll: Math.floor(c / 0.1)
+    };
+    
+    currencyKeys.forEach(key => {
+      totalNetWorth += activeCounts[key] * CURRENCY_CONFIG[key].worth;
+    });
+    stashLabelText = `GUILD VAULT: ${totalNetWorth.toFixed(0)}c`;
+  }
+  
+  document.getElementById("stashNetWorth").textContent = stashLabelText;
+  
+  // 2. Render cells for visual grid
   let slotIndex = 0;
   
-  // Populate existing quantities into cells
   currencyKeys.forEach(key => {
-    const qty = playerStash[key];
+    const qty = activeCounts[key] || 0;
     const conf = CURRENCY_CONFIG[key];
     
-    // Add worth
-    totalNetWorth += qty * conf.worth;
-    
-    // Render cells for stack
     if (qty > 0) {
-      // Break large stacks into standard stacks (e.g. max 20)
       const stackSize = key === "mirror" ? 1 : 20;
       let remaining = qty;
+      let slotsCreatedForThisCurrency = 0;
       
       while (remaining > 0 && slotIndex < 144) {
-        const drawQty = Math.min(stackSize, remaining);
-        remaining -= drawQty;
+        slotsCreatedForThisCurrency++;
+        
+        let drawQty = Math.min(stackSize, remaining);
+        // Cap splits per currency at max 4 slots to keep the grid diverse
+        if (slotsCreatedForThisCurrency === 4 || remaining <= stackSize) {
+          drawQty = remaining;
+          remaining = 0; // stop loop
+        } else {
+          remaining -= drawQty;
+        }
         
         const cell = document.createElement("div");
         cell.className = "stash-grid-cell";
-        cell.title = `${conf.name} (Stack: ${drawQty})`;
+        cell.title = `${conf.name} (Qty: ${drawQty})`;
         
-        const icon = document.createElement("span");
-        icon.className = "stash-icon";
-        icon.textContent = conf.char;
+        // Render high-res custom sprite if loaded
+        const img = CurrencyImages[key];
+        if (img && img.complete && img.naturalWidth > 0) {
+          const iconImg = document.createElement("img");
+          iconImg.className = "stash-image-icon";
+          iconImg.src = img.src;
+          iconImg.alt = conf.name;
+          cell.appendChild(iconImg);
+        } else {
+          // Retro emoji character fallback
+          const icon = document.createElement("span");
+          icon.className = "stash-icon";
+          icon.textContent = conf.char;
+          cell.appendChild(icon);
+        }
         
         const qtyLabel = document.createElement("span");
         qtyLabel.className = "stash-count";
-        qtyLabel.textContent = drawQty;
+        qtyLabel.textContent = formatStashQty(drawQty);
         
-        cell.appendChild(icon);
         cell.appendChild(qtyLabel);
         grid.appendChild(cell);
         
@@ -997,27 +1587,29 @@ function updateStashTabUI() {
     }
   });
   
-  // Fill remaining empty squares
+  // Fill remaining empty cells
   for (let i = slotIndex; i < 144; i++) {
     const cell = document.createElement("div");
     cell.className = "stash-grid-cell";
     grid.appendChild(cell);
   }
   
-  // Estimate Net Worth display (crunched to float)
-  const worthText = totalNetWorth.toFixed(1);
-  document.getElementById("stashNetWorth").textContent = `WORTH: ${worthText}c`;
-  document.getElementById("gameWorthText").textContent = `${worthText}c`;
-  
-  // 2. Text Summary Items
+  // 3. Text Summary panel items
   summaryBox.innerHTML = "";
   currencyKeys.forEach(key => {
-    const qty = playerStash[key];
+    const qty = activeCounts[key] || 0;
     if (qty > 0) {
       const conf = CURRENCY_CONFIG[key];
       const item = document.createElement("span");
       item.className = "summary-item";
-      item.innerHTML = `${conf.char} <strong>${qty}</strong>`;
+      
+      // Try displaying tiny image inside summary bar too!
+      const img = CurrencyImages[key];
+      if (img && img.complete && img.naturalWidth > 0) {
+        item.innerHTML = `<img src="${img.src}" style="width: 10px; height: 10px; object-fit: contain; margin-right: 2px;" alt="${conf.name}"> <strong>${formatStashQty(qty)}</strong>`;
+      } else {
+        item.innerHTML = `${conf.char} <strong>${formatStashQty(qty)}</strong>`;
+      }
       summaryBox.appendChild(item);
     }
   });
@@ -1102,6 +1694,10 @@ function calculateCollectiveGuildTax() {
   // Convert scores back into Chaos: score = chaos * 10
   const overallGuildChaos = overallGuildScore / 10;
   const deductionsChaos = totalDeductionsScore / 10;
+  
+  // Set global for derived calculations in Guild Tab
+  globalOverallGuildChaos = overallGuildChaos;
+  updateStashTabUI();
   
   // Guild Tax is exactly 15% of player runs, minus exact banker deductions taken live!
   const reservesChaos = (overallGuildChaos * 0.15) - deductionsChaos;
@@ -1378,10 +1974,10 @@ function handleInput() {
   let moveX = 0;
   let moveY = 0;
 
-  if (keys.w || keys.ArrowUp) moveY = -1;
-  if (keys.s || keys.ArrowDown) moveY = 1;
-  if (keys.a || keys.ArrowLeft) moveX = -1;
-  if (keys.d || keys.ArrowRight) moveX = 1;
+  if (keys.w || keys.ArrowUp) { moveY = -1; lastPlayerDirectionRow = 1; }
+  if (keys.s || keys.ArrowDown) { moveY = 1; lastPlayerDirectionRow = 0; }
+  if (keys.a || keys.ArrowLeft) { moveX = -1; lastPlayerDirectionRow = 2; }
+  if (keys.d || keys.ArrowRight) { moveX = 1; lastPlayerDirectionRow = 3; }
 
   // Normalize movements vector
   const len = Math.sqrt(moveX * moveX + moveY * moveY);
@@ -1496,16 +2092,15 @@ function handleEnemySpawning() {
       else if (border === 2) { sx = Math.random() * canvas.width; sy = canvas.height + 20; }
       else { sx = -20; sy = Math.random() * canvas.height; }
       
-      // Mobs pool selection
-      // Wave 1: Spiders only
-      // Wave 2: Spiders + Ghosts
-      // Wave 3+: Spiders, Ghosts, and rare Boss Apes!
+      // Mobs pool selection (MVP: Melee classic Zombie charger only!)
       let type = "spider";
-      const roll = Math.random() * 100;
       
+      /* UNCOMMENT TO ENABLE RANGED/FREEZING CYAN GHOST ENENMIES:
+      const roll = Math.random() * 100;
       if (wave >= 2 && roll < 30) {
         type = "ghost";
       }
+      */
       
       enemies.push(new Enemy(sx, sy, type));
     }
@@ -1565,9 +2160,29 @@ function handleEnemySpawning() {
 
 // Collisions and hits calculations
 function processGamePhysics() {
-  // Move player
-  player.x += player.vx;
-  player.y += player.vy;
+  // Move player (Dodge roll overrides standard steering)
+  if (player.isRolling) {
+    player.x += player.rollVx;
+    player.y += player.rollVy;
+    
+    // Spawn ghostly trail particles
+    particleEffects.push({
+      x: player.x,
+      y: player.y,
+      isTrail: true,
+      color: player.class === "Ranger" ? "rgba(15, 118, 110, 0.42)" : "rgba(88, 28, 135, 0.42)",
+      age: 0,
+      maxAge: 12
+    });
+    
+    player.rollTimer--;
+    if (player.rollTimer <= 0) {
+      player.isRolling = false;
+    }
+  } else {
+    player.x += player.vx;
+    player.y += player.vy;
+  }
   
   // Freeze debuff timer
   if (player.frozen) {
@@ -1596,7 +2211,55 @@ function processGamePhysics() {
   // Update particles
   particleEffects.forEach(p => {
     p.age++;
-    if (p.isBeam || p.isSlamRing) return;
+    if (p.isBeam) return;
+    
+    if (p.isSlamRing) {
+      // Dynamic dodge-rollable shockwave check
+      if (!p.hasHitPlayer && player.hp > 0 && currentGameState === GameState.PLAY) {
+        const currentRadius = p.radius * (p.age / p.maxAge);
+        const dx = player.x - p.x;
+        const dy = player.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        // Has the expanding shockwave reached the player?
+        if (dist <= currentRadius + player.radius) {
+          if (player.isRolling) {
+            // Player timed a dodge roll perfectly over the shockwave!
+            p.hasHitPlayer = true;
+            
+            particleEffects.push({
+              x: player.x,
+              y: player.y - 15,
+              text: "DODGED!",
+              color: "#a7f3d0", // Light emerald green
+              age: 0,
+              maxAge: 35
+            });
+          } else {
+            // Player hit by shockwave!
+            p.hasHitPlayer = true;
+            player.hp = Math.max(0, player.hp - 35);
+            
+            particleEffects.push({
+              x: player.x,
+              y: player.y - 12,
+              text: "PILLAR SLAMMED!",
+              color: "#ef4444",
+              age: 0,
+              maxAge: 45
+            });
+            
+            triggerCameraShake();
+            if (!gameMuted) playRipAudioFallback(); // Boom impact sound
+            
+            if (player.hp <= 0) {
+              handlePlayerDeath();
+            }
+          }
+        }
+      }
+      return;
+    }
     
     // float text upwards
     p.y -= 0.6;
@@ -1620,18 +2283,28 @@ function processGamePhysics() {
         if (e.type === "banker") {
           const roll = Math.random();
           let dropKey = null;
-          if (roll < 0.04) {
-            dropKey = "exalted"; // 4% chance of Exalted Orb!
-          } else if (roll < 0.008) {
-            dropKey = "divine";  // 0.8% chance of Divine Orb!
-          } else if (roll < 0.35) {
-            dropKey = "chaos";    // 30% chance of Chaos Orb!
-          } else if (roll < 0.60) {
-            dropKey = "alchemy";  // 25% chance of Alchemy!
-          } else if (roll < 0.82) {
-            dropKey = "transmute"; // 22% chance of Transmute!
+          if (roll < 0.005) {
+            dropKey = "mirror";     // 0.5% chance of Mirror of Kalandra!
+          } else if (roll < 0.015) {
+            dropKey = "divine";     // 1.0% chance of Divine Orb!
+          } else if (roll < 0.055) {
+            dropKey = "exalted";    // 4.0% chance of Exalted Orb!
+          } else if (roll < 0.095) {
+            dropKey = "annulment";  // 4.0% chance of Annulment Orb!
+          } else if (roll < 0.175) {
+            dropKey = "vaal";       // 8.0% chance of Vaal Orb!
+          } else if (roll < 0.425) {
+            dropKey = "chaos";      // 25.0% chance of Chaos Orb!
+          } else if (roll < 0.575) {
+            dropKey = "regal";      // 15.0% chance of Regal Orb!
+          } else if (roll < 0.725) {
+            dropKey = "alchemy";    // 15.0% chance of Alchemy!
+          } else if (roll < 0.825) {
+            dropKey = "transmute";  // 10.0% chance of Transmute!
+          } else if (roll < 0.925) {
+            dropKey = "augmentation";// 10.0% chance of Augmentation!
           } else {
-            dropKey = "scroll";    // 18% chance of Scroll!
+            dropKey = "scroll";     // 7.5% chance of Scroll!
           }
           
           if (dropKey) {
@@ -1663,66 +2336,116 @@ function processGamePhysics() {
         });
 
         // Kill check
+        // Kill check
         if (e.hp <= 0) {
-          e.active = false;
-          if (e.type === "ape") activeApeBoss = null;
-          
-          if (e.type === "banker") {
-            // Defeat jackpot!
-            const jackpot = ["exalted", "exalted", "chaos", "chaos", "chaos", "alchemy", "alchemy", "divine"];
-            jackpot.forEach(k => {
-              const scatterX = e.x + (Math.random() * 30 - 15);
-              const scatterY = e.y + (Math.random() * 30 - 15);
-              groundLoot.push(new GroundLoot(scatterX, scatterY, k));
-              
-              const lootVal = CURRENCY_CONFIG[k].worth;
-              bankerDeductedChaosThisRun += lootVal;
-            });
+          if (e.type === "spider" || e.type === "ape") {
+            // Melee classic zombie or Ape Boss death collapse!
+            e.isDead = true;
+            e.deathTimer = 48; // collapses over 48 updates
+            e.vx = 0;
+            e.vy = 0;
             
-            particleEffects.push({
-              x: e.x,
-              y: e.y - 20,
-              text: "💥 CREG DEFEATED! RESERVES LOOTED!",
-              color: "#fbbf24",
-              age: 0,
-              maxAge: 110
-            });
-            
-            if (bankerDeductedChaosThisRun > 0) {
-              submitBankerDeduction(bankerDeductedChaosThisRun);
+            if (e.type === "ape") {
+              activeApeBoss = null; // Clear active reference immediately to restore music and spawn future bosses
             }
             
-            setTimeout(() => {
-              syncGameMusic();
-            }, 100);
-          } else {
-            // Roll normal drops!
+            // Roll drops! (e.isBoss is true for Ape, rolling 3x items)
             rollMobLoot(e.x, e.y, e.isBoss);
             
-            // Award XP
-            const xpGained = e.isBoss ? 45 : (e.type === "ghost" ? 15 : 6);
+            // Award XP (Ape Boss awards massive XP)
+            const xpGained = e.type === "ape" ? 50 : 6;
             player.xp += xpGained;
             
             // Level up check
             if (player.xp >= player.maxXp) {
-            player.level++;
-            player.xp -= player.maxXp;
-            player.maxXp = Math.floor(player.maxXp * 1.35);
-            player.damage += 3;
-            player.maxHp += 10;
-            player.hp = player.maxHp; // Heal to full on level up!
+              player.level++;
+              player.xp -= player.maxXp;
+              player.maxXp = Math.floor(player.maxXp * 1.35);
+              player.damage += 3;
+              player.maxHp += 10;
+              player.hp = player.maxHp; // Heal to full on level up!
+              
+              // Level up splash
+              particleEffects.push({
+                x: player.x,
+                y: player.y - 15,
+                text: `LEVEL UP! LEVEL ${player.level}!`,
+                color: "#10b981",
+                age: 0,
+                maxAge: 70
+              });
+              
+              if (!gameMuted) playDivineAudioFallback(); // glorious ding
+            }
+          } 
+          else {
+            e.active = false;
             
-            // Level up splash
-            particleEffects.push({
-              x: player.x,
-              y: player.y - 15,
-              text: `LEVEL UP! LEVEL ${player.level}!`,
-              color: "#10b981",
-              age: 0,
-              maxAge: 70
-            });
-            
-            if (!gameMuted) playDivineAudioFallback(); // glorious ding
+            if (e.type === "banker") {
+              // Defeat jackpot! (Gothic 11-currency explosion)
+              const jackpot = [
+                "divine", "exalted", "exalted", "annulment", "vaal", "vaal", 
+                "chaos", "chaos", "chaos", "chaos", "regal", "regal", 
+                "alchemy", "alchemy", "transmute", "augmentation"
+              ];
+              // 2% chance of extra Mirror jackpot drop!
+              if (Math.random() < 0.02) jackpot.push("mirror");
+              
+              jackpot.forEach(k => {
+                const scatterX = e.x + (Math.random() * 30 - 15);
+                const scatterY = e.y + (Math.random() * 30 - 15);
+                groundLoot.push(new GroundLoot(scatterX, scatterY, k));
+                
+                const lootVal = CURRENCY_CONFIG[k].worth;
+                bankerDeductedChaosThisRun += lootVal;
+              });
+              
+              particleEffects.push({
+                x: e.x,
+                y: e.y - 20,
+                text: "💥 CREG DEFEATED! RESERVES LOOTED!",
+                color: "#fbbf24",
+                age: 0,
+                maxAge: 110
+              });
+              
+              if (bankerDeductedChaosThisRun > 0) {
+                submitBankerDeduction(bankerDeductedChaosThisRun);
+              }
+              
+              setTimeout(() => {
+                syncGameMusic();
+              }, 100);
+            } else {
+              // Roll normal drops!
+              rollMobLoot(e.x, e.y, e.isBoss);
+              
+              // Award XP
+              const xpGained = e.isBoss ? 45 : (e.type === "ghost" ? 15 : 6);
+              player.xp += xpGained;
+              
+              // Level up check
+              if (player.xp >= player.maxXp) {
+                player.level++;
+                player.xp -= player.maxXp;
+                player.maxXp = Math.floor(player.maxXp * 1.35);
+                player.damage += 3;
+                player.maxHp += 10;
+                player.hp = player.maxHp; // Heal to full on level up!
+                
+                // Level up splash
+                particleEffects.push({
+                  x: player.x,
+                  y: player.y - 15,
+                  text: `LEVEL UP! LEVEL ${player.level}!`,
+                  color: "#10b981",
+                  age: 0,
+                  maxAge: 70
+                });
+                
+                if (!gameMuted) playDivineAudioFallback(); // glorious ding
+              }
+            }
           }
         }
       }
@@ -1733,13 +2456,15 @@ function processGamePhysics() {
   // 2. ENEMY VS PLAYER COLLISIONS
   const now = Date.now();
   enemies.forEach(e => {
-    if (!e.active || player.frozen) return;
+    if (e.isDead || !e.active || player.frozen || player.hp <= 0 || currentGameState === GameState.GAMEOVER) return; // Dead, inactive, frozen, or already game over checks
     
     const dx = e.x - player.x;
     const dy = e.y - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     
     if (dist < e.radius + player.radius) {
+      if (player.isRolling) return; // Invulnerable frame! Skip hit calculations.
+      
       // Hit exile!
       // Knockback exile slightly to prevent instant death
       player.x -= (dx / dist) * 12;
@@ -1826,21 +2551,55 @@ function drawGamePlayScreen() {
   ctx.save();
   ctx.translate(cameraShake.x, cameraShake.y);
 
-  // 1. Grid lines for ground arena
-  ctx.strokeStyle = "#16110d";
-  ctx.lineWidth = 1;
-  const gridSpacing = 40;
-  for (let x = 0; x < canvas.width; x += gridSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-    ctx.stroke();
-  }
-  for (let y = 0; y < canvas.height; y += gridSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
+  // 1. Tiled terrain floor
+  const tileSize = 40;
+  let allTerrainLoaded = true;
+  
+  // Verify all tiles are complete
+  Object.values(TerrainTiles).forEach(img => {
+    if (!img.complete || img.naturalWidth === 0) allTerrainLoaded = false;
+  });
+  
+  if (allTerrainLoaded && terrainMap.length > 0) {
+    for (let r = 0; r < mapRows; r++) {
+      for (let c = 0; c < mapCols; c++) {
+        const tileKey = terrainMap[r][c];
+        const img = TerrainTiles[tileKey];
+        ctx.drawImage(img, c * tileSize, r * tileSize, tileSize, tileSize);
+      }
+    }
+    
+    // Draw very subtle gothic grid overlays for arcade tactical positioning!
+    ctx.strokeStyle = "rgba(22, 17, 13, 0.18)";
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < canvas.width; x += tileSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += tileSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+  } else {
+    // Fallback to our clean vector grid lines
+    ctx.strokeStyle = "#16110d";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += tileSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += tileSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
   }
 
   // 2. Render Ground loot items
@@ -1875,20 +2634,74 @@ function drawPlayerCharacter() {
     ctx.stroke();
   }
   
-  // Gilded border ring
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-  ctx.fillStyle = player.class === "Witch" ? "#581c87" : "#0f766e"; // purple Witch, cyan Ranger
-  ctx.strokeStyle = "#ffd700";
-  ctx.lineWidth = 2;
-  ctx.fill();
-  ctx.stroke();
-  
-  // Draw glowing core
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, 4, 0, Math.PI * 2);
-  ctx.fillStyle = "#fff";
-  ctx.fill();
+  const img = PlayerSprites.ranger;
+  if (player.class === "Ranger" && img && img.complete && img.naturalWidth > 0) {
+    const cols = 8;
+    const rows = 7;
+    const frameW = img.naturalWidth / cols;
+    const frameH = img.naturalHeight / rows;
+    
+    // Row selection logic based on state
+    let activeRow = 0; // Default Row 1: Idle (index 0)
+    
+    if (player.hp <= 0) {
+      activeRow = 1; // Row 2: Death (index 1)
+    } 
+    else if (player.isRolling) {
+      activeRow = 6; // Row 7: Dodge Roll (index 6)
+    }
+    else if (Date.now() - player.lastShotTime < 150) {
+      activeRow = 5; // Row 6: Spreadshot (index 5)
+    } 
+    else if (Math.abs(player.vx) > 0.1 || Math.abs(player.vy) > 0.1) {
+      const isMovingDiagonally = (player.vx !== 0 && player.vy !== 0);
+      activeRow = isMovingDiagonally ? 3 : 2; // Row 4: Turning (index 3) OR Row 3: Walk (index 2)
+    }
+    
+    // Column frame index select
+    let activeCol = playerAnimFrame;
+    if (player.hp <= 0) {
+      activeCol = 7; // Final dead pose (frame 7 of Row 2)
+    } else if (player.isRolling) {
+      // Sync frame column indices perfectly to physics progression ratio
+      const ratio = (player.rollDuration - player.rollTimer) / player.rollDuration;
+      activeCol = Math.min(7, Math.floor(ratio * 8));
+    }
+    
+    const srcX = activeCol * frameW;
+    const srcY = activeRow * frameH;
+    
+    // Ambient circle dropshadow
+    ctx.beginPath();
+    ctx.ellipse(player.x, player.y + 11, 8, 3, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    ctx.fill();
+    
+    // Render the high-resolution Ranger sprite frame
+    const drawW = 38;
+    const drawH = drawW * (frameH / frameW);
+    ctx.drawImage(
+      img,
+      srcX, srcY,
+      frameW, frameH,
+      player.x - drawW / 2, player.y - drawH / 2 - 2,
+      drawW, drawH
+    );
+  } else {
+    // Elegant gothic vector circle fallback
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+    ctx.fillStyle = player.class === "Witch" ? "#581c87" : "#0f766e"; // purple Witch, cyan Ranger
+    ctx.strokeStyle = "#ffd700";
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+  }
 
   ctx.restore();
 }
@@ -1915,6 +2728,13 @@ function drawParticles() {
       ctx.lineWidth = 3 * (1 - pct);
       ctx.stroke();
     } 
+    else if (p.isTrail) {
+      const opacity = 1 - (p.age / p.maxAge);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, player.radius * 0.95, 0, Math.PI * 2);
+      ctx.fillStyle = p.color.replace("0.42", (0.42 * opacity).toFixed(2)).replace("0.45", (0.45 * opacity).toFixed(2));
+      ctx.fill();
+    }
     else {
       // Standard floating texts
       ctx.font = "bold 8.5px Inter";
@@ -1979,6 +2799,13 @@ function updateGame() {
     // Sync level & boss soundtracks
     syncGameMusic();
     
+    // Player Sprite Animation Tick
+    playerAnimTick++;
+    if (playerAnimTick >= 6) {
+      playerAnimTick = 0;
+      playerAnimFrame = (playerAnimFrame + 1) % 8;
+    }
+    
     // Draw scenes
     drawGamePlayScreen();
     drawHUD();
@@ -2032,8 +2859,25 @@ function resetGame() {
   document.getElementById("gameWaveText").textContent = wave;
 
   // Stash clear
-  playerStash = { scroll: 0, transmute: 0, alchemy: 0, chaos: 0, exalted: 0, divine: 0, mirror: 0 };
+  playerStash = {
+    scroll: 0,
+    transmute: 0,
+    augmentation: 0,
+    alchemy: 0,
+    regal: 0,
+    chaos: 0,
+    vaal: 0,
+    annulment: 0,
+    exalted: 0,
+    divine: 0,
+    mirror: 0
+  };
   updateStashTabUI();
+
+  // Reset player animation variables
+  playerAnimFrame = 0;
+  playerAnimTick = 0;
+  lastPlayerDirectionRow = 0;
 
   // Reset player coordinates and stats
   player.x = canvas.width / 2;
@@ -2064,15 +2908,90 @@ function resetGame() {
   currentGameState = GameState.PLAY;
 }
 
+function playDodgeRollAudioFeedback() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(750, audioCtx.currentTime + 0.14);
+    
+    gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.16);
+  } catch (err) {
+    // blocked
+  }
+}
+
+function triggerPlayerDodgeRoll() {
+  if (currentGameState !== GameState.PLAY || player.frozen || player.hp <= 0 || player.isRolling) return;
+  
+  const now = Date.now();
+  if (now - player.lastRollTime < player.rollCooldown) return;
+  
+  // Determine direction based on current movement keys
+  let rollDx = 0;
+  let rollDy = 0;
+  
+  if (keys.w || keys.ArrowUp) rollDy = -1;
+  if (keys.s || keys.ArrowDown) rollDy = 1;
+  if (keys.a || keys.ArrowLeft) rollDx = -1;
+  if (keys.d || keys.ArrowRight) rollDx = 1;
+  
+  // If player is standing still, roll in their last direction
+  if (rollDx === 0 && rollDy === 0) {
+    if (lastPlayerDirectionRow === 1) rollDy = -1;     // Up
+    else if (lastPlayerDirectionRow === 2) rollDx = -1;  // Left
+    else if (lastPlayerDirectionRow === 3) rollDx = 1;   // Right
+    else rollDy = 1;                                    // Down
+  }
+  
+  const len = Math.sqrt(rollDx * rollDx + rollDy * rollDy);
+  const vx = (rollDx / len) * player.speed * player.rollSpeedMultiplier;
+  const vy = (rollDy / len) * player.speed * player.rollSpeedMultiplier;
+  
+  player.isRolling = true;
+  player.rollTimer = player.rollDuration;
+  player.rollVx = vx;
+  player.rollVy = vy;
+  player.lastRollTime = now;
+  
+  // Create an initial trail burst
+  for (let i = 0; i < 3; i++) {
+    particleEffects.push({
+      x: player.x + (Math.random() * 8 - 4),
+      y: player.y + (Math.random() * 8 - 4),
+      isTrail: true,
+      color: player.class === "Ranger" ? "rgba(15, 118, 110, 0.45)" : "rgba(88, 28, 135, 0.45)",
+      age: 0,
+      maxAge: 14
+    });
+  }
+  
+  if (!gameMuted) {
+    playDodgeRollAudioFeedback();
+  }
+}
+
 // Bind keyboard
 window.addEventListener("keydown", (e) => {
+  if (e.key === " " || e.key === "Spacebar") {
+    e.preventDefault();
+    triggerPlayerDodgeRoll();
+    return;
+  }
+  
   if (["w", "a", "s", "d", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
     keys[e.key] = true;
-    
-    // Prevent browser from scrolling up/down when arrow keys or WASD are pressed!
     e.preventDefault();
-    
-    // Auto-awaken game on movements click
     if (currentGameState === GameState.SELECT) {
       resetGame();
     }
@@ -2170,6 +3089,40 @@ function initGameEngine() {
       }
     });
   }
+
+  // 5. Stash Tab Selector Button Bindings
+  const btnRun = document.getElementById("btnStashViewRun");
+  const btnLifetime = document.getElementById("btnStashViewLifetime");
+  const btnGuild = document.getElementById("btnStashViewGuild");
+  
+  if (btnRun) {
+    btnRun.addEventListener("click", () => {
+      activeStashView = "run";
+      updateActiveStashTabHighlight();
+      updateStashTabUI();
+    });
+  }
+  if (btnLifetime) {
+    btnLifetime.addEventListener("click", () => {
+      activeStashView = "lifetime";
+      updateActiveStashTabHighlight();
+      updateStashTabUI();
+    });
+  }
+  if (btnGuild) {
+    btnGuild.addEventListener("click", () => {
+      activeStashView = "guild";
+      updateActiveStashTabHighlight();
+      updateStashTabUI();
+    });
+  }
+
+  // Generate static grass/dirt terrain floor mapping
+  generateTerrainMap();
+
+  // Load persistent stats
+  loadLifetimeStash();
+  updateActiveStashTabHighlight();
 
   // Load Stash visualizer initially
   updateStashTabUI();
