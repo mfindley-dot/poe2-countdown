@@ -1285,10 +1285,9 @@ document.addEventListener("DOMContentLoaded", () => {
       video.muted = true; // Required by browsers for dynamic autoplay
       video.playsInline = true;
       
-      // Size and overlay video across the entire viewport foreground!
       video.style.position = "fixed";
       video.style.zIndex = "9999";
-      video.style.width = "220px";
+      video.style.width = "550px"; /* Scaled 250% larger for visual prominence */
       video.style.height = "auto";
       video.style.pointerEvents = "none";
       

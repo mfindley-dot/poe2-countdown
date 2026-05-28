@@ -2409,32 +2409,39 @@ body {
 /* Sunprism Space Cat Floating Animation */
 @keyframes floatCatAcross {
   0% {
-    left: -180px;
-    top: 40%;
-    transform: translateY(0px) scale(0.3) rotate(-15deg);
+    left: -550px;
+    top: 30%;
+    transform: translateY(0px) rotate(-15deg);
     opacity: 0;
   }
-  15% {
+  25% {
+    left: calc(50% - 275px);
+    top: 35%;
+    transform: translateY(0px) rotate(0deg);
     opacity: 1;
-    transform: translateY(-20px) scale(1.0) rotate(0deg);
-  }
-  30% {
-    transform: translateY(15px) scale(1.1) rotate(5deg);
   }
   45% {
-    transform: translateY(-25px) scale(0.95) rotate(-5deg);
+    left: calc(50% - 240px);
+    top: 32%;
+    transform: translateY(-15px) rotate(3deg);
+    opacity: 1;
   }
   60% {
-    transform: translateY(10px) scale(1.05) rotate(8deg);
+    left: calc(50% - 210px);
+    top: 37%;
+    transform: translateY(15px) rotate(-3deg);
+    opacity: 1;
   }
   75% {
-    transform: translateY(-15px) scale(1.0) rotate(-2deg);
+    left: calc(50% - 180px);
+    top: 35%;
+    transform: translateY(0px) rotate(0deg);
     opacity: 1;
   }
   100% {
     left: 100%;
-    top: 25%;
-    transform: translateY(0px) scale(0.3) rotate(20deg);
+    top: 30%;
+    transform: translateY(-50px) rotate(15deg);
     opacity: 0;
   }
 }
