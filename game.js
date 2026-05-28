@@ -693,7 +693,7 @@ class Enemy {
     } 
     else if (type === "ape") {
       // The pillar of doom Boss!
-      this.radius = 100; // Scaled up physically for giant size, but kept at 100 to allow vertical range of movement
+      this.radius = 80; // Scaled to 80 to match 270px visual size
       this.hp = 450 + (wave * 150);
       this.maxHp = this.hp;
       this.speed = 0.75;
@@ -818,14 +818,14 @@ class Enemy {
       // 0. Cinematic Intro check
       if (this.introActive) {
         // Fall down dramatically from sky!
-        const targetY = 460;
+        const targetY = 440;
         
         if (this.y < targetY) {
           // Rapid vertical drop (meteor style!)
           this.y += 18;
           
-          // Calculate HP bar fill progress ratio dynamically based on falling distance from Y=-350 to Y=460
-          this.introHPProgress = Math.min(1.0, Math.max(0.0, (this.y - (-350)) / (460 - (-350))));
+          // Calculate HP bar fill progress ratio dynamically based on falling distance from Y=-350 to Y=440
+          this.introHPProgress = Math.min(1.0, Math.max(0.0, (this.y - (-350)) / (440 - (-350))));
           
           if (this.y >= targetY) {
             this.y = targetY;
@@ -837,17 +837,17 @@ class Enemy {
             // Translucent red damage flash vignette for visual impact
             damageFlashIntensity = 0.6;
             
-            // Spawn 4 massive expanding shockwave rings around his feet shadow
+            // Spawn 4 massive expanding shockwave rings around his feet shadow (purely visual, hasHitPlayer = true)
             for (let i = 0; i < 4; i++) {
               particleEffects.push({
                 isSlamRing: true,
                 x: this.x,
-                y: this.y + 70, // Align with feet shadow
-                radius: 10,
-                maxRadius: 200 + i * 45,
+                y: this.y + 60, // Align with feet shadow
+                radius: 130 + i * 30, // Visual maximum radius
                 color: i % 2 === 0 ? "rgba(239, 68, 68, 0.45)" : "rgba(251, 191, 36, 0.45)",
                 age: 0,
-                maxAge: 35 + i * 5
+                maxAge: 35 + i * 5,
+                hasHitPlayer: true // Purely visual, does not damage player on spawn landing
               });
             }
             
@@ -857,7 +857,7 @@ class Enemy {
               const spd = 4 + Math.random() * 8;
               particleEffects.push({
                 x: this.x,
-                y: this.y + 70,
+                y: this.y + 60,
                 vx: Math.cos(angle) * spd,
                 vy: Math.sin(angle) * spd * 0.45, // Flatten for 2D perspective shadow depth
                 radius: 3 + Math.random() * 5,
@@ -875,7 +875,7 @@ class Enemy {
             
             particleEffects.push({
               x: this.x,
-              y: this.y - 120,
+              y: this.y - 100,
               text: "🔥 DESTRUCTION BEGINS! 🔥",
               color: "#fbbf24",
               age: 0,
@@ -1162,8 +1162,8 @@ class Enemy {
             } catch (e) {}
           }
         }
-        // Slam: Melee range (dist < 150px) and slam cooldown (4.5s) has elapsed
-        else if (now - this.lastSlamTime > 4500 && dist < 150) {
+        // Slam: Melee range (dist < 120px) and slam cooldown (4.5s) has elapsed
+        else if (now - this.lastSlamTime > 4500 && dist < 120) {
           this.slamCharging = true;
           this.slamChargeTimer = 0;
           this.slamTargetX = player.x;
@@ -1368,14 +1368,14 @@ class Enemy {
         const srcX = activeCol * frameW;
         const srcY = activeRow * frameH;
         
-        // Underfoot perspective shadow for the giant boss
+        // Underfoot perspective shadow for the giant boss (scaled down by 25% to match 270px size)
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + 80, 96, 28, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + 60, 72, 21, 0, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fill();
         
-        // Render boss sprite frame
-        const drawW = 360;
+        // Render boss sprite frame (scaled down by 25% to 270px)
+        const drawW = 270;
         const drawH = drawW * (frameH / frameW);
         ctx.drawImage(
           apeImg,
@@ -1446,7 +1446,7 @@ class Enemy {
       if (this.slamCharging) {
         // Red target reticle on player coordinates
         ctx.beginPath();
-        ctx.arc(this.slamTargetX, this.slamTargetY, 150, 0, Math.PI * 2);
+        ctx.arc(this.slamTargetX, this.slamTargetY, 120, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(239, 68, 68, ${0.1 + (this.slamChargeTimer/40)*0.5})`;
         ctx.fillStyle = `rgba(239, 68, 68, ${this.slamChargeTimer/160})`;
         ctx.lineWidth = 1.5;
