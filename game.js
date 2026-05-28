@@ -2396,7 +2396,7 @@ function updateStashTabUI() {
     currencyKeys.forEach(key => {
       totalNetWorth += activeCounts[key] * CURRENCY_CONFIG[key].worth;
     });
-    stashLabelText = `MY LIFETIME: ${totalNetWorth.toFixed(1)}c`;
+    stashLabelText = `LIFETIME LOOTING: ${totalNetWorth.toFixed(1)}c`;
   } 
   else {
     // Guild Vault - derived from globalOverallGuildChaos
@@ -2425,17 +2425,22 @@ function updateStashTabUI() {
   
   // Dedicated PoE-style slot coordinate mapping for our 11 currencies (row, col in 12x12 grid)
   const CURRENCY_SLOTS = {
-    divine: { row: 2, col: 4 },
-    mirror: { row: 2, col: 5 },
-    exalted: { row: 2, col: 6 },
-    annulment: { row: 2, col: 7 },
-    regal: { row: 3, col: 4 },
-    chaos: { row: 3, col: 5 },
-    vaal: { row: 3, col: 6 },
-    alchemy: { row: 3, col: 7 },
-    scroll: { row: 4, col: 4 },
-    transmute: { row: 4, col: 5 },
-    augmentation: { row: 4, col: 6 }
+    // Top Row (5 boxes: Columns 3 to 7)
+    scroll: { row: 2, col: 3 },
+    transmute: { row: 2, col: 4 },
+    augmentation: { row: 2, col: 5 },
+    alchemy: { row: 2, col: 6 },
+    regal: { row: 2, col: 7 },
+
+    // Middle Row (5 boxes: Columns 3 to 7)
+    chaos: { row: 3, col: 3 },
+    vaal: { row: 3, col: 4 },
+    annulment: { row: 3, col: 5 },
+    exalted: { row: 3, col: 6 },
+    divine: { row: 3, col: 7 },
+
+    // Bottom Row (1 centered box: Column 5)
+    mirror: { row: 4, col: 5 }
   };
 
   // 2. Render all 144 slots in the 12x12 grid
@@ -2504,9 +2509,9 @@ function updateStashTabUI() {
       
       const img = CurrencyImages[key];
       if (img && img.complete && img.naturalWidth > 0) {
-        item.innerHTML = `<img src="${img.src}" style="width: 10px; height: 10px; object-fit: contain; margin-right: 2px;" alt="${conf.name}"> <strong>${formatStashQty(qty)}</strong>`;
+        item.innerHTML = `<img src="${img.src}" style="width: 22px; height: 22px; object-fit: contain; margin-right: 6px;" alt="${conf.name}"> <span class="summary-qty">${formatStashQty(qty)}x</span> <span class="summary-name">${conf.name}</span>`;
       } else {
-        item.innerHTML = `${conf.char} <strong>${formatStashQty(qty)}</strong>`;
+        item.innerHTML = `<span style="font-size: 1.25rem; margin-right: 6px;">${conf.char}</span> <span class="summary-qty">${formatStashQty(qty)}x</span> <span class="summary-name">${conf.name}</span>`;
       }
       summaryBox.appendChild(item);
     }

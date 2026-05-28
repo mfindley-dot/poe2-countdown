@@ -452,7 +452,7 @@ body {
 }
 
 .gauge-stats {
-  margin-top: 30px;
+  margin-top: 8px;
   text-align: center;
   font-family: var(--font-header);
   font-weight: bold;
@@ -671,9 +671,9 @@ body {
 
 /* Bottom Shelf Panels: Soundboard & Patch Notes */
 .interactive-bottom-shelf {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  display: flex !important;
+  justify-content: center !important;
+  width: 100%;
   margin-bottom: 20px;
 }
 
@@ -751,6 +751,11 @@ body {
 /* Mock Patch Notes styling */
 .patch-notes-panel {
   justify-content: space-between;
+  width: 35% !important;
+  min-width: 480px;
+  max-width: 600px;
+  margin: 0 auto !important;
+  height: 270px;
 }
 
 .patch-notes-box {
@@ -1683,7 +1688,7 @@ body {
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-header);
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   font-weight: bold;
   letter-spacing: 1px;
   border-bottom: 1px solid rgba(212, 175, 55, 0.2);
@@ -1695,9 +1700,9 @@ body {
   background: linear-gradient(135deg, #1b1610 0%, #0d0a08 100%);
   border: 1px solid var(--gold-primary);
   color: var(--gold-hover);
-  padding: 3px 10px;
+  padding: 4px 10px;
   border-radius: 3px;
-  font-size: 0.72rem;
+  font-size: 0.92rem;
   font-weight: 800;
   box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
@@ -1719,9 +1724,9 @@ body {
   border: 1px solid #201813;
   color: #887864;
   font-family: 'Cinzel', serif;
-  font-size: 0.58rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  padding: 6px 2px;
+  padding: 8px 4px;
   cursor: pointer;
   border-radius: 2px;
   transition: all 0.2s ease;
@@ -1756,8 +1761,9 @@ body {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85);
   overflow: hidden;
   width: 82% !important;       /* Shrink and center outer borders to match panel layout */
+  max-width: 420px !important; /* Sizing caps to eliminate oversized visualizer stretching */
   height: auto !important;     /* Auto height breaks circular vertical loops on load */
-  margin: 11% auto 0 auto !important; /* Push down past the top header elements */
+  margin: 20px auto 0 auto !important; /* Use pixel margins instead of percentages */
   aspect-ratio: 1 / 1 !important; /* Force strict stable square layout */
 }
 
@@ -1859,27 +1865,33 @@ body {
 }
 
 .stash-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  margin-top: 12px;
-  font-size: 0.68rem;
-  color: var(--gold-faded);
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 8px;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px 18px !important;
+  margin-top: 15px !important;
+  font-size: 0.95rem !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  padding: 12px !important;
   border-radius: var(--border-radius-gothic);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  box-sizing: border-box;
 }
 
 .summary-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-weight: 600;
+  gap: 6px;
+  font-weight: bold;
 }
 
-.summary-item strong {
-  color: #fff;
+.summary-item .summary-qty {
+  color: #ffd700;
+  font-weight: 800;
+}
+
+.summary-item .summary-name {
+  color: var(--gold-faded);
+  font-weight: 500;
 }
 
 /* Guild Leaderboard Panel styling */
@@ -1978,7 +1990,7 @@ body {
 }
 
 .font-small {
-  font-size: 0.65rem !important;
+  font-size: 0.92rem !important;
   font-weight: 800;
   letter-spacing: 0.5px;
 }
@@ -2001,7 +2013,7 @@ body {
 }
 
 .reserves-status-subtext {
-  font-size: 0.55rem;
+  font-size: 0.78rem;
   color: var(--gold-faded);
   text-align: center;
   margin-top: 4px;
@@ -2579,6 +2591,27 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Sidebar Soundboard Integration */
+.minigame-buttons-panel .soundboard-panel {
+  height: auto !important;
+  padding: 15px !important;
+  margin-top: 10px;
+  box-sizing: border-box;
+  width: 100% !important;
+}
+.minigame-buttons-panel .soundboard-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.minigame-buttons-panel .sound-btn {
+  padding: 8px 6px !important;
+  font-size: 0.65rem !important;
+}
+.minigame-buttons-panel .dopamine-counter {
+  margin-top: 10px;
+  font-size: 0.72rem;
 }
 
 /* Leaderboard Overlay Modal Styles */

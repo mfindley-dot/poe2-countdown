@@ -26,7 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;700;800&family=Inter:wght@300;400;600;700&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   
   <!-- Styling -->
-  <link rel="stylesheet" href="style.css?v=3.1">
+  <link rel="stylesheet" href="style.css?v=3.2">
 </head>
 <body>
 
@@ -97,9 +97,9 @@
             <!-- Divine Orb Inner Graphic (Can be customized by user with motion graphics later) -->
             <div class="divine-orb-inner">
               <img id="dopamineOrbImg" src="assets/images/currency/item_divine.png" class="divine-svg" style="image-rendering: pixelated; width: 100%; height: 100%; object-fit: contain; transform: scale(0.9); margin-top: -10px;" />
-              <!-- Interactive Click Tag -->
-              <span class="click-tag">CLICK FOR DOPAMINE</span>
             </div>
+            <!-- Interactive Click Tag -->
+            <span class="click-tag">CLICK FOR DOPAMINE</span>
           </div>
         </div>
 
@@ -309,6 +309,40 @@
               <span style="font-size: 0.72rem; color: #cbd5e1; margin-top: 4px; display: block;">Click to view top guild scores and cooperative grind!</span>
             </div>
           </button>
+
+          <!-- Left Panel: Loot Filter Soundboard -->
+          <div class="bottom-panel soundboard-panel">
+            <h2 class="panel-title text-gold">LOOT FILTER SOUNDBOARD</h2>
+            <div class="soundboard-grid">
+              <button class="sound-btn border-gold" id="soundBtnMirror" data-sound="mirror">
+                <span class="btn-shine"></span>
+                <span class="btn-text">🪞 Mirror of Kalandra</span>
+              </button>
+              <button class="sound-btn border-gold" id="soundBtnDivine" data-sound="divine">
+                <span class="btn-shine"></span>
+                <span class="btn-text">🪙 Divine Orb</span>
+              </button>
+              <button class="sound-btn border-gold" id="soundBtnExalted" data-sound="exalted">
+                <span class="btn-shine"></span>
+                <span class="btn-text">👑 Exalted Orb</span>
+              </button>
+              <button class="sound-btn border-gold" id="soundBtnChaos" data-sound="chaos">
+                <span class="btn-shine"></span>
+                <span class="btn-text">🌀 Chaos Orb</span>
+              </button>
+              <button class="sound-btn border-gold" id="soundBtnMemeRip" data-sound="rip">
+                <span class="btn-shine"></span>
+                <span class="btn-text">💀 Hype Guild RIP</span>
+              </button>
+              <button class="sound-btn border-gold" id="soundBtnSane" data-sound="sane">
+                <span class="btn-shine"></span>
+                <span class="btn-text">🗣️ "Still Sane, Exile?"</span>
+              </button>
+            </div>
+            <div class="dopamine-counter text-gold-faded">
+              Dopamine Injections Count: <span id="clickCountDisplay" class="text-gold">0</span> Orbs clicked
+            </div>
+          </div>
           
         </div>
 
@@ -323,7 +357,7 @@
             <!-- Gothic Stash Tab Selectors -->
             <div class="stash-view-selector">
               <button class="gothic-tab-btn active" id="btnStashViewRun">RUN LOOT</button>
-              <button class="gothic-tab-btn" id="btnStashViewLifetime">MY INVENTORY</button>
+              <button class="gothic-tab-btn" id="btnStashViewLifetime">LIFETIME LOOTING</button>
               <button class="gothic-tab-btn" id="btnStashViewGuild">GUILD VAULT</button>
             </div>
             
@@ -403,40 +437,6 @@
 
     <!-- Bottom Interactive Tray: Loot Filter & Patch Notes -->
     <section class="interactive-bottom-shelf">
-      
-      <!-- Left Panel: Loot Filter Soundboard -->
-      <div class="bottom-panel soundboard-panel">
-        <h2 class="panel-title text-gold">LOOT FILTER SOUNDBOARD</h2>
-        <div class="soundboard-grid">
-          <button class="sound-btn border-gold" id="soundBtnMirror" data-sound="mirror">
-            <span class="btn-shine"></span>
-            <span class="btn-text">🪞 Mirror of Kalandra</span>
-          </button>
-          <button class="sound-btn border-gold" id="soundBtnDivine" data-sound="divine">
-            <span class="btn-shine"></span>
-            <span class="btn-text">🪙 Divine Orb</span>
-          </button>
-          <button class="sound-btn border-gold" id="soundBtnExalted" data-sound="exalted">
-            <span class="btn-shine"></span>
-            <span class="btn-text">👑 Exalted Orb</span>
-          </button>
-          <button class="sound-btn border-gold" id="soundBtnChaos" data-sound="chaos">
-            <span class="btn-shine"></span>
-            <span class="btn-text">🌀 Chaos Orb</span>
-          </button>
-          <button class="sound-btn border-gold" id="soundBtnMemeRip" data-sound="rip">
-            <span class="btn-shine"></span>
-            <span class="btn-text">💀 Hype Guild RIP</span>
-          </button>
-          <button class="sound-btn border-gold" id="soundBtnSane" data-sound="sane">
-            <span class="btn-shine"></span>
-            <span class="btn-text">🗣️ "Still Sane, Exile?"</span>
-          </button>
-        </div>
-        <div class="dopamine-counter text-gold-faded">
-          Dopamine Injections Count: <span id="clickCountDisplay" class="text-gold">0</span> Orbs clicked
-        </div>
-      </div>
 
       <!-- Right Panel: Mock Patch Notes & Scuttlebutt Updates -->
       <div class="bottom-panel patch-notes-panel">
@@ -515,7 +515,7 @@
   </button>
 
   <!-- Core Javascript -->
-  <script src="app.js?v=3.1"></script>
-  <script src="game.js?v=3.1"></script>
+  <script src="app.js?v=3.2"></script>
+  <script src="game.js?v=3.2"></script>
 </body>
 </html>
