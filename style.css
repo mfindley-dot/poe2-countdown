@@ -1748,7 +1748,8 @@ body {
   gap: 0px !important; /* Zero gap to align perfectly with wood frame grid windows */
   background-color: #0b0806 !important; /* Rich dark wooden interior background */
   border: none !important; /* Let the wood frame asset's borders frame the grid! */
-  padding: 0px !important; /* No padding shift, grid spans 100% of container content-box */
+  padding: 9.3% !important; /* Shrink and align grid cells inside wood frame borders */
+  box-sizing: border-box !important;
   border-radius: 6px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85);
   overflow: hidden;

@@ -817,38 +817,74 @@ class Enemy {
       
       // 0. Cinematic Intro check
       if (this.introActive) {
-        this.introHPProgress += 0.015;
-        
-        // Walk down from offscreen spawn to (canvas.width / 2, 460)
-        const targetX = canvas.width / 2;
+        // Fall down dramatically from sky!
         const targetY = 460;
-        const dx = targetX - this.x;
-        const dy = targetY - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > 2) {
-          this.x += (dx / dist) * this.speed * 1.5;
-          this.y += (dy / dist) * this.speed * 1.5;
-        }
         
-        if (this.introHPProgress >= 1.0) {
-          this.introHPProgress = 1.0;
-          this.introActive = false;
-          this.lastComboTime = now;
+        if (this.y < targetY) {
+          // Rapid vertical drop (meteor style!)
+          this.y += 18;
           
-          if (!gameMuted) {
-            try {
-              playSynthRoarSound();
-            } catch (e) {}
+          // Calculate HP bar fill progress ratio dynamically based on falling distance from Y=-350 to Y=460
+          this.introHPProgress = Math.min(1.0, Math.max(0.0, (this.y - (-350)) / (460 - (-350))));
+          
+          if (this.y >= targetY) {
+            this.y = targetY;
+            this.introHPProgress = 1.0;
+            
+            // Severe camera shake rumble on impact!
+            triggerCameraShake(35, 20);
+            
+            // Translucent red damage flash vignette for visual impact
+            damageFlashIntensity = 0.6;
+            
+            // Spawn 4 massive expanding shockwave rings around his feet shadow
+            for (let i = 0; i < 4; i++) {
+              particleEffects.push({
+                isSlamRing: true,
+                x: this.x,
+                y: this.y + 70, // Align with feet shadow
+                radius: 10,
+                maxRadius: 200 + i * 45,
+                color: i % 2 === 0 ? "rgba(239, 68, 68, 0.45)" : "rgba(251, 191, 36, 0.45)",
+                age: 0,
+                maxAge: 35 + i * 5
+              });
+            }
+            
+            // Spawn 16 stone-grey debris particles exploding in all directions
+            for (let i = 0; i < 16; i++) {
+              const angle = (i / 16) * Math.PI * 2;
+              const spd = 4 + Math.random() * 8;
+              particleEffects.push({
+                x: this.x,
+                y: this.y + 70,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd * 0.45, // Flatten for 2D perspective shadow depth
+                radius: 3 + Math.random() * 5,
+                color: "#78716c", // Stone dust grey
+                age: 0,
+                maxAge: 25 + Math.random() * 15
+              });
+            }
+            
+            if (!gameMuted) {
+              try {
+                playSynthRoarSound();
+              } catch (e) {}
+            }
+            
+            particleEffects.push({
+              x: this.x,
+              y: this.y - 120,
+              text: "🔥 DESTRUCTION BEGINS! 🔥",
+              color: "#fbbf24",
+              age: 0,
+              maxAge: 90
+            });
+            
+            this.introActive = false;
+            this.lastComboTime = now;
           }
-          
-          particleEffects.push({
-            x: this.x,
-            y: this.y - 30,
-            text: "🔥 DESTRUCTION BEGINS! 🔥",
-            color: "#fbbf24",
-            age: 0,
-            maxAge: 80
-          });
         }
         return; // Skip standard AI updates while in intro!
       }
@@ -2798,8 +2834,9 @@ function escapeHtml(str) {
 
 let cameraShake = { x: 0, y: 0, duration: 0 };
 
-function triggerCameraShake() {
-  cameraShake.duration = 18;
+function triggerCameraShake(duration = 18, intensity = 8) {
+  cameraShake.duration = duration;
+  cameraShake.intensity = intensity;
 }
 
 function handleInput() {
@@ -3056,7 +3093,7 @@ function handleEnemySpawning() {
     // Spawn Boss Chieftain Ape!
     if (wave % 3 === 0 && !activeApeBoss) {
       // Spawn at top center
-      activeApeBoss = new Enemy(canvas.width / 2, -40, "ape");
+      activeApeBoss = new Enemy(canvas.width / 2, -350, "ape");
       enemies.push(activeApeBoss);
       
       // Hype splash note on HUD
@@ -3491,8 +3528,9 @@ function processGamePhysics() {
   // Camera Shake Decay
   if (cameraShake.duration > 0) {
     cameraShake.duration--;
-    cameraShake.x = (Math.random() * 8 - 4);
-    cameraShake.y = (Math.random() * 8 - 4);
+    const intensity = cameraShake.intensity || 8;
+    cameraShake.x = (Math.random() * intensity - intensity / 2);
+    cameraShake.y = (Math.random() * intensity - intensity / 2);
   } else {
     cameraShake.x = 0;
     cameraShake.y = 0;
