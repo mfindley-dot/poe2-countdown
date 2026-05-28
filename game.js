@@ -344,8 +344,8 @@ function updateForestBgAnimation() {
 }
 
 const terrainMap = [];
-const mapCols = 40;
-const mapRows = 23;
+const mapCols = 20;
+const mapRows = 12;
 
 function generateTerrainMap() {
   for (let r = 0; r < mapRows; r++) {
@@ -481,13 +481,13 @@ let player = {
   vx: 0,
   vy: 0,
   speed: 3.1,
-  radius: 12,
+  radius: 30,
   class: "Ranger",
   hp: 100,
   maxHp: 100,
   level: 1,
   xp: 0,
-  maxXp: 100,
+  maxXp: 150,
   lastShotTime: 0,
   shotCooldown: 280, // ms
   damage: 8,
@@ -672,7 +672,7 @@ class Enemy {
     
     // Stats base on types
     if (type === "spider") {
-      this.radius = 9;
+      this.radius = 55;
       this.hp = 8 + (wave * 2.2);
       this.maxHp = this.hp;
       this.speed = 1.3 + Math.random() * 0.4;
@@ -680,7 +680,7 @@ class Enemy {
       this.damage = 8;
     } 
     else if (type === "ghost") {
-      this.radius = 11;
+      this.radius = 65;
       this.hp = 18 + (wave * 3.5);
       this.maxHp = this.hp;
       this.speed = 0.9;
@@ -693,7 +693,7 @@ class Enemy {
     } 
     else if (type === "ape") {
       // The pillar of doom Boss!
-      this.radius = 25;
+      this.radius = 100; // Scaled up physically for giant size, but kept at 100 to allow vertical range of movement
       this.hp = 450 + (wave * 150);
       this.maxHp = this.hp;
       this.speed = 0.75;
@@ -715,7 +715,7 @@ class Enemy {
       
       // Enrage state
       this.enraged = false;
-
+ 
       // Cinematic intro and Combo State Machine
       this.introActive = true;
       this.introHPProgress = 0;
@@ -727,7 +727,7 @@ class Enemy {
     }
     else if (type === "banker") {
       // Creg the Guild Banker!
-      this.radius = 14;
+      this.radius = 65;
       this.hp = 250; // Tanky sack-carrier, harder to kill but drops jackpot!
       this.maxHp = this.hp;
       this.speed = player.speed * 1.25 + 0.4; // Runs faster than the player!
@@ -819,9 +819,9 @@ class Enemy {
       if (this.introActive) {
         this.introHPProgress += 0.015;
         
-        // Walk down from offscreen spawn to (canvas.width / 2, 180)
+        // Walk down from offscreen spawn to (canvas.width / 2, 460)
         const targetX = canvas.width / 2;
-        const targetY = 180;
+        const targetY = 460;
         const dx = targetX - this.x;
         const dy = targetY - this.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1019,8 +1019,10 @@ class Enemy {
         this.y += this.rollVy;
         
         // Boundaries clamp to stay within grid clearing
+        const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
+        const minY = forestLoaded ? 360 + this.radius : this.radius;
         this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
-        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+        this.y = Math.max(minY, Math.min(canvas.height - this.radius, this.y));
         
         // Spawn dirt/dust trail particles
         if (this.rollTimer % 3 === 0) {
@@ -1091,7 +1093,9 @@ class Enemy {
         this.y += this.vy;
         
         this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
-        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+        const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
+        const minY = forestLoaded ? 360 + this.radius : this.radius;
+        this.y = Math.max(minY, Math.min(canvas.height - this.radius, this.y));
         
         // Decide to roll or slam
         // Roll: Mid-range distance (130px to 280px) and roll cooldown (6.0s) has elapsed
@@ -1263,16 +1267,16 @@ class Enemy {
       // Underfoot perspective shadow (Fainter and larger for floating ghosts!)
       ctx.beginPath();
       if (this.type === "ghost") {
-        ctx.ellipse(this.x, this.y + 11, 9, 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + 27.5, 22.5, 7.5, 0, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(0, 0, 0, 0.18)";
       } else {
-        ctx.ellipse(this.x, this.y + 9, 7, 2.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + 22.5, 17.5, 6.25, 0, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
       }
       ctx.fill();
       
       // Render standard sprite frame (with bounce for zombie/spider, hover bob for ghosts!)
-      const drawW = 32;
+      const drawW = 80;
       const drawH = drawW * (frameH / frameW);
       
       let drawY = this.y;
@@ -1330,12 +1334,12 @@ class Enemy {
         
         // Underfoot perspective shadow for the giant boss
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + 20, 24, 7, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + 80, 96, 28, 0, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fill();
         
         // Render boss sprite frame
-        const drawW = 90;
+        const drawW = 360;
         const drawH = drawW * (frameH / frameW);
         ctx.drawImage(
           apeImg,
@@ -1406,7 +1410,7 @@ class Enemy {
       if (this.slamCharging) {
         // Red target reticle on player coordinates
         ctx.beginPath();
-        ctx.arc(this.slamTargetX, this.slamTargetY, 45, 0, Math.PI * 2);
+        ctx.arc(this.slamTargetX, this.slamTargetY, 150, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(239, 68, 68, ${0.1 + (this.slamChargeTimer/40)*0.5})`;
         ctx.fillStyle = `rgba(239, 68, 68, ${this.slamChargeTimer/160})`;
         ctx.lineWidth = 1.5;
@@ -1446,12 +1450,12 @@ class Enemy {
         
         // Ambient perspective circle dropshadow under feet
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + 13, 10, 3.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + 32.5, 25, 8.75, 0, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fill();
         
         // Render Creg the Banker sprite frame
-        const drawW = 38;
+        const drawW = 95;
         const drawH = drawW * (frameH / frameW);
         
         ctx.save();
@@ -1463,7 +1467,7 @@ class Enemy {
             img,
             srcX, srcY,
             frameW, frameH,
-            -drawW / 2, -drawH / 2 - 2,
+            -drawW / 2, -drawH / 2 - 5,
             drawW, drawH
           );
         } else {
@@ -1472,7 +1476,7 @@ class Enemy {
             img,
             srcX, srcY,
             frameW, frameH,
-            -drawW / 2, -drawH / 2 - 2,
+            -drawW / 2, -drawH / 2 - 5,
             drawW, drawH
           );
         }
@@ -1883,7 +1887,7 @@ function awardXp(amount) {
   if (player.xp >= player.maxXp) {
     player.level++;
     player.xp -= player.maxXp;
-    player.maxXp = Math.floor(player.maxXp * 1.60);
+    player.maxXp = Math.floor(player.maxXp * 1.65);
     triggerLevelUp();
   }
 }
@@ -3015,14 +3019,28 @@ function handleEnemySpawning() {
     const count = baseEnemyCount + (wave * 2);
     
     // Choose spawn positions offscreen
+    const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
+    
     for (let i = 0; i < count; i++) {
       let sx, sy;
       const border = Math.floor(Math.random() * 4); // 0: Top, 1: Right, 2: Bottom, 3: Left
       
-      if (border === 0) { sx = Math.random() * canvas.width; sy = -20; }
-      else if (border === 1) { sx = canvas.width + 20; sy = Math.random() * canvas.height; }
-      else if (border === 2) { sx = Math.random() * canvas.width; sy = canvas.height + 20; }
-      else { sx = -20; sy = Math.random() * canvas.height; }
+      if (border === 0) { 
+        sx = Math.random() * canvas.width; 
+        sy = forestLoaded ? 360 + 55 : -20; 
+      }
+      else if (border === 1) { 
+        sx = canvas.width + 20; 
+        sy = forestLoaded ? 360 + 65 + Math.random() * (canvas.height - 360 - 130) : Math.random() * canvas.height; 
+      }
+      else if (border === 2) { 
+        sx = Math.random() * canvas.width; 
+        sy = canvas.height + 20; 
+      }
+      else { 
+        sx = -20; 
+        sy = forestLoaded ? 360 + 65 + Math.random() * (canvas.height - 360 - 130) : Math.random() * canvas.height; 
+      }
       
       // Mobs pool selection (Spider is default, Ghost is an uncommon ranged chill projectile spawn)
       let type = "spider";
@@ -3056,10 +3074,22 @@ function handleEnemySpawning() {
     if (guildBankerUnlocked && !hasBanker && Math.random() < 0.10 && wave >= 2) {
       let sx, sy;
       const border = Math.floor(Math.random() * 4);
-      if (border === 0) { sx = Math.random() * canvas.width; sy = -20; }
-      else if (border === 1) { sx = canvas.width + 20; sy = Math.random() * canvas.height; }
-      else if (border === 2) { sx = Math.random() * canvas.width; sy = canvas.height + 20; }
-      else { sx = -20; sy = Math.random() * canvas.height; }
+      if (border === 0) { 
+        sx = Math.random() * canvas.width; 
+        sy = forestLoaded ? 360 + 65 : -20; 
+      }
+      else if (border === 1) { 
+        sx = canvas.width + 20; 
+        sy = forestLoaded ? 360 + 65 + Math.random() * (canvas.height - 360 - 130) : Math.random() * canvas.height; 
+      }
+      else if (border === 2) { 
+        sx = Math.random() * canvas.width; 
+        sy = canvas.height + 20; 
+      }
+      else { 
+        sx = -20; 
+        sy = forestLoaded ? 360 + 65 + Math.random() * (canvas.height - 360 - 130) : Math.random() * canvas.height; 
+      }
       
       const bankerNPC = new Enemy(sx, sy, "banker");
       enemies.push(bankerNPC);
@@ -3312,8 +3342,8 @@ function processGamePhysics() {
             // Roll drops! (e.isBoss is true for Ape, rolling 3x items)
             rollMobLoot(e.x, e.y, e.isBoss);
             
-            // Award XP (Ape Boss awards massive XP)
-            const xpGained = e.type === "ape" ? 35 : 3;
+            // Award XP (Ape Boss awards massive XP, spiders award 1 XP)
+            const xpGained = e.type === "ape" ? 50 : 1;
             awardXp(xpGained);
           } 
           else {
@@ -3351,6 +3381,8 @@ function processGamePhysics() {
                 submitBankerDeduction(bankerDeductedChaosThisRun);
               }
               
+              awardXp(20); // Defeating Creg the Banker awards 20 XP!
+
               setTimeout(() => {
                 syncGameMusic();
               }, 100);
@@ -3359,7 +3391,7 @@ function processGamePhysics() {
               rollMobLoot(e.x, e.y, e.isBoss);
               
               // Award XP
-              const xpGained = e.isBoss ? 35 : (e.type === "ghost" ? 8 : 3);
+              const xpGained = e.isBoss ? 50 : (e.type === "ghost" ? 3 : 1);
               awardXp(xpGained);
             }
           }
@@ -3644,15 +3676,21 @@ function drawGamePlayScreen() {
       ctx.restore();
     });
 
-    // Draw the tiled grass/dirt floor ONLY in rows 9 to 22 (y from 360 to 920)
-    const tileSize = 40;
+    // Draw the tiled grass/dirt floor ONLY in rows 4 to 11 (y from 320 to 960), clipped to y >= 360
+    const tileSize = 80;
     let allTerrainLoaded = true;
     Object.values(TerrainTiles).forEach(img => {
       if (!img.complete || img.naturalWidth === 0) allTerrainLoaded = false;
     });
 
     if (allTerrainLoaded && terrainMap.length > 0) {
-      for (let r = 9; r < mapRows; r++) {
+      ctx.save();
+      // Clip to gameplay area below horizon split
+      ctx.beginPath();
+      ctx.rect(0, 360, canvas.width, canvas.height - 360);
+      ctx.clip();
+
+      for (let r = 4; r < mapRows; r++) {
         for (let c = 0; c < mapCols; c++) {
           const tileKey = terrainMap[r][c];
           const img = TerrainTiles[tileKey];
@@ -3660,7 +3698,7 @@ function drawGamePlayScreen() {
         }
       }
       
-      // Grid lines for bottom 60% (from 360 y-split boundary)
+      // Grid lines for bottom (from 360 y-split boundary)
       ctx.strokeStyle = "rgba(22, 17, 13, 0.18)";
       ctx.lineWidth = 0.5;
       for (let x = 0; x < canvas.width; x += tileSize) {
@@ -3675,6 +3713,7 @@ function drawGamePlayScreen() {
         ctx.lineTo(canvas.width, y);
         ctx.stroke();
       }
+      ctx.restore();
     } else {
       // Vector fallback grid for bottom 60%
       ctx.fillStyle = "#2d3c34"; // Dark forest green floor
@@ -3696,7 +3735,7 @@ function drawGamePlayScreen() {
     }
   } else {
     // DEFAULT FULL TILE FLOOR (if forest background is not active)
-    const tileSize = 40;
+    const tileSize = 80;
     let allTerrainLoaded = true;
     Object.values(TerrainTiles).forEach(img => {
       if (!img.complete || img.naturalWidth === 0) allTerrainLoaded = false;
@@ -3767,7 +3806,7 @@ function drawGamePlayScreen() {
     
     ctx.save();
     ctx.globalAlpha = 0.90; // Solid 90% opacity!
-    ctx.drawImage(canopyImg, canopyDrawX, 0, targetCanopyW, 200);
+    ctx.drawImage(canopyImg, canopyDrawX, 0, targetCanopyW, 250);
     ctx.restore();
   }
 
@@ -3900,18 +3939,18 @@ function drawPlayerCharacter() {
     
     // Ambient circle dropshadow
     ctx.beginPath();
-    ctx.ellipse(player.x, player.y + 11, 8, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(player.x, player.y + 27.5, 20, 7.5, 0, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
     ctx.fill();
     
     // Render the high-resolution Ranger sprite frame
-    const drawW = 38;
+    const drawW = 95;
     const drawH = drawW * (frameH / frameW);
     ctx.drawImage(
       img,
       srcX, srcY,
       frameW, frameH,
-      player.x - drawW / 2, player.y - drawH / 2 - 2,
+      player.x - drawW / 2, player.y - drawH / 2 - 5,
       drawW, drawH
     );
   } else {
@@ -4287,7 +4326,8 @@ function resetGame() {
   player.vy = 0;
   player.level = 1;
   player.xp = 0;
-  player.maxXp = 100;
+  player.maxXp = 150;
+  player.radius = 30;
   player.frozen = false;
   player.freezeTimer = 0;
   player.slowStacks = 0;

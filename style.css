@@ -1305,14 +1305,18 @@ body {
 /* Canvas HUD Overlay styling */
 .game-ui-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  padding: 12px 18px;
+  top: 16px;
+  left: 16px;
+  width: calc(100% - 32px);
+  padding: 8px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+  background: rgba(10, 8, 6, 0.65);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   pointer-events: none;
   z-index: 5;
   box-sizing: border-box;
