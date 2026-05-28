@@ -2427,18 +2427,18 @@ function updateStashTabUI() {
   // Each printed gold box is represented by a 2x2 span centered symmetrically in the 12x12 grid.
   const CURRENCY_SLOTS = {
     // Top Row (5 boxes)
-    scroll: { row: 2, col: 2, rSpan: 2, cSpan: 2 },
-    transmute: { row: 2, col: 4, rSpan: 2, cSpan: 2 },
-    augmentation: { row: 2, col: 6, rSpan: 2, cSpan: 2 },
-    alchemy: { row: 2, col: 8, rSpan: 2, cSpan: 2 },
-    regal: { row: 2, col: 10, rSpan: 2, cSpan: 2 },
+    scroll: { row: 3, col: 2, rSpan: 2, cSpan: 2 },
+    transmute: { row: 3, col: 4, rSpan: 2, cSpan: 2 },
+    augmentation: { row: 3, col: 6, rSpan: 2, cSpan: 2 },
+    alchemy: { row: 3, col: 8, rSpan: 2, cSpan: 2 },
+    regal: { row: 3, col: 10, rSpan: 2, cSpan: 2 },
 
     // Middle Row (5 boxes)
-    chaos: { row: 6, col: 2, rSpan: 2, cSpan: 2 },
-    vaal: { row: 6, col: 4, rSpan: 2, cSpan: 2 },
-    annulment: { row: 6, col: 6, rSpan: 2, cSpan: 2 },
-    exalted: { row: 6, col: 8, rSpan: 2, cSpan: 2 },
-    divine: { row: 6, col: 10, rSpan: 2, cSpan: 2 },
+    chaos: { row: 7, col: 2, rSpan: 2, cSpan: 2 },
+    vaal: { row: 7, col: 4, rSpan: 2, cSpan: 2 },
+    annulment: { row: 7, col: 6, rSpan: 2, cSpan: 2 },
+    exalted: { row: 7, col: 8, rSpan: 2, cSpan: 2 },
+    divine: { row: 7, col: 10, rSpan: 2, cSpan: 2 },
 
     // Bottom Row (1 centered box)
     mirror: { row: 10, col: 6, rSpan: 2, cSpan: 2 }

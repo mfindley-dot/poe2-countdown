@@ -452,7 +452,7 @@ body {
 }
 
 .gauge-stats {
-  margin-top: -16px !important;
+  margin-top: -4px !important;
   text-align: center;
   font-family: var(--font-header);
   font-weight: bold;
