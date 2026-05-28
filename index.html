@@ -147,155 +147,171 @@
       </div>
       <p class="subtitle text-gold-faded center-text">Defeat hordes of Wraeclast monsters, loot currency, and fill your guild stash!</p>
       
-      <!-- Character Selection & Controls Plaque -->
-      <div class="arcade-controls-row">
-        <div class="class-selector">
-          <span class="text-gold-faded font-cinzel">CHOOSE YOUR EXILE:</span>
-          <button class="gothic-btn active-class" id="btnSelectRanger">🏹 RANGER (Split Arrow)</button>
-        </div>
-        
-        <div class="game-instructions-plaque border-gold">
-          <div class="keybind-list">
-            <div class="keybind-item">
-              <div class="kb-canvas-container">
-                <canvas id="kbMoveCanvas" width="48" height="48"></canvas>
+      <!-- Main Widescreen Game Screen and Overlays -->
+      <div class="game-viewport-wrapper">
+        <div class="game-viewport-container">
+          <canvas id="gameCanvas" width="1600" height="900"></canvas>
+          
+          <!-- UI Overlay (Health, XP, Stats) - Hidden by default until play starts -->
+          <div class="game-ui-overlay hidden">
+            <div class="ui-left">
+              <div class="health-bar-container">
+                <div class="health-bar" id="gameHealthBar"></div>
+                <span class="bar-text" id="gameHealthText">HP: 100/100</span>
               </div>
-              <span class="kb-text">⌨️ Move: <strong>WASD / Arrows</strong></span>
+              <div class="xp-bar-container">
+                <div class="xp-bar" id="gameXpBar"></div>
+                <span class="bar-text" id="gameXpText">XP: Level 1 (0%)</span>
+              </div>
             </div>
-            <div class="keybind-item">
-              <div class="kb-canvas-container">
-                <canvas id="kbRollCanvas" width="48" height="48"></canvas>
-              </div>
-              <span class="kb-text">🌀 Dodge: <strong>Space (1s CD)</strong></span>
+
+            <!-- HUD Middle Settings Plaque (Pointer events active!) -->
+            <div class="hud-center-actions" style="pointer-events: auto !important; display: flex; gap: 8px; align-items: center; justify-content: center; z-index: 100;">
+              <button id="btnToggleMute" class="mute-btn border-gold" style="font-size: 9px; padding: 3px 8px; background: rgba(21, 13, 4, 0.85); color: var(--gold-primary); cursor: pointer; border-radius: 4px;">🔇 SOUND: ON</button>
+              <button id="btnToggleLabels" class="mute-btn border-gold" style="font-size: 9px; padding: 3px 8px; background: rgba(21, 13, 4, 0.85); color: var(--gold-primary); cursor: pointer; border-radius: 4px;">🏷️ SHOW ITEMS: ON</button>
+              <button id="btnPauseGame" class="pause-btn border-gold" style="font-size: 9px; padding: 3px 8px; background: rgba(21, 13, 4, 0.85); color: var(--gold-primary); cursor: pointer; font-weight: bold; border-radius: 4px;">⏸️ PAUSE</button>
             </div>
-            <div class="keybind-item">
-              <div class="kb-canvas-container">
-                <canvas id="kbShootCanvas" width="48" height="48"></canvas>
-              </div>
-              <span class="kb-text">🏹 Spread: <strong>E Key (1.5s CD)</strong></span>
+
+            <div class="ui-right">
+              <span class="ui-stat">WAVE: <strong id="gameWaveText" class="text-gold">1</strong></span>
+              <span class="ui-stat">NET WORTH: <strong id="gameWorthText" class="text-gold">0c</strong></span>
             </div>
           </div>
-          <div class="mute-container" style="display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 5px;">
-            <span>🔇 <button id="btnToggleMute" class="mute-btn border-gold" style="font-size: 8.5px; padding: 2px 6px;">SOUND: ON</button></span>
-            <span>🏷️ <button id="btnToggleLabels" class="mute-btn border-gold" style="font-size: 8.5px; padding: 2px 6px;">SHOW ITEMS: ON (V)</button></span>
+
+          <!-- Virtual Joystick for Mobile Controls -->
+          <div id="virtualJoystickContainer" class="joystick-overlay hidden" style="position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px; background: rgba(0, 0, 0, 0.45); border: 2.5px solid rgba(212, 175, 55, 0.35); border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 150; touch-action: none; pointer-events: auto;">
+            <div id="joystickKnob" style="width: 55px; height: 55px; background: radial-gradient(circle, #fbbf24 0%, #d97706 100%); border: 2px solid #5c4033; border-radius: 50%; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.75); transition: transform 0.05s ease; pointer-events: none;"></div>
+          </div>
+
+          <!-- Action Buttons for Mobile Controls -->
+          <div id="mobileActionButtons" class="joystick-overlay hidden" style="position: absolute; bottom: 40px; right: 40px; display: none; gap: 20px; z-index: 150; pointer-events: auto;">
+            <!-- Dodge Button -->
+            <button id="btnMobileDodge" style="width: 65px; height: 65px; background: radial-gradient(circle, #3b82f6 0%, #1d4ed8 100%); border: 2px solid #1e3a8a; border-radius: 50%; color: white; font-weight: bold; font-size: 11px; box-shadow: 0 5px 10px rgba(0,0,0,0.6); cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; flex-direction: column; outline: none; -webkit-tap-highlight-color: transparent;">
+              <span style="font-size: 16px;">🌀</span>
+              <span style="font-size: 8.5px; margin-top: 2px; letter-spacing: 0.5px;">DODGE</span>
+            </button>
+            <!-- Spread Button -->
+            <button id="btnMobileSpread" style="width: 65px; height: 65px; background: radial-gradient(circle, #ec4899 0%, #be185d 100%); border: 2px solid #881337; border-radius: 50%; color: white; font-weight: bold; font-size: 11px; box-shadow: 0 5px 10px rgba(0,0,0,0.6); cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; flex-direction: column; outline: none; -webkit-tap-highlight-color: transparent;">
+              <span style="font-size: 16px;">🏹</span>
+              <span style="font-size: 8.5px; margin-top: 2px; letter-spacing: 0.5px;">SPREAD</span>
+            </button>
+          </div>
+
+          <!-- Start Screen Overlay -->
+          <div class="game-start-screen" id="startScreen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; background: rgba(10, 8, 6, 0.95);">
+            <img src="assets/images/logos/path-of-looting-2_logo.png" alt="Path of Looting 2" class="start-logo-img" style="max-width: 90%; max-height: 250px; margin-bottom: 25px; object-fit: contain; filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.45));" />
+            
+            <!-- Class Selection Relocated and Styled Elegantly Inside Start Screen -->
+            <div class="class-selector" style="margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 20;">
+              <span class="text-gold-faded font-cinzel" style="font-size: 15px; letter-spacing: 1.5px; font-weight: bold;">CHOOSE YOUR EXILE:</span>
+              <div style="display: flex; gap: 18px;">
+                <button class="gothic-btn active-class font-cinzel" id="btnSelectRanger" style="padding: 10px 24px; font-size: 13px; font-weight: bold; cursor: pointer; min-width: 190px; -webkit-tap-highlight-color: transparent;">🏹 RANGER (Split Arrow)</button>
+                <button class="gothic-btn font-cinzel" id="btnSelectWitch" style="padding: 10px 24px; font-size: 13px; font-weight: bold; cursor: pointer; min-width: 190px; -webkit-tap-highlight-color: transparent;">🧙‍♀️ WITCH (Spark)</button>
+              </div>
+            </div>
+
+            <button class="gothic-btn border-gold start-btn-action font-16bit" id="btnShowInstructions" style="padding: 14px 44px; font-size: 14px; font-weight: bold; letter-spacing: 2px;">START THE GRIND</button>
+          </div>
+
+          <!-- Instructions Screen Overlay -->
+          <div class="game-start-screen hidden" id="instructionsScreen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; background: rgba(10, 8, 6, 0.96);">
+            <img src="assets/images/logos/path-of-looting-2_logo.png" alt="Path of Looting 2" class="start-logo-img" style="max-width: 60%; max-height: 80px; margin-bottom: 12px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.35));" />
+            <h3 class="font-16bit text-gold" style="font-size: 12px; margin-bottom: 12px; letter-spacing: 1px;">COOPERATIVE ARCADE GUIDE</h3>
+            
+            <div class="start-instructions border-gold" style="margin-bottom: 15px;">
+              <div class="instruction-item">
+                <span class="inst-icon">🧙‍♀️</span>
+                <div>
+                  <strong>Witch (Necromancer)</strong>: Auto-fires chaotic bouncing <strong>Sparks</strong> that seek out the closest targets.
+                </div>
+              </div>
+              <div class="instruction-item">
+                <span class="inst-icon">🏹</span>
+                <div>
+                  <strong>Ranger (Split Arrow)</strong>: Fires a piercing 3-arrow fan in the direction of your movement or nearest target.
+                </div>
+              </div>
+              <div class="instruction-item">
+                <span class="inst-icon">💀</span>
+                <div>
+                  <strong>Survivability</strong>: Avoid cold ghosts (freezing lasers) and the Act 2 Gorilla Boss's <strong>Pillar of Doom</strong> shockwaves!
+                </div>
+              </div>
+              <div class="instruction-item">
+                <span class="inst-icon">🪙</span>
+                <div>
+                  <strong>Guild Banker Event</strong>: Spawns when Reserves hit 100 EX! Hit Creg the Banker to beat currency out of him before he teleports!
+                </div>
+              </div>
+            </div>
+            
+            <p class="start-callout text-gold-hover font-16bit" style="font-size: 11px; margin: 10px 0;">Choose your exile class above and begin the cooperational grind!</p>
+            <button class="gothic-btn border-gold start-btn-action font-16bit" id="btnStartArcadeGame" style="padding: 12px 36px; font-size: 12px;">BEGIN THE GRIND</button>
+          </div>
+
+          <!-- Death Screen Overlay (Dark Souls style) -->
+          <div class="game-death-screen hidden" id="deathScreen" style="padding: 20px;">
+            <h2 class="death-title text-red" id="deathMessage">FUCK YOU, CREG</h2>
+            <p class="death-subtitle">YOUR SOUL HAS RETURNED TO WRAECLAST</p>
+            
+            <!-- Death Tax Info -->
+            <p class="death-tax-message" id="deathTaxMessage">They come for us all, death and taxes... a 15% tax has been looted from your corpse.</p>
+            <div id="deathTaxBreakdown" class="death-tax-breakdown hidden"></div>
+            
+            <div class="score-submission-form">
+              <label for="playerNameInput" class="text-gold-faded">Enter Guild Handle for Leaderboard:</label>
+              <div class="input-group-row">
+                <input type="text" id="playerNameInput" maxlength="15" placeholder="PlayerName" class="border-gold">
+                <button class="gothic-btn border-gold" id="btnSubmitScore">SUBMIT LOOT</button>
+              </div>
+              <div id="submitStatusMsg" class="status-msg"></div>
+            </div>
+            
+            <button class="gothic-btn border-gold restart-btn" id="btnRestartGame">TRY AGAIN</button>
           </div>
         </div>
       </div>
 
-      <!-- Main Game Board layout -->
-      <div class="arcade-game-grid">
+      <!-- Restructured Bottom Layout Row: Stacked Buttons (Left) & Stash Tab (Right) -->
+      <div class="arcade-bottom-row">
         
-        <!-- Left: Game Play screen wrapper -->
-        <div class="game-viewport-wrapper">
-          <div class="game-viewport-container">
-            <canvas id="gameCanvas" width="640" height="400"></canvas>
-            
-            <!-- UI Overlay (Health, XP, Stats) - Hidden by default until play starts -->
-            <div class="game-ui-overlay hidden">
-              <div class="ui-left">
-                <div class="health-bar-container">
-                  <div class="health-bar" id="gameHealthBar"></div>
-                  <span class="bar-text" id="gameHealthText">HP: 100/100</span>
-                </div>
-                <div class="xp-bar-container">
-                  <div class="xp-bar" id="gameXpBar"></div>
-                  <span class="bar-text" id="gameXpText">XP: Level 1 (0%)</span>
-                </div>
-              </div>
-              <div class="ui-right">
-                <span class="ui-stat">WAVE: <strong id="gameWaveText" class="text-gold">1</strong></span>
-                <span class="ui-stat">NET WORTH: <strong id="gameWorthText" class="text-gold">0c</strong></span>
-              </div>
-            </div>
-
-            <!-- Start Screen Overlay -->
-            <div class="game-start-screen" id="startScreen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: rgba(10, 8, 6, 0.95);">
-              <img src="assets/images/logos/path-of-looting-2_logo.png" alt="Path of Looting 2" class="start-logo-img" style="max-width: 90%; max-height: 180px; margin-bottom: 25px; object-fit: contain; filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.4));" />
-              <button class="gothic-btn border-gold start-btn-action font-16bit" id="btnShowInstructions" style="padding: 12px 36px; font-size: 13px; font-weight: bold; letter-spacing: 2px;">START THE GRIND</button>
-            </div>
-
-            <!-- Instructions Screen Overlay -->
-            <div class="game-start-screen hidden" id="instructionsScreen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; background: rgba(10, 8, 6, 0.96);">
-              <img src="assets/images/logos/path-of-looting-2_logo.png" alt="Path of Looting 2" class="start-logo-img" style="max-width: 50%; max-height: 55px; margin-bottom: 8px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.3));" />
-              <h3 class="font-16bit text-gold" style="font-size: 11px; margin-bottom: 10px; letter-spacing: 1px;">COOPERATIVE ARCADE GUIDE</h3>
-              
-              <div class="start-instructions border-gold">
-                <div class="instruction-item">
-                  <span class="inst-icon">🧙‍♀️</span>
-                  <div>
-                    <strong>Witch (Necromancer)</strong>: Auto-fires chaotic bouncing <strong>Sparks</strong> that seek out the closest targets.
-                  </div>
-                </div>
-                <div class="instruction-item">
-                  <span class="inst-icon">🏹</span>
-                  <div>
-                    <strong>Ranger (Split Arrow)</strong>: Fires a piercing 3-arrow fan in the direction of your movement or nearest target.
-                  </div>
-                </div>
-                <div class="instruction-item">
-                  <span class="inst-icon">💀</span>
-                  <div>
-                    <strong>Survivability</strong>: Avoid cold ghosts (freezing lasers) and the Act 2 Gorilla Boss's <strong>Pillar of Doom</strong> shockwaves!
-                  </div>
-                </div>
-                <div class="instruction-item">
-                  <span class="inst-icon">🪙</span>
-                  <div>
-                    <strong>Guild Banker Event</strong>: Spawns when Reserves hit 100 EX! Hit Creg the Banker to beat currency out of him before he teleports!
-                  </div>
-                </div>
-              </div>
-              
-              <p class="start-callout text-gold-hover font-16bit" style="font-size: 10px; margin: 10px 0;">Choose your exile class above and begin the cooperational grind!</p>
-              <button class="gothic-btn border-gold start-btn-action font-16bit" id="btnStartArcadeGame" style="padding: 10px 30px; font-size: 11px;">BEGIN THE GRIND</button>
-            </div>
-
-            <!-- Death Screen Overlay (Dark Souls style) -->
-            <div class="game-death-screen hidden" id="deathScreen">
-              <h2 class="death-title text-red" id="deathMessage">FUCK YOU, CREG</h2>
-              <p class="death-subtitle">YOUR SOUL HAS RETURNED TO WRAECLAST</p>
-              
-              <!-- Death Tax Info -->
-              <p class="death-tax-message" id="deathTaxMessage">They come for us all, death and taxes... a 15% tax has been looted from your corpse.</p>
-              <div id="deathTaxBreakdown" class="death-tax-breakdown hidden"></div>
-              
-              <div class="score-submission-form">
-                <label for="playerNameInput" class="text-gold-faded">Enter Guild Handle for Leaderboard:</label>
-                <div class="input-group-row">
-                  <input type="text" id="playerNameInput" maxlength="15" placeholder="PlayerName" class="border-gold">
-                  <button class="gothic-btn border-gold" id="btnSubmitScore">SUBMIT LOOT</button>
-                </div>
-                <div id="submitStatusMsg" class="status-msg"></div>
-              </div>
-              
-              <button class="gothic-btn border-gold restart-btn" id="btnRestartGame">TRY AGAIN</button>
-            </div>
-          </div>
+        <!-- Left: Stacked Actions Panel -->
+        <div class="minigame-buttons-panel">
           
-          <!-- Stein of Ale & Sunprism Cat Interactive Buttons -->
-          <div class="stein-ale-container">
-            <button id="btnSteinAle" class="gothic-btn border-gold stein-btn">
-              <div class="stein-canvas-container">
-                <canvas id="steinCanvas" width="128" height="72"></canvas>
-              </div>
+          <!-- Drink Guild Ale Button -->
+          <button id="btnSteinAle" class="gothic-btn border-gold stein-btn">
+            <div class="stein-canvas-container">
+              <canvas id="steinCanvas" width="128" height="72"></canvas>
+            </div>
+            <div class="stein-btn-label">
               <span class="stein-text-content">DRINK GUILD ALE</span>
-              <span class="stein-subtext">(Click to add Blur Challenge! Stacks up to 3x)</span>
-            </button>
+              <span class="stein-subtext">Click to add Blur Challenge! Stacks up to 3x</span>
+            </div>
+          </button>
 
-            <button id="btnSunprismCat" class="gothic-btn border-gold stein-btn">
-              <div class="stein-canvas-container" style="height: 72px; width: 128px; display: flex; align-items: center; justify-content: center;">
-                <img src="assets/images/icons/cat-paw_icon.png" alt="Cat Paw" class="cat-paw-icon-img" />
-              </div>
+          <!-- Sunprism Cat Companion Button -->
+          <button id="btnSunprismCat" class="gothic-btn border-gold stein-btn">
+            <div class="stein-canvas-container" style="height: 72px; width: 128px; display: flex; align-items: center; justify-content: center;">
+              <img src="assets/images/icons/cat-paw_icon.png" alt="Cat Paw" class="cat-paw-icon-img" />
+            </div>
+            <div class="stein-btn-label">
               <span class="stein-text-content">CAT!</span>
-              <span class="stein-subtext">(Summon Sunprism space cat companion!)</span>
-            </button>
-          </div>
+              <span class="stein-subtext">Summon Sunprism space cat companion!</span>
+            </div>
+          </button>
+
+          <!-- Guild Hall Leaderboard Pop-out Toggle Button (Reddish Brown Frame!) -->
+          <button id="btnToggleLeaderboard" class="gothic-btn leaderboard-toggle-btn">
+            <div class="leaderboard-btn-label">
+              <h3 class="panel-title text-gold" style="margin: 0; font-family: var(--font-header); font-size: 1.15rem; letter-spacing: 2px; font-weight: bold;">GUILD HALL LEADERBOARD</h3>
+              <span style="font-size: 0.72rem; color: #cbd5e1; margin-top: 4px; display: block;">Click to view top guild scores and cooperative grind!</span>
+            </div>
+          </button>
+          
         </div>
 
-        <!-- Right: Stash Tab & Leaderboard -->
-        <div class="stash-leaderboard-sidebar">
-          
-          <!-- Stash Tab Widget -->
+        <!-- Right: Guild Stash Tab Widget -->
+        <div class="stash-tab-column">
           <div class="stash-tab-container border-gold">
             <div class="stash-header">
               <span class="text-gold">GUILD STASH TAB</span>
@@ -340,18 +356,27 @@
               <!-- Summary of counts -->
             </div>
           </div>
+        </div>
 
-          <!-- Leaderboard Panel -->
-          <div class="leaderboard-container border-gold">
-            <h3 class="panel-title text-gold">GUILD HALL LEADERBOARD</h3>
+      </div>
+
+      <!-- Pop-out Leaderboard Modal Overlay (Dimming backdrop) -->
+      <div id="leaderboardOverlayModal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; box-sizing: border-box;">
+        <div class="modal-content" style="background: var(--bg-panel); border: 3px solid #5c4033; border-radius: 12px; padding: 25px; width: 90%; max-width: 600px; box-shadow: 0 10px 30px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.95); transform: scale(0.7); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative;">
+          
+          <button id="btnCloseLeaderboard" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #887864; font-size: 24px; cursor: pointer; transition: color 0.2s ease; outline: none; -webkit-tap-highlight-color: transparent;">✕</button>
+          
+          <!-- Leaderboard Panel inner content -->
+          <div class="leaderboard-container" style="border: none !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; margin: 0 !important;">
+            <h3 class="panel-title text-gold" style="margin-top: 0; margin-bottom: 15px; font-family: var(--font-header); font-size: 1.4rem; letter-spacing: 2px;">GUILD HALL LEADERBOARD</h3>
             
             <!-- Dual mode leaderboard tabs -->
-            <div class="leaderboard-tabs">
-              <button class="tab-btn active-tab" id="btnTabTopRuns">TOP RUNS</button>
-              <button class="tab-btn" id="btnTabTotalGrind">TOTAL GRIND</button>
+            <div class="leaderboard-tabs" style="margin-bottom: 15px;">
+              <button class="tab-btn active-tab" id="btnTabTopRuns" style="-webkit-tap-highlight-color: transparent;">TOP RUNS</button>
+              <button class="tab-btn" id="btnTabTotalGrind" style="-webkit-tap-highlight-color: transparent;">TOTAL GRIND</button>
             </div>
             
-            <div class="leaderboard-table-wrapper">
+            <div class="leaderboard-table-wrapper" style="max-height: 380px;">
               <table class="leaderboard-table" id="leaderboardTable">
                 <thead>
                   <tr>
@@ -369,9 +394,8 @@
               </table>
             </div>
           </div>
-
+          
         </div>
-
       </div>
     </section>
 

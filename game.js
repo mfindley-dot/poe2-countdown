@@ -61,6 +61,11 @@ let bankerDeductedChaosThisRun = 0;
 let currentGameState = GameState.SELECT;
 let gameMuted = false;
 let gameScoreSubmitted = false;
+let gamePaused = false;
+let joystickActive = false;
+let joystickMoveX = 0;
+let joystickMoveY = 0;
+let prevGamepadButtons = {};
 
 // Global settings for UI HUD & damage hit flash
 let showItemLabels = true;
@@ -204,11 +209,11 @@ function initProceduralFog() {
   // Spawn 6 volumetric fog puffs
   for (let i = 0; i < 6; i++) {
     forestFogParticles.push({
-      x: Math.random() * 640,
-      y: 20 + Math.random() * 100, // strictly within the woods zone
+      x: Math.random() * 1600,
+      y: 50 + Math.random() * 220, // strictly within the woods zone
       vx: (0.1 + Math.random() * 0.2) * (Math.random() < 0.5 ? 1 : -1),
       vy: (0.02 + Math.random() * 0.04) * (Math.random() < 0.5 ? 1 : -1),
-      radius: 60 + Math.random() * 50,
+      radius: 90 + Math.random() * 70, // slightly larger for widescreen scaling
       opacity: 0.15 + Math.random() * 0.25,
       maxOpacity: 0.3 + Math.random() * 0.2,
       fadeDir: Math.random() < 0.5 ? 1 : -1
@@ -219,12 +224,12 @@ function initProceduralFog() {
 // Initialize random blinking red eye positions in dark forest corners
 function initProceduralEyes() {
   forestEyes = [
-    { x: 90, y: 80, state: "closed", timer: Math.random() * 200, opacity: 0, pulse: Math.random() * Math.PI },
-    { x: 220, y: 60, state: "closed", timer: Math.random() * 200 + 100, opacity: 0, pulse: Math.random() * Math.PI },
-    { x: 450, y: 90, state: "closed", timer: Math.random() * 200 + 200, opacity: 0, pulse: Math.random() * Math.PI },
-    { x: 580, y: 70, state: "closed", timer: Math.random() * 200 + 300, opacity: 0, pulse: Math.random() * Math.PI },
-    { x: 140, y: 130, state: "closed", timer: Math.random() * 200 + 150, opacity: 0, pulse: Math.random() * Math.PI },
-    { x: 500, y: 140, state: "closed", timer: Math.random() * 200 + 250, opacity: 0, pulse: Math.random() * Math.PI }
+    { x: 225, y: 180, state: "closed", timer: Math.random() * 200, opacity: 0, pulse: Math.random() * Math.PI },
+    { x: 550, y: 135, state: "closed", timer: Math.random() * 200 + 100, opacity: 0, pulse: Math.random() * Math.PI },
+    { x: 1125, y: 202, state: "closed", timer: Math.random() * 200 + 200, opacity: 0, pulse: Math.random() * Math.PI },
+    { x: 1450, y: 157, state: "closed", timer: Math.random() * 200 + 300, opacity: 0, pulse: Math.random() * Math.PI },
+    { x: 350, y: 292, state: "closed", timer: Math.random() * 200 + 150, opacity: 0, pulse: Math.random() * Math.PI },
+    { x: 1250, y: 315, state: "closed", timer: Math.random() * 200 + 250, opacity: 0, pulse: Math.random() * Math.PI }
   ];
 }
 
@@ -235,10 +240,10 @@ function updateProceduralForestEffects() {
     f.x += f.vx;
     f.y += f.vy;
     
-    // Bounce/wrap fog
-    if (f.x < -120) f.x = 760;
-    if (f.x > 760) f.x = -120;
-    if (f.y < 10 || f.y > 150) f.vy *= -1;
+    // Bounce/wrap fog (scaled to 1600x900)
+    if (f.x < -150) f.x = 1750;
+    if (f.x > 1750) f.x = -150;
+    if (f.y < 20 || f.y > 330) f.vy *= -1; // bounce within woods zone
     
     // Gentle opacity breath cycle
     f.opacity += f.fadeDir * 0.0005;
@@ -339,8 +344,8 @@ function updateForestBgAnimation() {
 }
 
 const terrainMap = [];
-const mapCols = 16;
-const mapRows = 10;
+const mapCols = 40;
+const mapRows = 23;
 
 function generateTerrainMap() {
   for (let r = 0; r < mapRows; r++) {
@@ -814,9 +819,9 @@ class Enemy {
       if (this.introActive) {
         this.introHPProgress += 0.015;
         
-        // Walk down from offscreen spawn to (canvas.width / 2, 80)
+        // Walk down from offscreen spawn to (canvas.width / 2, 180)
         const targetX = canvas.width / 2;
-        const targetY = 80;
+        const targetY = 180;
         const dx = targetX - this.x;
         const dy = targetY - this.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1174,7 +1179,7 @@ class Enemy {
         // Edge clamping
         this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
         const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
-        const minY = forestLoaded ? 160 + this.radius : this.radius;
+        const minY = forestLoaded ? 360 + this.radius : this.radius;
         this.y = Math.max(minY, Math.min(canvas.height - this.radius, this.y));
         
         // Hop bounce offset for comical hopping animation
@@ -1205,7 +1210,7 @@ class Enemy {
     // Constrain normal enemies to the active playfield bounds if forest is loaded
     if (this.type !== "ape" && !this.isDead) {
       const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
-      const minY = forestLoaded ? 160 + this.radius : this.radius;
+      const minY = forestLoaded ? 360 + this.radius : this.radius;
       this.y = Math.max(minY, Math.min(canvas.height - this.radius, this.y));
     }
   }
@@ -1943,30 +1948,30 @@ function playLevelUpChime() {
 }
 
 function handleLevelUpClick(clickX, clickY) {
-  const cardW = 160;
-  const cardH = 220;
-  const y = 110;
-  const spacing = 30;
-  const startX = (640 - (3 * cardW + 2 * spacing)) / 2;
+  const cardW = 240;
+  const cardH = 340;
+  const y = 280;
+  const spacing = 50;
+  const startX = (1600 - (3 * cardW + 2 * spacing)) / 2;
   
   for (let i = 0; i < levelUpChoices.length; i++) {
     const choice = levelUpChoices[i];
     const x = startX + i * (cardW + spacing);
     
-    const btnStdX = x + 15;
-    const btnStdY = y + 120;
-    const btnStdW = cardW - 30;
-    const btnStdH = 32;
+    const btnStdX = x + 20;
+    const btnStdY = y + 190;
+    const btnStdW = cardW - 40;
+    const btnStdH = 45;
     
     if (clickX >= btnStdX && clickX <= btnStdX + btnStdW && clickY >= btnStdY && clickY <= btnStdY + btnStdH) {
       applyUpgrade(choice.type, false);
       return;
     }
     
-    const btnExX = x + 15;
-    const btnExY = y + 165;
-    const btnExW = cardW - 30;
-    const btnExH = 35;
+    const btnExX = x + 20;
+    const btnExY = y + 255;
+    const btnExW = cardW - 40;
+    const btnExH = 50;
     
     if (playerStash.exalted >= 10 && clickX >= btnExX && clickX <= btnExX + btnExW && clickY >= btnExY && clickY <= btnExY + btnExH) {
       playerStash.exalted -= 10;
@@ -2235,7 +2240,7 @@ function syncGameMusic() {
   // Determine which game soundtrack SHOULD play right now
   let activeMusicTrack = "none";
   
-  if (!gameMuted && !musicMuted) {
+  if (!gameMuted && !musicMuted && !gamePaused) {
     if (currentGameState === GameState.PLAY || currentGameState === GameState.LEVEL_UP) {
       const hasBanker = enemies && enemies.some(e => e.type === "banker");
       if (hasBanker) {
@@ -2794,6 +2799,64 @@ function triggerCameraShake() {
 }
 
 function handleInput() {
+  // Poll desktop / browser HTML5 gamepads
+  const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let gp = null;
+  for (let i = 0; i < gamepads.length; i++) {
+    if (gamepads[i]) {
+      gp = gamepads[i];
+      break;
+    }
+  }
+
+  if (gp) {
+    const justPressed = (btnIndex) => {
+      const isPressed = gp.buttons[btnIndex] ? gp.buttons[btnIndex].pressed : false;
+      const wasPressed = prevGamepadButtons[btnIndex] || false;
+      return isPressed && !wasPressed;
+    };
+
+    // Global Pause button check: Start button (button 9)
+    if (justPressed(9)) {
+      if (currentGameState === GameState.PLAY) {
+        toggleGamePause();
+      }
+    }
+
+    // Lobby Selection: select character
+    if (currentGameState === GameState.SELECT) {
+      if (justPressed(14)) { // D-pad Left
+        setRangerClass();
+      }
+      if (justPressed(15)) { // D-pad Right
+        setWitchClass();
+      }
+      if (justPressed(0) || justPressed(9)) { // A button or Start to play
+        resetGame();
+      }
+    }
+
+    // Gameplay active actions
+    if (currentGameState === GameState.PLAY && !gamePaused) {
+      // A button (button 0): Dodge Roll
+      if (justPressed(0)) {
+        triggerPlayerDodgeRoll();
+      }
+      // X button (button 2): Special Attack (Spreadshot)
+      if (justPressed(2)) {
+        triggerPlayerSpreadshot();
+      }
+    }
+
+    // Store button states for next tick
+    for (let i = 0; i < gp.buttons.length; i++) {
+      prevGamepadButtons[i] = gp.buttons[i].pressed;
+    }
+  } else {
+    prevGamepadButtons = {};
+  }
+
+  // Early return if not active playing or frozen
   if (currentGameState !== GameState.PLAY || player.frozen) {
     player.vx = 0;
     player.vy = 0;
@@ -2803,10 +2866,35 @@ function handleInput() {
   let moveX = 0;
   let moveY = 0;
 
-  if (keys.w || keys.ArrowUp) { moveY = -1; lastPlayerDirectionRow = 1; }
-  if (keys.s || keys.ArrowDown) { moveY = 1; lastPlayerDirectionRow = 0; }
-  if (keys.a || keys.ArrowLeft) { moveX = -1; lastPlayerDirectionRow = 2; }
-  if (keys.d || keys.ArrowRight) { moveX = 1; lastPlayerDirectionRow = 3; }
+  // Gamepad analog stick & D-pad movement vector
+  let gpMoveX = 0;
+  let gpMoveY = 0;
+  if (gp && !gamePaused) {
+    const deadzone = 0.15;
+    const ax = gp.axes[0] || 0;
+    const ay = gp.axes[1] || 0;
+    if (Math.abs(ax) > deadzone) gpMoveX = ax;
+    if (Math.abs(ay) > deadzone) gpMoveY = ay;
+
+    // D-pad movement overrides
+    if (gp.buttons[12] && gp.buttons[12].pressed) gpMoveY = -1; // D-pad Up
+    if (gp.buttons[13] && gp.buttons[13].pressed) gpMoveY = 1;  // D-pad Down
+    if (gp.buttons[14] && gp.buttons[14].pressed) gpMoveX = -1; // D-pad Left
+    if (gp.buttons[15] && gp.buttons[15].pressed) gpMoveX = 1;  // D-pad Right
+  }
+
+  if (gp && !gamePaused && (Math.abs(gpMoveX) > 0 || Math.abs(gpMoveY) > 0)) {
+    moveX = gpMoveX;
+    moveY = gpMoveY;
+  } else if (typeof joystickActive !== "undefined" && joystickActive) {
+    moveX = joystickMoveX;
+    moveY = joystickMoveY;
+  } else {
+    if (keys.w || keys.ArrowUp) { moveY = -1; lastPlayerDirectionRow = 1; }
+    if (keys.s || keys.ArrowDown) { moveY = 1; lastPlayerDirectionRow = 0; }
+    if (keys.a || keys.ArrowLeft) { moveX = -1; lastPlayerDirectionRow = 2; }
+    if (keys.d || keys.ArrowRight) { moveX = 1; lastPlayerDirectionRow = 3; }
+  }
 
   // Normalize movements vector
   const len = Math.sqrt(moveX * moveX + moveY * moveY);
@@ -2814,6 +2902,15 @@ function handleInput() {
     const slowMultiplier = 1.0 - ((player.slowStacks || 0) * 0.03);
     player.vx = (moveX / len) * player.speed * slowMultiplier;
     player.vy = (moveY / len) * player.speed * slowMultiplier;
+    
+    // Auto-update face direction from dominant stick/joystick vector
+    if ((gp && !gamePaused && (Math.abs(gpMoveX) > 0 || Math.abs(gpMoveY) > 0)) || (typeof joystickActive !== "undefined" && joystickActive)) {
+      if (Math.abs(moveX) > Math.abs(moveY)) {
+        lastPlayerDirectionRow = moveX > 0 ? 3 : 2;
+      } else {
+        lastPlayerDirectionRow = moveY > 0 ? 0 : 1;
+      }
+    }
   } else {
     player.vx = 0;
     player.vy = 0;
@@ -3031,7 +3128,7 @@ function processGamePhysics() {
   // Bounds checks player dynamically depending on active forest background horizon
   player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
   const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
-  const minY = forestLoaded ? 160 + player.radius : player.radius;
+  const minY = forestLoaded ? 360 + player.radius : player.radius;
   player.y = Math.max(minY, Math.min(canvas.height - player.radius, player.y));
 
   // Poison damage over time ticking
@@ -3465,17 +3562,14 @@ function handlePlayerDeath() {
 }
 
 
-// ==========================================================================
-// 10. RENDERING & VISUAL ENGINE
-// ==========================================================================
-
+// ===================================================
 function drawGamePlayScreen() {
   ctx.save();
   ctx.translate(cameraShake.x, cameraShake.y);
 
-  // Parallax Coordinates calculations
-  const bgOffsetX = -(player.x - 320) * 0.06;
-  const bgOffsetY = -(player.y - 200) * 0.06;
+  // Parallax Coordinates calculations (scaled to 1600x900 center: 800 and 450)
+  const bgOffsetX = -(player.x - 800) * 0.06;
+  const bgOffsetY = -(player.y - 450) * 0.06;
 
   let forestBgActive = false;
 
@@ -3486,20 +3580,20 @@ function drawGamePlayScreen() {
   }
 
   if (forestBgActive) {
-    // Draw the forest sequence backdrop at 90% opacity, y from 0 to 160
+    // Draw the forest sequence backdrop at 90% opacity, y from 0 to 360 (split)
     ctx.save();
     ctx.globalAlpha = 0.90;
-    const targetW = 720;
-    const bgDrawX = 320 - targetW / 2 + bgOffsetX;
-    ctx.drawImage(bgImg, bgDrawX, 0, targetW, 160);
+    const targetW = 1800; // Expanded to cover 1600 width with panning space
+    const bgDrawX = 800 - targetW / 2 + bgOffsetX;
+    ctx.drawImage(bgImg, bgDrawX, 0, targetW, 360);
     ctx.restore();
 
-    // 1a. Procedural Glowing Red Eyes (strictly within woods zone)
+    // 1a. Procedural Glowing Red Eyes (strictly within woods zone y: [0, 360])
     forestEyes.forEach(eye => {
       if (eye.opacity > 0) {
-        // Map 640x400 space onto the top 160px with parallax
-        const ex = bgDrawX + (eye.x / 640) * targetW;
-        const ey = (eye.y / 400) * 160; // Constrained strictly within [0, 160]!
+        // Map 1600x900 space onto the top 360px with parallax
+        const ex = bgDrawX + (eye.x / 1600) * targetW;
+        const ey = (eye.y / 900) * 360; // Constrained strictly within [0, 360]!
         
         ctx.save();
         const pulseAmt = Math.sin(eye.pulse) * 0.15 + 0.85;
@@ -3532,11 +3626,11 @@ function drawGamePlayScreen() {
       }
     });
 
-    // 1b. Procedural Drifting Volumetric Fog (strictly within woods zone)
+    // 1b. Procedural Drifting Volumetric Fog (strictly within woods zone y: [0, 360])
     forestFogParticles.forEach(f => {
       ctx.save();
-      const fx = bgDrawX + (f.x / 640) * targetW;
-      const fy = (f.y / 400) * 160; // Constrained strictly within [0, 160]!
+      const fx = bgDrawX + (f.x / 1600) * targetW;
+      const fy = (f.y / 900) * 360; // Constrained strictly within [0, 360]!
       
       const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, f.radius);
       grad.addColorStop(0, `rgba(45, 60, 52, ${f.opacity})`);
@@ -3550,7 +3644,7 @@ function drawGamePlayScreen() {
       ctx.restore();
     });
 
-    // Draw the tiled grass/dirt floor ONLY in rows 4 to 9 (y from 160 to 400)
+    // Draw the tiled grass/dirt floor ONLY in rows 9 to 22 (y from 360 to 920)
     const tileSize = 40;
     let allTerrainLoaded = true;
     Object.values(TerrainTiles).forEach(img => {
@@ -3558,7 +3652,7 @@ function drawGamePlayScreen() {
     });
 
     if (allTerrainLoaded && terrainMap.length > 0) {
-      for (let r = 4; r < mapRows; r++) {
+      for (let r = 9; r < mapRows; r++) {
         for (let c = 0; c < mapCols; c++) {
           const tileKey = terrainMap[r][c];
           const img = TerrainTiles[tileKey];
@@ -3566,16 +3660,16 @@ function drawGamePlayScreen() {
         }
       }
       
-      // Grid lines for bottom 60%
+      // Grid lines for bottom 60% (from 360 y-split boundary)
       ctx.strokeStyle = "rgba(22, 17, 13, 0.18)";
       ctx.lineWidth = 0.5;
       for (let x = 0; x < canvas.width; x += tileSize) {
         ctx.beginPath();
-        ctx.moveTo(x, 160);
+        ctx.moveTo(x, 360);
         ctx.lineTo(x, canvas.height);
         ctx.stroke();
       }
-      for (let y = 160; y < canvas.height; y += tileSize) {
+      for (let y = 360; y < canvas.height; y += tileSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
@@ -3584,16 +3678,16 @@ function drawGamePlayScreen() {
     } else {
       // Vector fallback grid for bottom 60%
       ctx.fillStyle = "#2d3c34"; // Dark forest green floor
-      ctx.fillRect(0, 160, canvas.width, canvas.height - 160);
+      ctx.fillRect(0, 360, canvas.width, canvas.height - 360);
       ctx.strokeStyle = "rgba(22, 17, 13, 0.3)";
       ctx.lineWidth = 1;
       for (let x = 0; x < canvas.width; x += tileSize) {
         ctx.beginPath();
-        ctx.moveTo(x, 160);
+        ctx.moveTo(x, 360);
         ctx.lineTo(x, canvas.height);
         ctx.stroke();
       }
-      for (let y = 160; y < canvas.height; y += tileSize) {
+      for (let y = 360; y < canvas.height; y += tileSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
@@ -3665,26 +3759,27 @@ function drawGamePlayScreen() {
   // 6. Render Particle animations
   drawParticles();
 
-  // 6.5 Render Foreground Canopy Parallax Layer (anchored strictly at the top 90px, at 90% opacity)
+  // 6.5 Render Foreground Canopy Parallax Layer (anchored strictly at the top 200px, at 90% opacity)
   if (canopyImg.complete && canopyImg.naturalWidth > 0) {
-    const targetCanopyW = 760;
-    const canopyOffsetX = -(player.x - 320) * 0.20;
-    const canopyDrawX = 320 - targetCanopyW / 2 + canopyOffsetX;
+    const targetCanopyW = 2000;
+    const canopyOffsetX = -(player.x - 800) * 0.20;
+    const canopyDrawX = 800 - targetCanopyW / 2 + canopyOffsetX;
     
     ctx.save();
     ctx.globalAlpha = 0.90; // Solid 90% opacity!
-    ctx.drawImage(canopyImg, canopyDrawX, 0, targetCanopyW, 90);
+    ctx.drawImage(canopyImg, canopyDrawX, 0, targetCanopyW, 200);
     ctx.restore();
   }
 
-  // 7. Render Epic Boss Health Bar if activeApeBoss is alive!
+  // 7. Render Epic Boss Health Bar if activeApeBoss is alive! (Repositioned to very bottom center, translucent 45% alpha)
   if (activeApeBoss && activeApeBoss.hp > 0 && !activeApeBoss.isDead) {
     ctx.save();
+    ctx.globalAlpha = 0.45; // Sleek 45% translucent alpha overlay
     
-    const barX = 120;
-    const barY = 25;
-    const barW = 400;
-    const barH = 12;
+    const barW = 800;
+    const barH = 20;
+    const barX = (canvas.width - barW) / 2;
+    const barY = canvas.height - 60; // Placed at the very bottom center
     
     // Draw background panel
     ctx.fillStyle = "rgba(10, 8, 5, 0.75)";
@@ -3718,16 +3813,14 @@ function drawGamePlayScreen() {
     
     // Draw name and subtitle
     ctx.fillStyle = "#fbbf24";
-    ctx.font = "bold 9px Cinzel";
+    ctx.font = "bold 15px Cinzel";
     ctx.textAlign = "center";
     
     const subtitle = activeApeBoss.introActive ? "🚨 PREPARING DESTRUCTION..." : (activeApeBoss.enraged ? "🔥 ENRAGED BOSS COMBOS ACTIVE! 🔥" : "Wielder of Seismic Slams");
-    ctx.fillText(`OLE-APE PILLAR DEMON - ${subtitle}`, canvas.width / 2, barY - 6);
+    ctx.fillText(`OLE-APE PILLAR DEMON - ${subtitle}`, canvas.width / 2, barY - 8);
     
     ctx.restore();
   }
-
-  ctx.restore();
 
   // 8. Render full-screen red damage vignette if damageFlashIntensity > 0
   if (damageFlashIntensity > 0) {
@@ -3750,6 +3843,8 @@ function drawGamePlayScreen() {
     
     ctx.restore();
   }
+
+  ctx.restore();
 }
 
 function drawPlayerCharacter() {
@@ -3924,11 +4019,11 @@ function drawLevelUpScreen() {
   ctx.fillText("Select a stat to level up. Or spend 10 Exalted Orbs for a double boost!", canvas.width / 2, 80);
   
   // 4. Draw Cards
-  const cardW = 160;
-  const cardH = 220;
-  const y = 110;
-  const spacing = 30;
-  const startX = (640 - (3 * cardW + 2 * spacing)) / 2;
+  const cardW = 240;
+  const cardH = 340;
+  const y = 280;
+  const spacing = 50;
+  const startX = (1600 - (3 * cardW + 2 * spacing)) / 2;
   
   for (let i = 0; i < levelUpChoices.length; i++) {
     const choice = levelUpChoices[i];
@@ -3951,22 +4046,22 @@ function drawLevelUpScreen() {
     ctx.strokeRect(x, y, cardW, cardH);
     
     // Card Icon / Title
-    ctx.font = "28px Arial";
-    ctx.fillText(choice.icon, x + cardW / 2, y + 45);
+    ctx.font = "40px Arial";
+    ctx.fillText(choice.icon, x + cardW / 2, y + 60);
     
     ctx.fillStyle = isHovered ? "#fff" : "#fbbf24";
-    ctx.font = "bold 13px Cinzel";
-    ctx.fillText(choice.title, x + cardW / 2, y + 80);
+    ctx.font = "bold 18px Cinzel";
+    ctx.fillText(choice.title, x + cardW / 2, y + 115);
     
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "9px Inter";
-    ctx.fillText(choice.desc, x + cardW / 2, y + 102);
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = "13px Inter";
+    ctx.fillText(choice.desc, x + cardW / 2, y + 150);
     
     // 5. Draw Standard Option Button
-    const btnStdX = x + 15;
-    const btnStdY = y + 120;
-    const btnStdW = cardW - 30;
-    const btnStdH = 32;
+    const btnStdX = x + 20;
+    const btnStdY = y + 190;
+    const btnStdW = cardW - 40;
+    const btnStdH = 45;
     
     const isHoveredStd = (mousePos.x >= btnStdX && mousePos.x <= btnStdX + btnStdW && mousePos.y >= btnStdY && mousePos.y <= btnStdY + btnStdH);
     ctx.fillStyle = isHoveredStd ? "rgba(16, 185, 129, 0.25)" : "rgba(0,0,0,0.5)";
@@ -3976,14 +4071,14 @@ function drawLevelUpScreen() {
     ctx.strokeRect(btnStdX, btnStdY, btnStdW, btnStdH);
     
     ctx.fillStyle = isHoveredStd ? "#34d399" : "#a7f3d0";
-    ctx.font = "bold 9.5px Cinzel";
-    ctx.fillText(`STANDARD: ${choice.standard}`, btnStdX + btnStdW / 2, btnStdY + 20);
+    ctx.font = "bold 14px Cinzel";
+    ctx.fillText(`STANDARD: ${choice.standard}`, btnStdX + btnStdW / 2, btnStdY + 28);
     
     // 6. Draw Exalted Option Button
-    const btnExX = x + 15;
-    const btnExY = y + 165;
-    const btnExW = cardW - 30;
-    const btnExH = 35;
+    const btnExX = x + 20;
+    const btnExY = y + 255;
+    const btnExW = cardW - 40;
+    const btnExH = 50;
     
     const hasExalts = (playerStash.exalted >= 10);
     const isHoveredEx = (hasExalts && mousePos.x >= btnExX && mousePos.x <= btnExX + btnExW && mousePos.y >= btnExY && mousePos.y <= btnExY + btnExH);
@@ -4001,17 +4096,17 @@ function drawLevelUpScreen() {
     
     if (hasExalts) {
       ctx.fillStyle = isHoveredEx ? "#fff" : "#fdba74";
-      ctx.font = "bold 9.5px Cinzel";
-      ctx.fillText(`EXALTED: ${choice.exalted}`, btnExX + btnExW / 2, btnExY + 15);
+      ctx.font = "bold 14px Cinzel";
+      ctx.fillText(`EXALTED: ${choice.exalted}`, btnExX + btnExW / 2, btnExY + 22);
       ctx.fillStyle = "#fbbf24";
-      ctx.font = "bold 8px Inter";
-      ctx.fillText("COSTS 10 👑 ORBS", btnExX + btnExW / 2, btnExY + 27);
+      ctx.font = "bold 11px Inter";
+      ctx.fillText("COSTS 10 👑 ORBS", btnExX + btnExW / 2, btnExY + 38);
     } else {
       ctx.fillStyle = "#6b7280";
-      ctx.font = "bold 9.5px Cinzel";
-      ctx.fillText("EXALTED LOCKED", btnExX + btnExW / 2, btnExY + 15);
-      ctx.font = "8px Inter";
-      ctx.fillText(`NEEDS 10 👑 (HAVE ${playerStash.exalted})`, btnExX + btnExW / 2, btnExY + 26);
+      ctx.font = "bold 14px Cinzel";
+      ctx.fillText("EXALTED LOCKED", btnExX + btnExW / 2, btnExY + 22);
+      ctx.font = "11px Inter";
+      ctx.fillText(`NEEDS 10 👑 (HAVE ${playerStash.exalted})`, btnExX + btnExW / 2, btnExY + 37);
     }
   }
   
@@ -4022,6 +4117,26 @@ function drawLevelUpScreen() {
 // ==========================================================================
 // 11. GAME LOOPS MANAGERS & RESETS
 // ==========================================================================
+
+// Gothic glassmorphic pause screen overlay drawing
+function drawPauseOverlay() {
+  ctx.save();
+  // Semi-transparent overlay to darken play area
+  ctx.fillStyle = "rgba(10, 8, 6, 0.75)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Imposing Red/Gold Pause Header
+  ctx.fillStyle = "#fbbf24";
+  ctx.font = "bold 44px Cinzel";
+  ctx.textAlign = "center";
+  ctx.fillText("GRIND TEMPORARILY SUSPENDED", canvas.width / 2, canvas.height / 2 - 40);
+  
+  // Retro secondary message
+  ctx.fillStyle = "#cbd5e1";
+  ctx.font = "bold 22px Cinzel";
+  ctx.fillText("PRESS 'P' OR CLICK RESUME TO AWAKEN", canvas.width / 2, canvas.height / 2 + 20);
+  ctx.restore();
+}
 
 function updateGame() {
   // Update music crossfading volumes on every frame across all states
@@ -4035,39 +4150,46 @@ function updateGame() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     ctx.fillStyle = varColorText("--gold-hover", "#ffd700");
-    ctx.font = "bold 22px Cinzel";
+    ctx.font = "bold 38px Cinzel";
     ctx.textAlign = "center";
-    ctx.fillText("GLG GUILD ARCADE", canvas.width / 2, 130);
+    ctx.fillText("GLG GUILD ARCADE", canvas.width / 2, 300);
     
     ctx.fillStyle = "#cbd5e1";
-    ctx.font = "10px Inter";
-    ctx.fillText("Defeat spiders and freeze ghosts. Survive the giant slam monkey's pillar of doom!", canvas.width / 2, 165);
+    ctx.font = "16px Inter";
+    ctx.fillText("Defeat spiders and freeze ghosts. Survive the giant slam monkey's pillar of doom!", canvas.width / 2, 360);
     ctx.fillStyle = varColorText("--gold-faded", "#b8860b");
-    ctx.fillText("All collected currencies dynamically stack inside your Stash Tab. Score = Net Worth!", canvas.width / 2, 185);
+    ctx.fillText("All collected currencies dynamically stack inside your Stash Tab. Score = Net Worth!", canvas.width / 2, 400);
     
     ctx.fillStyle = "#fff8d4";
-    ctx.font = "bold 11px Cinzel";
-    ctx.fillText("TAP OR PRESS WASD KEYS TO AWAKEN", canvas.width / 2, 260);
+    ctx.font = "bold 20px Cinzel";
+    ctx.fillText("TAP OR PRESS WASD KEYS TO AWAKEN", canvas.width / 2, 550);
   } 
   else if (currentGameState === GameState.PLAY) {
-    // Inputs & Combat triggers
-    handleInput();
-    executePlayerAutoShooting();
-    handleEnemySpawning();
-    
-    // Physics and updates
-    processGamePhysics();
-    
-    // Player Sprite Animation Tick
-    playerAnimTick++;
-    if (playerAnimTick >= 6) {
-      playerAnimTick = 0;
-      playerAnimFrame = (playerAnimFrame + 1) % 8;
+    if (gamePaused) {
+      // Freeze active updates but keep rendering background scenes and overlays
+      drawGamePlayScreen();
+      drawHUD();
+      drawPauseOverlay();
+    } else {
+      // Inputs & Combat triggers
+      handleInput();
+      executePlayerAutoShooting();
+      handleEnemySpawning();
+      
+      // Physics and updates
+      processGamePhysics();
+      
+      // Player Sprite Animation Tick
+      playerAnimTick++;
+      if (playerAnimTick >= 6) {
+        playerAnimTick = 0;
+        playerAnimFrame = (playerAnimFrame + 1) % 8;
+      }
+      
+      // Draw scenes
+      drawGamePlayScreen();
+      drawHUD();
     }
-    
-    // Draw scenes
-    drawGamePlayScreen();
-    drawHUD();
   } 
   else if (currentGameState === GameState.LEVEL_UP) {
     drawGamePlayScreen();
@@ -4095,6 +4217,13 @@ function varColorText(cssVar, fallback) {
 }
 
 function resetGame() {
+  gamePaused = false;
+  const btnPause = document.getElementById("btnPauseGame");
+  if (btnPause) {
+    btnPause.innerHTML = "⏸️ PAUSE";
+    btnPause.classList.remove("active-pause");
+  }
+
   // Reset and pause music tracks safely
   try { bgMusic.pause(); } catch(e){}
   try { bossMusic.pause(); } catch(e){}
@@ -4340,14 +4469,22 @@ window.addEventListener("keydown", (e) => {
     return;
   }
 
+  if (e.key === "p" || e.key === "P") {
+    e.preventDefault();
+    toggleGamePause();
+    return;
+  }
+
   if (e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
+    if (gamePaused) return;
     triggerPlayerDodgeRoll();
     return;
   }
   
   if (e.key === "e" || e.key === "E") {
     e.preventDefault();
+    if (gamePaused) return;
     triggerPlayerSpreadshot();
     return;
   }
@@ -4497,13 +4634,18 @@ function animateKeybindPreviews() {
 let animationsEnabled = true;
 
 function loadAnimationsPreference() {
-  try {
-    const saved = localStorage.getItem("GLG_ANIMATIONS_ENABLED");
-    if (saved !== null) {
-      animationsEnabled = saved === "true";
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth <= 1024);
+  if (isMobile) {
+    animationsEnabled = false; // Disable heavy loops on mobile by default!
+  } else {
+    try {
+      const saved = localStorage.getItem("GLG_ANIMATIONS_ENABLED");
+      if (saved !== null) {
+        animationsEnabled = saved === "true";
+      }
+    } catch (e) {
+      console.error(e);
     }
-  } catch (e) {
-    console.error(e);
   }
   updateAnimationsState();
 }
@@ -4562,6 +4704,110 @@ function toggleAnimations() {
   animationsEnabled = !animationsEnabled;
   saveAnimationsPreference();
   updateAnimationsState();
+}
+
+// Pause game engine state toggler
+function toggleGamePause() {
+  if (currentGameState !== GameState.PLAY) return;
+  gamePaused = !gamePaused;
+  const btnPause = document.getElementById("btnPauseGame");
+  if (btnPause) {
+    btnPause.innerHTML = gamePaused ? "▶️ RESUME" : "⏸️ PAUSE";
+    btnPause.classList.toggle("active-pause", gamePaused);
+  }
+  
+  // Pause/Resume music tracks via global crossfader
+  syncGameMusic();
+}
+
+// Mobile touch joystick setup
+function initVirtualJoystick() {
+  const joystickContainer = document.getElementById("virtualJoystickContainer");
+  const joystickKnob = document.getElementById("joystickKnob");
+  const mobileActionButtons = document.getElementById("mobileActionButtons");
+  
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth <= 1024);
+  
+  if (!isMobile) {
+    if (joystickContainer) joystickContainer.style.display = "none";
+    if (mobileActionButtons) mobileActionButtons.style.display = "none";
+    return;
+  }
+  
+  // Show touch pad and action buttons on mobile touch devices
+  if (joystickContainer) {
+    joystickContainer.style.display = "flex";
+    joystickContainer.classList.remove("hidden");
+  }
+  if (mobileActionButtons) {
+    mobileActionButtons.style.display = "flex";
+    mobileActionButtons.classList.remove("hidden");
+  }
+  
+  if (!joystickContainer || !joystickKnob) return;
+  
+  let rect = joystickContainer.getBoundingClientRect();
+  let centerX = rect.left + rect.width / 2;
+  let centerY = rect.top + rect.height / 2;
+  const maxRadius = 40; // Clamping pixel limit
+  
+  window.addEventListener("resize", () => {
+    rect = joystickContainer.getBoundingClientRect();
+    centerX = rect.left + rect.width / 2;
+    centerY = rect.top + rect.height / 2;
+  });
+  
+  function handleTouchStart(e) {
+    e.preventDefault();
+    rect = joystickContainer.getBoundingClientRect();
+    centerX = rect.left + rect.width / 2;
+    centerY = rect.top + rect.height / 2;
+    joystickActive = true;
+    
+    if (currentGameState === GameState.SELECT) {
+      resetGame();
+    }
+  }
+  
+  function handleTouchMove(e) {
+    if (!joystickActive) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const dx = touch.clientX - centerX;
+    const dy = touch.clientY - centerY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist === 0) {
+      joystickMoveX = 0;
+      joystickMoveY = 0;
+      joystickKnob.style.transform = "translate(0px, 0px)";
+      return;
+    }
+    
+    const clampedDist = Math.min(dist, maxRadius);
+    const angle = Math.atan2(dy, dx);
+    const kx = Math.cos(angle) * clampedDist;
+    const ky = Math.sin(angle) * clampedDist;
+    
+    joystickKnob.style.transform = `translate(${kx}px, ${ky}px)`;
+    
+    // Normalize to [-1, 1] bounds
+    joystickMoveX = dx / dist;
+    joystickMoveY = dy / dist;
+  }
+  
+  function handleTouchEnd(e) {
+    e.preventDefault();
+    joystickActive = false;
+    joystickMoveX = 0;
+    joystickMoveY = 0;
+    joystickKnob.style.transform = "translate(0px, 0px)";
+  }
+  
+  joystickContainer.addEventListener("touchstart", handleTouchStart, { passive: false });
+  joystickContainer.addEventListener("touchmove", handleTouchMove, { passive: false });
+  joystickContainer.addEventListener("touchend", handleTouchEnd, { passive: false });
 }
 
 
@@ -4705,6 +4951,82 @@ function initGameEngine() {
       updateStashTabUI();
     });
   }
+
+  // 6. Pause Button Click Handler
+  const btnPause = document.getElementById("btnPauseGame");
+  if (btnPause) {
+    btnPause.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleGamePause();
+    });
+  }
+
+  // 7. Mobile Action Buttons Click Handlers
+  const btnMobileDodge = document.getElementById("btnMobileDodge");
+  if (btnMobileDodge) {
+    btnMobileDodge.addEventListener("click", (e) => {
+      e.stopPropagation();
+      triggerPlayerDodgeRoll();
+    });
+  }
+  const btnMobileSpread = document.getElementById("btnMobileSpread");
+  if (btnMobileSpread) {
+    btnMobileSpread.addEventListener("click", (e) => {
+      e.stopPropagation();
+      triggerPlayerSpreadshot();
+    });
+  }
+
+  // 8. Pop-out Leaderboard Modal Toggle Bindings
+  const modalLeaderboard = document.getElementById("leaderboardOverlayModal");
+  const btnToggleLboard = document.getElementById("btnToggleLeaderboard");
+  const btnCloseLboard = document.getElementById("btnCloseLeaderboard");
+
+  if (modalLeaderboard) {
+    if (btnToggleLboard) {
+      btnToggleLboard.addEventListener("click", () => {
+        modalLeaderboard.classList.add("modal-active");
+        loadDreamloLeaderboard(); // refresh scores live when opening!
+      });
+    }
+    if (btnCloseLboard) {
+      btnCloseLboard.addEventListener("click", () => {
+        modalLeaderboard.classList.remove("modal-active");
+      });
+    }
+    // Close when clicking dimming backdrop (outside modal-content card)
+    modalLeaderboard.addEventListener("click", (e) => {
+      if (e.target === modalLeaderboard) {
+        modalLeaderboard.classList.remove("modal-active");
+      }
+    });
+  }
+
+  // 9. Dual-mode Leaderboard Tabs Bindings
+  const tabTopRuns = document.getElementById("btnTabTopRuns");
+  const tabTotalGrind = document.getElementById("btnTabTotalGrind");
+
+  if (tabTopRuns) {
+    tabTopRuns.addEventListener("click", (e) => {
+      e.stopPropagation();
+      currentLeaderboardTab = "topRuns";
+      tabTopRuns.classList.add("active-tab");
+      if (tabTotalGrind) tabTotalGrind.classList.remove("active-tab");
+      renderActiveLeaderboard();
+    });
+  }
+  if (tabTotalGrind) {
+    tabTotalGrind.addEventListener("click", (e) => {
+      e.stopPropagation();
+      currentLeaderboardTab = "totalGrind";
+      tabTotalGrind.classList.add("active-tab");
+      if (tabTopRuns) tabTopRuns.classList.remove("active-tab");
+      renderActiveLeaderboard();
+    });
+  }
+
+  // 10. Mobile Touch Virtual Joystick Initialization
+  initVirtualJoystick();
 
   // Generate static grass/dirt terrain floor mapping
   generateTerrainMap();
