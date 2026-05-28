@@ -42,11 +42,6 @@
 
 body {
   background-color: var(--bg-dark);
-  background-image: url('assets/images/backgrounds/GLG_guild-hall_background-image.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   color: #e2e8f0;
   font-family: var(--font-body);
   min-height: 100vh;
@@ -55,6 +50,38 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Video Background & Fallback Overlay Wrapper */
+.background-overlay-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -10; /* Sitting far behind all contents */
+  background-image: url('assets/images/backgrounds/GLG_guild-hall_background-image.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  pointer-events: none;
+}
+
+.bg-video-loop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.bg-video-loop.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Gothic Background & Canvas */
