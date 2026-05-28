@@ -171,6 +171,30 @@ function getProcessedApeImg() {
   // Scale raw image onto the integer-aligned canvas
   ctx.drawImage(rawImg, 0, 0, originalW, originalH, 0, 0, originalW, targetH);
   
+  // Programmatically clean up semi-transparent white/gray halo edges to nix jaggies
+  try {
+    const imgData = ctx.getImageData(0, 0, originalW, targetH);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i+1];
+      const b = data[i+2];
+      const a = data[i+3];
+      
+      // If the pixel is very faint/translucent (alpha < 60), clear it completely
+      if (a < 60) {
+        data[i+3] = 0;
+      }
+      // If it is semi-transparent and close to white/grey, eliminate the border halo glow
+      else if (a < 200 && r > 160 && g > 160 && b > 160) {
+        data[i+3] = 0;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  } catch (e) {
+    console.warn("Could not clean up sprite halos programmatically:", e);
+  }
+  
   processedApeImg = canvas;
   return processedApeImg;
 }

@@ -1519,85 +1519,86 @@ body {
 
 .death-title {
   font-family: 'Cinzel', serif;
-  font-size: 1.6rem; /* Made more compact for vertical fitting */
-  letter-spacing: 3px;
+  font-size: 3.5rem; /* Expanded cinematic size for widescreen viewports */
+  letter-spacing: 6px;
   color: #dc2626;
   text-shadow: 
-    0 0 8px rgba(220, 38, 38, 0.4),
-    0 0 24px rgba(220, 38, 38, 0.8);
-  margin-bottom: 4px; /* Reduced margin */
+    0 0 10px rgba(220, 38, 38, 0.6),
+    0 0 35px rgba(220, 38, 38, 0.95);
+  margin-top: 15px;
+  margin-bottom: 12px;
   animation: deathScaleUp 3s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
   text-transform: uppercase;
   text-align: center;
   max-width: 90%;
-  line-height: 1.25;
+  line-height: 1.15;
 }
 
 @keyframes deathScaleUp {
-  from { transform: scale(0.94); opacity: 0; letter-spacing: 1.5px; }
-  to { transform: scale(1); opacity: 1; letter-spacing: 3px; }
+  from { transform: scale(0.90); opacity: 0; letter-spacing: 2px; }
+  to { transform: scale(1); opacity: 1; letter-spacing: 6px; }
 }
 
 .death-subtitle {
   font-family: var(--font-header);
-  font-size: 0.72rem; /* Compact size */
-  letter-spacing: 3px;
+  font-size: 1.15rem; /* Spacious size */
+  letter-spacing: 6px;
   color: var(--gold-primary);
-  margin-bottom: 4px; /* Reduced margin */
+  margin-bottom: 15px; /* Better margin spacing */
   text-transform: uppercase;
-  text-shadow: 0 1px 3px #000;
+  text-shadow: 0 2px 4px #000;
   opacity: 0;
   animation: fadeIn 1s 1.2s ease forwards;
 }
 
 .death-tax-message {
   font-family: 'Cinzel', serif;
-  font-size: 0.7rem; /* Compact size */
-  letter-spacing: 1px;
-  color: #ef4444; /* bright, warning red */
+  font-size: 0.95rem; /* Clear warning size */
+  letter-spacing: 1.5px;
+  color: #ef4444; /* bright warning red */
   text-shadow: 
-    0 0 5px rgba(239, 68, 68, 0.4),
-    0 0 15px rgba(239, 68, 68, 0.7);
+    0 0 6px rgba(239, 68, 68, 0.5),
+    0 0 18px rgba(239, 68, 68, 0.75);
   margin-top: 0;
-  margin-bottom: 6px; /* Reduced margin */
+  margin-bottom: 15px;
   opacity: 0;
   animation: taxScaleUp 3.2s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
   text-align: center;
   max-width: 90%;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 @keyframes taxScaleUp {
   from { transform: scale(0.94); opacity: 0; letter-spacing: 0.5px; }
-  to { transform: scale(1); opacity: 1; letter-spacing: 1px; }
+  to { transform: scale(1); opacity: 1; letter-spacing: 1.5px; }
 }
 
 .death-tax-breakdown {
   font-family: 'VT323', monospace;
-  font-size: 1.0rem; /* Made more compact for vertical fitting */
+  font-size: 1.25rem; /* Larger monospace elements */
   letter-spacing: 1px;
-  color: #cbd5e1; /* slate light grey */
-  background: rgba(22, 17, 13, 0.8);
-  border: 1px solid rgba(255, 215, 0, 0.15);
-  border-radius: 4px;
-  padding: 4px 10px; /* Reduced padding */
-  margin-bottom: 8px; /* Reduced margin */
+  color: #cbd5e1;
+  background: rgba(22, 17, 13, 0.85);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 6px;
+  padding: 8px 16px;
+  margin-bottom: 16px;
   text-align: center;
   max-width: 85%;
-  width: 420px;
-  line-height: 1.4;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  width: 440px;
+  line-height: 1.45;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.6);
   opacity: 0;
   animation: fadeIn 1s 1.5s ease forwards;
 }
 
 .tax-breakdown-title {
   color: var(--gold-primary);
-  font-size: 0.8rem; /* Made more compact */
+  font-size: 0.95rem;
   font-weight: bold;
   letter-spacing: 1px;
   display: inline-block;
-  margin-bottom: 0px; /* Reduced margin */
+  margin-bottom: 4px;
 }
 
 
@@ -1606,13 +1607,13 @@ body {
   background: rgba(15, 11, 8, 0.95);
   border: 1px solid var(--gold-primary);
   border-radius: var(--border-radius-gothic);
-  padding: 8px 15px; /* Reduced padding vertically from 20px */
+  padding: 12px 20px;
   width: 85%;
-  max-width: 420px;
+  max-width: 440px;
   box-shadow: 
     0 10px 20px rgba(0,0,0,0.8),
     inset 0 0 8px rgba(0,0,0,0.9);
-  margin-bottom: 8px; /* Reduced margin vertically from 25px */
+  margin-bottom: 15px;
   text-align: center;
   opacity: 0;
   animation: fadeIn 1s 1.8s ease forwards;
@@ -1743,8 +1744,9 @@ body {
 
 .stash-grid-visualizer {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  display: grid !important;
+  grid-template-columns: repeat(12, 1fr) !important;
+  grid-template-rows: repeat(12, 1fr) !important;
   gap: 0px !important; /* Zero gap to align perfectly with wood frame grid windows */
   background-color: #0b0806 !important; /* Rich dark wooden interior background */
   border: none !important; /* Let the wood frame asset's borders frame the grid! */
@@ -1753,10 +1755,10 @@ body {
   border-radius: 6px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85);
   overflow: hidden;
-  width: 100%;
-  max-width: 380px;
-  margin: 0 auto;
-  aspect-ratio: 1;
+  width: 82% !important;       /* Shrink and center outer borders to match panel layout */
+  height: 78% !important;      
+  margin: 11% auto 0 auto !important; /* Push down past the top header elements */
+  aspect-ratio: 1 !important; /* Lock to perfect square aspect ratio */
 }
 
 /* Layer the wooden frame asset on top of the grid elements! Clicks will pass through. */
