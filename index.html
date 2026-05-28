@@ -134,15 +134,37 @@
       </div>
       <p class="subtitle text-gold-faded center-text">Defeat hordes of Wraeclast monsters, loot currency, and fill your guild stash!</p>
       
-      <!-- Character Selection & Controls -->
+      <!-- Character Selection & Controls Plaque -->
       <div class="arcade-controls-row">
         <div class="class-selector">
-          <span class="text-gold-faded">CHOOSE YOUR EXILE:</span>
-          <!-- <button class="gothic-btn" id="btnSelectWitch">🧙‍♀️ WITCH (Spark)</button> -->
+          <span class="text-gold-faded font-cinzel">CHOOSE YOUR EXILE:</span>
           <button class="gothic-btn active-class" id="btnSelectRanger">🏹 RANGER (Split Arrow)</button>
         </div>
-        <div class="game-instructions text-gold-faded" style="font-size: 8.5px; line-height: 1.4;">
-          ⌨️ Move: <strong>WASD / Arrow Keys</strong> | 🌀 Dodge Roll: <strong>Spacebar (1s CD)</strong> | 🏹 Spreadshot: <strong>E Key (1.5s CD)</strong> | 🔇 <button id="btnToggleMute" class="mute-btn border-gold" style="padding: 1px 4px; font-size: 8px;">SOUND: ON</button>
+        
+        <div class="game-instructions-plaque border-gold">
+          <div class="keybind-list">
+            <div class="keybind-item">
+              <div class="kb-canvas-container">
+                <canvas id="kbMoveCanvas" width="48" height="48"></canvas>
+              </div>
+              <span class="kb-text">⌨️ Move: <strong>WASD / Arrows</strong></span>
+            </div>
+            <div class="keybind-item">
+              <div class="kb-canvas-container">
+                <canvas id="kbRollCanvas" width="48" height="48"></canvas>
+              </div>
+              <span class="kb-text">🌀 Dodge: <strong>Space (1s CD)</strong></span>
+            </div>
+            <div class="keybind-item">
+              <div class="kb-canvas-container">
+                <canvas id="kbShootCanvas" width="48" height="48"></canvas>
+              </div>
+              <span class="kb-text">🏹 Spread: <strong>E Key (1.5s CD)</strong></span>
+            </div>
+          </div>
+          <div class="mute-container">
+            🔇 <button id="btnToggleMute" class="mute-btn border-gold" style="font-size: 8.5px; padding: 2px 6px;">SOUND: ON</button>
+          </div>
         </div>
       </div>
 
@@ -230,7 +252,7 @@
           <div class="stein-ale-container">
             <button id="btnSteinAle" class="gothic-btn border-gold stein-btn">
               <div class="stein-canvas-container">
-                <canvas id="steinCanvas" width="64" height="57"></canvas>
+                <canvas id="steinCanvas" width="128" height="114"></canvas>
               </div>
               <span class="stein-text-content">DRINK GUILD ALE</span>
               <span class="stein-subtext">(Click to add Blur Challenge! Stacks up to 3x)</span>

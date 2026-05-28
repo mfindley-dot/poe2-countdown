@@ -1118,6 +1118,7 @@ document.addEventListener("DOMContentLoaded", () => {
       
       // Draw slice accurately
       if (mugSpritesheet.complete && mugSpritesheet.naturalWidth > 0) {
+        steinCtx.imageSmoothingEnabled = false;
         steinCtx.drawImage(
           mugSpritesheet,
           srcX, srcY,

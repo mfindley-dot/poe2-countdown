@@ -40,6 +40,11 @@
 
 body {
   background-color: var(--bg-dark);
+  background-image: url('assets/images/backgrounds/GLG_guild-hall_background-image.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: #e2e8f0;
   font-family: var(--font-body);
   min-height: 100vh;
@@ -57,7 +62,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1; /* Render behind boxes and interactive buttons to prevent occlusion overflows */
+  z-index: 998; /* Render in front of boxes and interactive buttons to float click explosions on top! */
   pointer-events: none;
 }
 
@@ -69,14 +74,13 @@ body {
   max-width: 1280px;
   margin: 40px auto;
   padding: 30px;
-  background: radial-gradient(circle at center, hsla(20, 10%, 12%, 0.9) 0%, hsla(20, 12%, 5%, 0.98) 100%);
-  border: 2px solid var(--gold-primary);
+  background: radial-gradient(circle at center, hsla(20, 10%, 10%, 0.88) 0%, hsla(20, 12%, 4%, 0.96) 100%);
+  border: 2px solid #27221e; /* Heavy hand-hammered rustic dark iron plate border */
   border-radius: var(--border-radius-gothic);
   box-shadow: 
-    0 0 25px rgba(0, 0, 0, 0.8),
-    inset 0 0 20px rgba(0, 0, 0, 0.9),
-    0 0 0 4px #000,
-    0 0 15px var(--gold-glow);
+    0 0 35px rgba(0, 0, 0, 0.95),
+    inset 0 0 25px rgba(0, 0, 0, 0.92),
+    0 0 0 4px #120f0d; /* rustic dark spacing divider */
   overflow: hidden;
   backdrop-filter: blur(8px);
   filter: blur(var(--site-blur, 0px));
@@ -98,8 +102,7 @@ body {
   object-fit: contain;
   margin: -15px auto 10px; /* negative top margin to hang chains from the top! */
   display: block;
-  filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4));
-  animation: pulseGlow 4s ease-in-out infinite;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.7)); /* clean silhouette wood drop-shadow tracing actual outline! */
 }
 
 .app-header::after {
@@ -1918,13 +1921,14 @@ body {
 }
 
 .arcade-logo-img {
-  max-width: 500px;
-  width: 90%;
+  max-width: 640px; /* expanded to fill the game column viewport width completely! */
+  width: 100%;
   height: auto;
-  max-height: 120px;
+  max-height: 180px; /* taller bounds to prevent clamping down scale */
   object-fit: contain;
-  filter: drop-shadow(0 0 16px rgba(212, 175, 55, 0.28));
-  animation: pulseGlow 5s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 14px rgba(217, 119, 6, 0.28)); /* rustic wood shadow + golden-orange silhouette outline glow! */
+  display: block;
+  margin: 0 auto;
 }
 
 /* Wrapper for viewport and button so they stack in left grid column */
@@ -1988,8 +1992,8 @@ body {
 }
 
 .stein-canvas-container {
-  width: 64px;
-  height: 57px;
+  width: 128px;
+  height: 114px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2028,6 +2032,74 @@ body {
 
 .stein-btn.drinking-active .stein-text-content {
   color: #f97316;
+}
+
+/* Gothic Control Keybinds Plaque styling */
+.game-instructions-plaque {
+  background: linear-gradient(180deg, #1f140a 0%, #0d0804 100%);
+  border: 1.5px solid var(--gold-faded);
+  padding: 6px 15px;
+  border-radius: var(--border-radius-gothic);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  box-shadow: 
+    0 6px 15px rgba(0,0,0,0.6),
+    inset 0 1px 3px rgba(217, 119, 6, 0.15),
+    0 0 0 3px #000;
+  width: 100%;
+}
+
+.keybind-list {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+}
+
+.keybind-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kb-canvas-container {
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid rgba(217, 119, 6, 0.35);
+  background: rgba(0, 0, 0, 0.65);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.95);
+  overflow: hidden;
+}
+
+.kb-canvas-container canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  width: 36px;
+  height: 36px;
+}
+
+.kb-text {
+  font-size: 10px;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.8px;
+  color: #cbd5e1;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.kb-text strong {
+  color: #fbbf24;
+}
+
+.mute-container {
+  display: flex;
+  align-items: center;
+  font-family: 'Cinzel', serif;
 }
 
 /* Ensure wrapper takes 100% column space under responsive media queries */
