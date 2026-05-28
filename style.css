@@ -20,9 +20,11 @@
   --mana-glow: hsla(215, 100%, 50%, 0.4);
   
   --border-radius-gothic: 4px;
-  --font-header: 'VT323', monospace;
-  --font-header-deco: 'Press Start 2P', monospace;
+  --font-header: 'Cinzel', serif;
+  --font-header-deco: 'Cinzel', serif;
   --font-body: 'Inter', sans-serif;
+  --font-pixel: 'VT323', monospace;
+  --font-pixel-deco: 'Press Start 2P', monospace;
   
   --transition-speed: 0.3s;
 }
@@ -1698,8 +1700,8 @@ body {
 
 /* Ghosted empty slot icon styling */
 .stash-image-icon.ghosted-icon {
-  width: 82%;
-  height: 82%;
+  width: 95%;
+  height: 95%;
   object-fit: contain;
   filter: grayscale(100%) opacity(0.18) brightness(0.6); /* Translucent and desaturated ghost */
   image-rendering: pixelated;
@@ -1707,8 +1709,8 @@ body {
 }
 
 .stash-image-icon {
-  width: 82%;
-  height: 82%;
+  width: 95%;
+  height: 95%;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.75));
   transition: transform var(--transition-speed);
@@ -1716,7 +1718,7 @@ body {
 }
 
 .stash-grid-cell:hover .stash-image-icon {
-  transform: scale(1.15) rotate(2deg);
+  transform: scale(1.08) rotate(1deg); /* Softened slightly since it fits tightly in slot */
 }
 
 .stash-icon {
@@ -1732,16 +1734,18 @@ body {
 
 .stash-count {
   position: absolute;
-  bottom: 0px;
-  right: 2px;
-  font-size: 0.5rem;
-  font-weight: 900;
-  color: #ffd700;
+  top: 1px;
+  left: 2px;
+  font-size: 0.58rem; /* slightly larger for readability in top-left */
+  font-weight: bold;
+  color: #fff !important; /* Authentic PoE white numbers! */
   text-shadow: 
-    -1px -1px 0 #000,  
-     1px -1px 0 #000,
-    -1px  1px 0 #000,
-     1px  1px 0 #000;
+    -1.5px -1.5px 0 #000,  
+     1.5px -1.5px 0 #000,
+    -1.5px  1.5px 0 #000,
+     1.5px  1.5px 0 #000;
+  z-index: 3; /* Sit in front of the wood overlay frame at z-index: 2! */
+  pointer-events: none;
 }
 
 .stash-summary {
@@ -2267,3 +2271,28 @@ body {
   mix-blend-mode: screen; /* gorgeous celestial overlay blending the space cat inner stardust into the dark forest! */
 }
 
+/* ==========================================================================
+   SCOPED 16-BIT RETRO THEME FOR ARCADE MINIGAME
+   ========================================================================== */
+
+/* 16-Bit Pixel Fonts exclusively inside the Arcade Section */
+.arcade-section,
+.arcade-section button,
+.arcade-section select,
+.arcade-section input,
+.arcade-section .font-16bit {
+  font-family: var(--font-pixel) !important;
+}
+
+/* Selective chunkier 16-bit fonts for titles, badges, and primary buttons in arcade */
+.arcade-section .panel-title,
+.arcade-section .stash-header .text-gold,
+.arcade-section .class-selector span,
+.arcade-section #btnToggleLabels,
+.arcade-section #btnToggleMute,
+.arcade-section #instructionsScreen h3,
+.arcade-section #btnShowInstructions,
+.arcade-section #btnStartArcadeGame {
+  font-family: var(--font-pixel-deco) !important;
+  letter-spacing: 1px;
+}
