@@ -580,7 +580,7 @@ body {
   background: var(--bg-panel);
   border: 1px solid var(--gold-primary);
   border-radius: var(--border-radius-gothic);
-  padding: 20px 40px;
+  padding: 15px 30px;
   text-align: center;
   box-shadow: 
     0 10px 30px rgba(0, 0, 0, 0.6),
@@ -591,6 +591,12 @@ body {
   max-width: 480px;
   width: 100%;
   backdrop-filter: blur(2.5px); /* tuned background blur down considerably */
+  min-height: 180px; /* Lock height of card to prevent layout shifting */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .countdown-main-card::before {
@@ -609,7 +615,7 @@ body {
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .clock-display {
@@ -622,20 +628,22 @@ body {
   font-weight: 800;
   color: #fff;
   letter-spacing: 1px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
 .time-block {
-  display: inline-block;
-  min-width: 65px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px; /* Lock block width */
+  height: 40px; /* Lock block height */
   background: rgba(0, 0, 0, 0.4);
-  padding: 6px 4px;
   border-radius: 4px;
   border: 1px solid rgba(212, 175, 55, 0.15);
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
   color: #f8fafc;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: var(--font-header); /* Use Cinzel gothic header */
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
@@ -645,12 +653,13 @@ body {
   color: var(--gold-faded);
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  margin-top: 10px;
+  margin-top: 5px;
   font-weight: bold;
-  min-height: 34px;
+  height: 42px; /* Lock height of quote box completely for 3 lines of text! */
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 /* Bottom Shelf Panels: Soundboard & Patch Notes */
