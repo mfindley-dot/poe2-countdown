@@ -3380,13 +3380,61 @@ function processGamePhysics() {
   }
 }
 
+function applyDeathTax() {
+  let hasTaxedAny = false;
+  let taxedDetails = [];
+
+  Object.keys(CURRENCY_CONFIG).forEach(key => {
+    const qty = playerStash[key] || 0;
+    if (qty > 0) {
+      let tax = 0;
+      if (key === "divine" || key === "mirror") {
+        tax = qty < 5 ? 0 : 1;
+      } else {
+        tax = Math.floor(qty * 0.15);
+      }
+      
+      if (tax > 0) {
+        playerStash[key] -= tax;
+        lifetimeStash[key] = Math.max(0, lifetimeStash[key] - tax);
+        hasTaxedAny = true;
+        const conf = CURRENCY_CONFIG[key];
+        // Use clean style colors from our currency configuration for standard display
+        const dispColor = (key === "scroll" || key === "transmute" || key === "augmentation") ? "#cbd5e1" : (conf.color || "#fff");
+        taxedDetails.push(`<span style="color: ${dispColor}; font-weight: bold;">${tax}x ${conf.name}</span>`);
+      }
+    }
+  });
+
+  if (hasTaxedAny) {
+    saveLifetimeStash();
+    updateStashTabUI();
+  }
+  
+  return taxedDetails;
+}
+
 function handlePlayerDeath() {
   currentGameState = GameState.GAMEOVER;
   
+  // Calculate and apply death tax immediately
+  const taxedDetails = applyDeathTax();
+  const breakdownEl = document.getElementById("deathTaxBreakdown");
+  if (breakdownEl) {
+    if (taxedDetails.length > 0) {
+      breakdownEl.innerHTML = `<span class="tax-breakdown-title">⚖️ CREG'S REVENUE COLLECTION (15% TAX):</span><br>` + taxedDetails.join(" | ");
+      breakdownEl.classList.remove("hidden");
+    } else {
+      breakdownEl.innerHTML = `<span class="tax-breakdown-title">🛡️ NO LOOT TO TAX... THIS TIME.</span>`;
+      breakdownEl.classList.remove("hidden");
+    }
+  }
+
   // Stop all active loop music immediately safely
   try { bgMusic.pause(); } catch(e){}
   try { bossMusic.pause(); } catch(e){}
   try { if (typeof bankerMusic !== "undefined") bankerMusic.pause(); } catch(e){}
+
   
   // Choose random Dark Souls death messages
   const deathMessages = [
@@ -4061,6 +4109,13 @@ function resetGame() {
 
   // Clear live banker deduction tally
   bankerDeductedChaosThisRun = 0;
+
+  // Hide the death tax breakdown on reset
+  const breakdownEl = document.getElementById("deathTaxBreakdown");
+  if (breakdownEl) {
+    breakdownEl.classList.add("hidden");
+    breakdownEl.innerHTML = "";
+  }
 
   // Clear entities
   projectiles = [];
