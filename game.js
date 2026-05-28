@@ -33,12 +33,27 @@ const PICKUP_SOUND_COOLDOWN = 150;
 const bgMusic = new Audio("music/the-grind-begins.mp3");
 const bossMusic = new Audio("music/monkey-boss-smash.mp3");
 const bankerMusic = new Audio("music/banker-stash-dash.mp3");
+const tavernMusic = new Audio("music/GLG_tavern_theme.mp3");
+
 bgMusic.loop = true;
 bossMusic.loop = true;
 bankerMusic.loop = true;
-bgMusic.volume = 0.28;  // balanced background volume
-bossMusic.volume = 0.32; // slightly louder for boss fight intensity
-bankerMusic.volume = 0.35; // bouncy beat for the loot dash chase!
+tavernMusic.loop = true;
+
+// Music Mute and Crossfading States
+let musicMuted = false;
+const maxVolumes = {
+  tavern: 0.35,
+  bg: 0.28,
+  boss: 0.32,
+  banker: 0.35
+};
+const currentVolumes = {
+  tavern: 0.0,
+  bg: 0.0,
+  boss: 0.0,
+  banker: 0.0
+};
 
 // Track live currency deducted from reserves during active Banker chase
 let bankerDeductedChaosThisRun = 0;
@@ -2122,50 +2137,68 @@ function playSynthSpreadshotSound() {
   osc.stop(now + 0.2);
 }
 
-// Synchronize background, boss, and banker event soundtrack state (CORS-safe browser Audio player)
+// Synchronize and crossfade background, boss, banker, and lobby soundtracks (CORS-safe dynamic volume blending)
 function syncGameMusic() {
-  if (gameMuted || currentGameState !== GameState.PLAY) {
-    try { bgMusic.pause(); } catch(e){}
-    try { bossMusic.pause(); } catch(e){}
-    try { if (typeof bankerMusic !== "undefined") bankerMusic.pause(); } catch(e){}
-    return;
-  }
+  // Determine which game soundtrack SHOULD play right now
+  let activeMusicTrack = "none";
   
-  const hasBanker = enemies.some(e => e.type === "banker");
+  if (!gameMuted && !musicMuted) {
+    if (currentGameState === GameState.PLAY || currentGameState === GameState.LEVEL_UP) {
+      const hasBanker = enemies && enemies.some(e => e.type === "banker");
+      if (hasBanker) {
+        activeMusicTrack = "banker";
+      } else if (activeApeBoss && activeApeBoss.hp > 0 && !activeApeBoss.isDead) {
+        activeMusicTrack = "boss";
+      } else {
+        activeMusicTrack = "bg";
+      }
+    } else {
+      // Lobby / Gameover screens play the Tavern Theme!
+      activeMusicTrack = "tavern";
+    }
+  }
+
+  // Define our Audio elements map
+  const audioTracks = {
+    tavern: tavernMusic,
+    bg: bgMusic,
+    boss: bossMusic,
+    banker: bankerMusic
+  };
+
+  // Crossfade step: Gradually shift actual volumes toward their target volumes
+  const fadeSpeed = 0.012; // approx 1.2 seconds transition
   
-  if (hasBanker) {
-    // If Banker is active, trigger banker chase soundtrack with graceful fallback
-    if (typeof bankerMusic !== "undefined" && bankerMusic.paused) {
-      try { bgMusic.pause(); } catch(e){}
-      try { bossMusic.pause(); } catch(e){}
-      try { bankerMusic.currentTime = 0; } catch(e){}
-      
-      bankerMusic.play().catch(err => {
-        console.warn("Autoplay blocked or banker theme file banker-stash-dash.mp3 not found yet: " + err);
-        // Gracefully play boss music theme as fallback if banker track is absent
-        if (bossMusic.paused) {
-          try { bossMusic.currentTime = 0; } catch(e){}
-          bossMusic.play().catch(e => console.log("Boss theme fallback autoplay failed: " + e));
-        }
-      });
+  Object.keys(audioTracks).forEach(trackKey => {
+    const audio = audioTracks[trackKey];
+    if (!audio) return;
+
+    const targetVolume = (trackKey === activeMusicTrack) ? maxVolumes[trackKey] : 0.0;
+    
+    // Gradual volume shift
+    if (currentVolumes[trackKey] < targetVolume) {
+      currentVolumes[trackKey] = Math.min(targetVolume, currentVolumes[trackKey] + fadeSpeed);
+    } else if (currentVolumes[trackKey] > targetVolume) {
+      currentVolumes[trackKey] = Math.max(0.0, currentVolumes[trackKey] - fadeSpeed);
     }
-  }
-  else if (activeApeBoss) {
-    // If boss is active and boss theme is paused, fade out normal/banker music and play boss theme
-    try { if (typeof bankerMusic !== "undefined") bankerMusic.pause(); } catch(e){}
-    if (bossMusic.paused) {
-      try { bgMusic.pause(); } catch(e){}
-      try { bossMusic.currentTime = 0; } catch(e){}
-      bossMusic.play().catch(err => console.log("Autoplay blocked boss music: " + err));
+
+    // Set Audio volume property
+    audio.volume = currentVolumes[trackKey];
+
+    // Manage play/pause states based on volume to save browser CPU resources
+    if (currentVolumes[trackKey] > 0.0) {
+      if (audio.paused) {
+        audio.play().catch(err => {
+          // Blocked by autoplay initially (this is normal until first click!)
+        });
+      }
+    } else {
+      if (!audio.paused) {
+        audio.pause();
+        audio.currentTime = 0; // reset track position
+      }
     }
-  } else {
-    // If no boss active, ensure boss theme and banker themes are paused and normal level music plays
-    try { if (typeof bankerMusic !== "undefined") bankerMusic.pause(); } catch(e){}
-    try { bossMusic.pause(); } catch(e){}
-    if (bgMusic.paused) {
-      bgMusic.play().catch(err => console.log("Autoplay blocked level music: " + err));
-    }
-  }
+  });
 }
 
 
@@ -3781,6 +3814,9 @@ function drawLevelUpScreen() {
 // ==========================================================================
 
 function updateGame() {
+  // Update music crossfading volumes on every frame across all states
+  syncGameMusic();
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (currentGameState === GameState.SELECT) {
@@ -3811,9 +3847,6 @@ function updateGame() {
     
     // Physics and updates
     processGamePhysics();
-    
-    // Sync level & boss soundtracks
-    syncGameMusic();
     
     // Player Sprite Animation Tick
     playerAnimTick++;
@@ -4287,15 +4320,25 @@ function initGameEngine() {
       if (gameMuted) {
         muteBtn.textContent = "SOUND: OFF";
         muteBtn.classList.add("muted");
-        // Pause all active loops immediately
-        bgMusic.pause();
-        bossMusic.pause();
       } else {
         muteBtn.textContent = "SOUND: ON";
         muteBtn.classList.remove("muted");
         playLootClickAudio();
-        // Sync active state music
-        syncGameMusic();
+      }
+    });
+  }
+
+  // 3b. Floating Music Mute Button
+  const floatMute = document.getElementById("btnFloatingMute");
+  if (floatMute) {
+    floatMute.addEventListener("click", () => {
+      musicMuted = !musicMuted;
+      if (musicMuted) {
+        floatMute.classList.add("muted");
+        floatMute.innerHTML = "🔇";
+      } else {
+        floatMute.classList.remove("muted");
+        floatMute.innerHTML = "🎵";
       }
     });
   }
