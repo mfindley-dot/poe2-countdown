@@ -3583,6 +3583,18 @@ function handlePlayerDeath() {
   // Show death panel
   document.getElementById("deathScreen").classList.remove("hidden");
   
+  // Hide mobile touch virtual controls inside handlePlayerDeath
+  const joystickContainer = document.getElementById("virtualJoystickContainer");
+  const mobileActionButtons = document.getElementById("mobileActionButtons");
+  if (joystickContainer) {
+    joystickContainer.style.display = "none";
+    joystickContainer.classList.add("hidden");
+  }
+  if (mobileActionButtons) {
+    mobileActionButtons.style.display = "none";
+    mobileActionButtons.classList.add("hidden");
+  }
+  
   // Reset scoreboard forms
   document.getElementById("playerNameInput").disabled = false;
   document.getElementById("btnSubmitScore").disabled = false;
@@ -4351,6 +4363,21 @@ function resetGame() {
   const hud = document.querySelector(".game-ui-overlay");
   if (hud) hud.classList.remove("hidden");
   
+  // Show mobile touch virtual controls when gameplay starts on mobile
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth <= 1024);
+  if (isMobile) {
+    const joystickContainer = document.getElementById("virtualJoystickContainer");
+    const mobileActionButtons = document.getElementById("mobileActionButtons");
+    if (joystickContainer) {
+      joystickContainer.style.display = "flex";
+      joystickContainer.classList.remove("hidden");
+    }
+    if (mobileActionButtons) {
+      mobileActionButtons.style.display = "flex";
+      mobileActionButtons.classList.remove("hidden");
+    }
+  }
+  
   // Re-initialize procedural forest effects
   initProceduralFog();
   initProceduralEyes();
@@ -4810,14 +4837,14 @@ function initVirtualJoystick() {
     return;
   }
   
-  // Show touch pad and action buttons on mobile touch devices
+  // By default, keep touch controls hidden inside character select lobby screen!
   if (joystickContainer) {
-    joystickContainer.style.display = "flex";
-    joystickContainer.classList.remove("hidden");
+    joystickContainer.style.display = "none";
+    joystickContainer.classList.add("hidden");
   }
   if (mobileActionButtons) {
-    mobileActionButtons.style.display = "flex";
-    mobileActionButtons.classList.remove("hidden");
+    mobileActionButtons.style.display = "none";
+    mobileActionButtons.classList.add("hidden");
   }
   
   if (!joystickContainer || !joystickKnob) return;
@@ -5054,17 +5081,36 @@ function initGameEngine() {
       toggleFullscreenMode();
     });
   }
+  const btnLobbyFullscreen = document.getElementById("btnLobbyFullscreen");
+  if (btnLobbyFullscreen) {
+    btnLobbyFullscreen.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleFullscreenMode();
+    });
+  }
 
   // 6c. Fullscreen state change listener to update HUD styling dynamically
   document.addEventListener("fullscreenchange", () => {
     const btnFs = document.getElementById("btnToggleFullscreen");
+    const btnLobbyFs = document.getElementById("btnLobbyFullscreen");
+    const isFs = !!document.fullscreenElement;
+    
     if (btnFs) {
-      if (document.fullscreenElement) {
+      if (isFs) {
         btnFs.textContent = "🖥️ EXIT FULLSCREEN";
         btnFs.classList.add("active-fullscreen");
       } else {
         btnFs.textContent = "🖥️ FULLSCREEN";
         btnFs.classList.remove("active-fullscreen");
+      }
+    }
+    if (btnLobbyFs) {
+      if (isFs) {
+        btnLobbyFs.textContent = "🖥️ EXIT FULLSCREEN";
+        btnLobbyFs.classList.add("active-fullscreen");
+      } else {
+        btnLobbyFs.textContent = "🖥️ FULLSCREEN MODE";
+        btnLobbyFs.classList.remove("active-fullscreen");
       }
     }
   });

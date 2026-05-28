@@ -41,11 +41,10 @@
   <canvas id="particleCanvas"></canvas>
 
   <!-- Guild Sign logo hanging from absolute top of page (seamless animated loop with static fallback) -->
-  <video id="headerLogoVideo" class="header-logo-img" autoplay loop muted playsinline poster="assets/images/logos/GLG_guild-hall_logo.png">
+  <video id="headerLogoVideo" class="header-logo-img video-logo" autoplay loop muted playsinline poster="assets/images/logos/GLG_guild-hall_logo.png">
     <source src="assets/animations/GLG-sign_swinging_animated.webm" type="video/webm">
-    <!-- Static image fallback if video formats are unsupported -->
-    <img src="assets/images/logos/GLG_guild-hall_logo.png" alt="GLG GUILD HALL" class="header-logo-img" />
   </video>
+  <img id="headerLogoStatic" src="assets/images/logos/GLG_guild-hall_logo.png" alt="GLG GUILD HALL" class="header-logo-img static-logo" />
 
   <div class="app-container">
     <!-- Header -->
@@ -213,6 +212,7 @@
             </div>
 
             <button class="gothic-btn border-gold start-btn-action font-16bit" id="btnShowInstructions" style="padding: 14px 44px; font-size: 14px; font-weight: bold; letter-spacing: 2px;">START THE GRIND</button>
+            <button class="gothic-btn border-gold font-16bit" id="btnLobbyFullscreen" style="margin-top: 12px; padding: 8px 22px; font-size: 10px; font-weight: bold; letter-spacing: 1px; cursor: pointer; -webkit-tap-highlight-color: transparent; background: rgba(21, 13, 4, 0.85); color: var(--gold-primary);">🖥️ FULLSCREEN MODE</button>
           </div>
 
           <!-- Instructions Screen Overlay -->
