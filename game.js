@@ -3331,7 +3331,11 @@ function drawGamePlayScreen() {
     const bgDrawX = 320 - bgW / 2 + bgOffsetX;
     const bgDrawY = 200 - bgH / 2 + bgOffsetY;
     
+    ctx.save();
+    ctx.globalAlpha = 0.05; // Reduce dark forest background opacity to 5%!
     ctx.drawImage(bgImg, bgDrawX, bgDrawY, bgW, bgH);
+    ctx.restore();
+    
     forestBgActive = true;
 
     // 1a. Procedural Glowing Red Eyes (shifting relative to background coordinates)
@@ -3486,7 +3490,11 @@ function drawGamePlayScreen() {
     const canopyOffsetY = -(player.y - 200) * 0.20;
     const canopyDrawX = 320 - canopyW / 2 + canopyOffsetX;
     const canopyDrawY = 200 - canopyH / 2 + canopyOffsetY;
+    
+    ctx.save();
+    ctx.globalAlpha = 0.15; // Set overhead branches to 15% transparent opacity
     ctx.drawImage(canopyImg, canopyDrawX, canopyDrawY, canopyW, canopyH);
+    ctx.restore();
   }
 
   // 7. Render Epic Boss Health Bar if activeApeBoss is alive!

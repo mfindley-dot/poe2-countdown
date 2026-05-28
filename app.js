@@ -1010,7 +1010,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================================================
   let blurStacks = 0;
   const MAX_BLUR_STACKS = 3;
-  const BLUR_PIXELS_PER_STACK = 4.5;
+  const BLUR_PIXELS_PER_STACK = 1.8; // Tuned down considerably for a subtle, fun challenge
   const STACK_DURATION = 5000; // 5 seconds
   
   // Mug Animation State
@@ -1062,8 +1062,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function animateMugCanvas() {
       steinCtx.clearRect(0, 0, steinCanvas.width, steinCanvas.height);
       
-      const frameW = mugSpritesheet.naturalWidth / 8;
-      const frameH = mugSpritesheet.naturalHeight / 4; // Exactly 4 rows!
+      const frameW = mugSpritesheet.naturalWidth / 4; // 4 columns!
+      const frameH = mugSpritesheet.naturalHeight / 4; // 4 rows!
       
       let activeRow = 0; // Row 1: Full Mug (index 0)
       let activeCol = 0;
@@ -1072,34 +1072,34 @@ document.addEventListener("DOMContentLoaded", () => {
       
       if (steinState === "FULL") {
         activeRow = 0; // Row 1: Full Mug
-        activeCol = 0; // Static full mug frame
+        activeCol = 0; // Static full frame (column 1)
       } 
       else if (steinState === "DRINKING") {
         activeRow = 1; // Row 2: Drinking sequence
         steinTick++;
-        if (steinTick >= 4) { // Draining frame duration (4 ticks/frame ~ 67ms)
+        if (steinTick >= 60) { // Play slow stop-motion chug (exactly 1 frame per second at 60 FPS!)
           steinTick = 0;
           steinFrame++;
-          if (steinFrame >= 8) {
+          if (steinFrame >= 4) { // 4 columns!
             // Drink completed! Start refilling sequence immediately
             steinFrame = 0;
             steinState = "REFILLING";
             lastClickTime = now; // Anchor the refilling timer exactly now!
           }
         }
-        activeCol = Math.min(7, steinFrame);
+        activeCol = Math.min(3, steinFrame);
       } 
       else if (steinState === "EMPTY") {
         activeRow = 2; // Row 3: Empty Mug
-        activeCol = 0; // Static empty mug frame
+        activeCol = 0; // Static empty frame (column 1)
       } 
       else if (steinState === "REFILLING") {
         activeRow = 3; // Row 4: Refilling sequence
         const elapsed = now - lastClickTime;
-        const ratio = Math.min(1.0, elapsed / (STACK_DURATION - 400)); // offset by drinking duration for smooth sync
+        const ratio = Math.min(1.0, elapsed / STACK_DURATION);
         
-        // Map 0.0-1.0 refilling progress to 0-7 frame indices
-        activeCol = Math.min(7, Math.floor(ratio * 8));
+        // Map 0.0-1.0 refilling progress to 0-3 frame indices (4 columns!)
+        activeCol = Math.min(3, Math.floor(ratio * 4));
         
         if (ratio >= 1.0) {
           // Glass is fully refilled!

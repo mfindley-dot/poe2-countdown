@@ -81,8 +81,8 @@ body {
     0 0 35px rgba(0, 0, 0, 0.95),
     inset 0 0 25px rgba(0, 0, 0, 0.92),
     0 0 0 4px #120f0d; /* rustic dark spacing divider */
-  overflow: hidden;
-  backdrop-filter: blur(8px);
+  overflow: visible; /* set to visible so the top logo chains can hang outside the top container border! */
+  backdrop-filter: blur(2.5px); /* tuned down considerably so fireplace background details are clean and visible */
   filter: blur(var(--site-blur, 0px));
   transition: filter 0.8s cubic-bezier(0.25, 1, 0.5, 1);
 }
@@ -91,16 +91,16 @@ body {
   text-align: center;
   margin-bottom: 20px;
   position: relative;
-  margin-top: -20px; /* pull the whole header up slightly to anchor chains! */
+  margin-top: -65px; /* pulled all the way up so chains hang from the absolute top ceiling of the page! */
 }
 
 .header-logo-img {
-  max-width: 840px; /* twice as large! */
+  max-width: 960px; /* expanded considerably to span beautifully across the top! */
   width: 100%;
   height: auto;
-  max-height: 250px;
+  max-height: 280px;
   object-fit: contain;
-  margin: -15px auto 10px; /* negative top margin to hang chains from the top! */
+  margin: -35px auto 15px; /* negative top offset to merge perfectly with page ceiling */
   display: block;
   filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.7)); /* clean silhouette wood drop-shadow tracing actual outline! */
 }
