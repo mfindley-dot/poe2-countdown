@@ -20,8 +20,8 @@
   --mana-glow: hsla(215, 100%, 50%, 0.4);
   
   --border-radius-gothic: 4px;
-  --font-header: 'Cinzel', serif;
-  --font-header-deco: 'Cinzel Decorative', serif;
+  --font-header: 'VT323', monospace;
+  --font-header-deco: 'Press Start 2P', monospace;
   --font-body: 'Inter', sans-serif;
   
   --transition-speed: 0.3s;
@@ -72,7 +72,7 @@ body {
   z-index: 2;
   width: 95%;
   max-width: 1280px;
-  margin: 40px auto;
+  margin: 140px auto 40px; /* Pushed down to give spacing for the absolute hanging guild sign! */
   padding: 30px;
   background: radial-gradient(circle at center, hsla(20, 10%, 10%, 0.20) 0%, hsla(20, 12%, 4%, 0.32) 100%);
   border: 2px solid #27221e; /* Heavy hand-hammered rustic dark iron plate border */
@@ -82,7 +82,7 @@ body {
     inset 0 0 25px rgba(0, 0, 0, 0.92),
     0 0 0 4px #120f0d; /* rustic dark spacing divider */
   overflow: visible; /* set to visible so the top logo chains can hang outside the top container border! */
-  backdrop-filter: blur(2.5px); /* tuned down considerably so fireplace background details are clean and visible */
+  backdrop-filter: blur(0.8px); /* tuned down considerably so fireplace background details are clean and visible */
   filter: blur(var(--site-blur, 0px));
   transition: filter 0.8s cubic-bezier(0.25, 1, 0.5, 1);
 }
@@ -91,18 +91,23 @@ body {
   text-align: center;
   margin-bottom: 20px;
   position: relative;
-  margin-top: -65px; /* pulled all the way up so chains hang from the absolute top ceiling of the page! */
+  padding-top: 100px; /* Pushed down inside container to sit beautifully under the absolute sign! */
 }
 
 .header-logo-img {
-  max-width: 960px; /* expanded considerably to span beautifully across the top! */
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3; /* Render on top of app-container which has z-index 2 */
+  max-width: 1100px; /* expanded considerably to span beautifully across the top! */
   width: 100%;
   height: auto;
-  max-height: 280px;
+  max-height: 320px;
   object-fit: contain;
-  margin: -35px auto 15px; /* negative top offset to merge perfectly with page ceiling */
+  pointer-events: none; /* Let clicks pass directly through to elements below */
   display: block;
-  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.7)); /* clean silhouette wood drop-shadow tracing actual outline! */
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.85)); /* clean silhouette wood drop-shadow tracing actual outline! */
 }
 
 .app-header::after {
@@ -556,7 +561,7 @@ body {
   overflow: hidden;
   max-width: 480px;
   width: 100%;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(2.5px); /* tuned background blur down considerably */
 }
 
 .countdown-main-card::before {
@@ -1132,7 +1137,7 @@ body {
    ========================================================================== */
 
 .arcade-section {
-  background: radial-gradient(circle at center, hsla(20, 10%, 9%, 0.95) 0%, hsla(20, 12%, 4%, 0.98) 100%);
+  background: radial-gradient(circle at center, hsla(20, 10%, 9%, 0.05) 0%, hsla(20, 12%, 4%, 0.05) 100%); /* reduced opacity to 5% per user request to allow background art to shine through! */
   border: 2px solid var(--gold-primary);
   border-radius: var(--border-radius-gothic);
   padding: 30px;
@@ -1455,8 +1460,8 @@ body {
 }
 
 .death-title {
-  font-family: var(--font-header-deco);
-  font-size: 1.6rem;
+  font-family: 'Cinzel', serif;
+  font-size: 2.2rem;
   letter-spacing: 4px;
   color: #dc2626;
   text-shadow: 
@@ -1628,35 +1633,73 @@ body {
 }
 
 .stash-grid-visualizer {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 2px;
-  background-color: #000;
-  background-image: url('assets/images/currency/stash-tab_frame.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
+  background-color: #0b0806 !important; /* Rich dark wooden interior background */
   border: 3px solid var(--gold-primary);
   padding: 6px;
   border-radius: 3px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+}
+
+/* Layer the wooden frame asset on top of the grid elements! Clicks will pass through. */
+.stash-grid-visualizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('assets/images/currency/stash-tab_frame.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 2; /* Sit in front of currency items */
 }
 
 .stash-grid-cell {
   aspect-ratio: 1;
-  background: rgba(14, 10, 7, 0.55);
-  border: 1px solid rgba(212, 175, 55, 0.05);
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
-  transition: background var(--transition-speed);
+  z-index: 1; /* Sit behind the frame asset overlay */
+  box-sizing: border-box;
 }
 
-.stash-grid-cell:hover {
+/* Active slots where currency is supposed to go */
+.stash-grid-cell.active-slot {
+  background: rgba(14, 10, 7, 0.55);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+.stash-grid-cell.active-slot:hover {
   background: rgba(212, 175, 55, 0.18);
-  border-color: rgba(212, 175, 55, 0.35);
-  box-shadow: inset 0 0 5px rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.4);
+  box-shadow: inset 0 0 5px rgba(212, 175, 55, 0.2);
+}
+
+/* Completely empty cells which act as invisible spacers letting the frame show through */
+.stash-grid-cell.empty-slot {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
+/* Ghosted empty slot icon styling */
+.stash-image-icon.ghosted-icon {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  filter: grayscale(100%) opacity(0.18) brightness(0.6); /* Translucent and desaturated ghost */
+  image-rendering: pixelated;
+  transition: transform var(--transition-speed);
 }
 
 .stash-image-icon {
@@ -1945,6 +1988,7 @@ body {
 .stein-ale-container {
   display: flex;
   justify-content: center;
+  gap: 15px;
   width: 100%;
 }
 
@@ -1994,7 +2038,7 @@ body {
 
 .stein-canvas-container {
   width: 128px;
-  height: 114px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2158,5 +2202,64 @@ body {
   box-shadow: 
     0 4px 10px rgba(0, 0, 0, 0.5),
     inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+/* ==========================================================================
+   SUNPRISM SPACE CAT SUMMON UPGRADES
+   ========================================================================== */
+
+.cat-paw-icon-img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(217, 119, 6, 0.45));
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.stein-btn:hover .cat-paw-icon-img {
+  transform: scale(1.15) rotate(7deg);
+}
+
+.stein-btn:active .cat-paw-icon-img {
+  transform: scale(0.92) rotate(-7deg);
+}
+
+/* Sunprism Space Cat Floating Animation */
+@keyframes floatCatAcross {
+  0% {
+    left: -180px;
+    top: 40%;
+    transform: translateY(0px) scale(0.3) rotate(-15deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1.0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(15px) scale(1.1) rotate(5deg);
+  }
+  45% {
+    transform: translateY(-25px) scale(0.95) rotate(-5deg);
+  }
+  60% {
+    transform: translateY(10px) scale(1.05) rotate(8deg);
+  }
+  75% {
+    transform: translateY(-15px) scale(1.0) rotate(-2deg);
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    top: 25%;
+    transform: translateY(0px) scale(0.3) rotate(20deg);
+    opacity: 0;
+  }
+}
+
+.sunprism-cat-video {
+  pointer-events: none;
+  background: transparent;
+  mix-blend-mode: screen; /* gorgeous celestial overlay blending the space cat inner stardust into the dark forest! */
 }
 

@@ -23,7 +23,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;700;800&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;700;800&family=Inter:wght@300;400;600;700&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   
   <!-- Styling -->
   <link rel="stylesheet" href="style.css">
@@ -33,10 +33,16 @@
   <!-- Gothic Canvas Background for Particle Effects -->
   <canvas id="particleCanvas"></canvas>
 
+  <!-- Guild Sign logo hanging from absolute top of page (seamless animated loop with static fallback) -->
+  <video class="header-logo-img" autoplay loop muted playsinline poster="assets/images/logos/GLG_guild-hall_logo.png">
+    <source src="assets/animations/GLG-sign_swinging_animated.webm" type="video/webm">
+    <!-- Static image fallback if video formats are unsupported -->
+    <img src="assets/images/logos/GLG_guild-hall_logo.png" alt="GLG GUILD HALL" class="header-logo-img" />
+  </video>
+
   <div class="app-container">
     <!-- Header -->
     <header class="app-header">
-      <img src="assets/images/logos/GLG_guild-hall_logo.png" alt="GLG GUILD HALL" class="header-logo-img" />
       <p class="subtitle text-gold-faded">GOOD LOOT GANG</p>
       
       <!-- Milestone Sigil Selector -->
@@ -162,8 +168,9 @@
               <span class="kb-text">🏹 Spread: <strong>E Key (1.5s CD)</strong></span>
             </div>
           </div>
-          <div class="mute-container">
-            🔇 <button id="btnToggleMute" class="mute-btn border-gold" style="font-size: 8.5px; padding: 2px 6px;">SOUND: ON</button>
+          <div class="mute-container" style="display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 5px;">
+            <span>🔇 <button id="btnToggleMute" class="mute-btn border-gold" style="font-size: 8.5px; padding: 2px 6px;">SOUND: ON</button></span>
+            <span>🏷️ <button id="btnToggleLabels" class="mute-btn border-gold" style="font-size: 8.5px; padding: 2px 6px;">SHOW ITEMS: ON (V)</button></span>
           </div>
         </div>
       </div>
@@ -195,9 +202,15 @@
             </div>
 
             <!-- Start Screen Overlay -->
-            <div class="game-start-screen" id="startScreen">
-              <h2 class="start-title glow-gold">GLG GUILD ARCADE</h2>
-              <p class="start-subtitle text-gold-faded">GOOD LOOT GANG ARCHIVE</p>
+            <div class="game-start-screen" id="startScreen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: rgba(10, 8, 6, 0.95);">
+              <img src="assets/images/logos/path-of-looting-2_logo.png" alt="Path of Looting 2" class="start-logo-img" style="max-width: 90%; max-height: 180px; margin-bottom: 25px; object-fit: contain; filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.4));" />
+              <button class="gothic-btn border-gold start-btn-action font-16bit" id="btnShowInstructions" style="padding: 12px 36px; font-size: 13px; font-weight: bold; letter-spacing: 2px;">START THE GRIND</button>
+            </div>
+
+            <!-- Instructions Screen Overlay -->
+            <div class="game-start-screen hidden" id="instructionsScreen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; background: rgba(10, 8, 6, 0.96);">
+              <img src="assets/images/logos/path-of-looting-2_logo.png" alt="Path of Looting 2" class="start-logo-img" style="max-width: 50%; max-height: 55px; margin-bottom: 8px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.3));" />
+              <h3 class="font-16bit text-gold" style="font-size: 11px; margin-bottom: 10px; letter-spacing: 1px;">COOPERATIVE ARCADE GUIDE</h3>
               
               <div class="start-instructions border-gold">
                 <div class="instruction-item">
@@ -226,8 +239,8 @@
                 </div>
               </div>
               
-              <p class="start-callout text-gold-hover">Choose your exile class above and begin the cooperational grind!</p>
-              <button class="gothic-btn border-gold start-btn-action" id="btnStartArcadeGame">START THE GRIND</button>
+              <p class="start-callout text-gold-hover font-16bit" style="font-size: 10px; margin: 10px 0;">Choose your exile class above and begin the cooperational grind!</p>
+              <button class="gothic-btn border-gold start-btn-action font-16bit" id="btnStartArcadeGame" style="padding: 10px 30px; font-size: 11px;">BEGIN THE GRIND</button>
             </div>
 
             <!-- Death Screen Overlay (Dark Souls style) -->
@@ -248,14 +261,22 @@
             </div>
           </div>
           
-          <!-- Stein of Ale Stacking Blur Challenge Button -->
+          <!-- Stein of Ale & Sunprism Cat Interactive Buttons -->
           <div class="stein-ale-container">
             <button id="btnSteinAle" class="gothic-btn border-gold stein-btn">
               <div class="stein-canvas-container">
-                <canvas id="steinCanvas" width="128" height="114"></canvas>
+                <canvas id="steinCanvas" width="128" height="72"></canvas>
               </div>
               <span class="stein-text-content">DRINK GUILD ALE</span>
               <span class="stein-subtext">(Click to add Blur Challenge! Stacks up to 3x)</span>
+            </button>
+
+            <button id="btnSunprismCat" class="gothic-btn border-gold stein-btn">
+              <div class="stein-canvas-container" style="height: 72px; width: 128px; display: flex; align-items: center; justify-content: center;">
+                <img src="assets/images/icons/cat-paw_icon.png" alt="Cat Paw" class="cat-paw-icon-img" />
+              </div>
+              <span class="stein-text-content">CAT!</span>
+              <span class="stein-subtext">(Summon Sunprism space cat companion!)</span>
             </button>
           </div>
         </div>

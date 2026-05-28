@@ -62,6 +62,29 @@ let currentGameState = GameState.SELECT;
 let gameMuted = false;
 let gameScoreSubmitted = false;
 
+// Global settings for UI HUD & damage hit flash
+let showItemLabels = true;
+let damageFlashIntensity = 0;
+
+function toggleItemLabels() {
+  showItemLabels = !showItemLabels;
+  const labelsBtn = document.getElementById("btnToggleLabels");
+  if (labelsBtn) {
+    if (showItemLabels) {
+      labelsBtn.textContent = "SHOW ITEMS: ON (V)";
+      labelsBtn.classList.remove("muted");
+    } else {
+      labelsBtn.textContent = "SHOW ITEMS: OFF (V)";
+      labelsBtn.classList.add("muted");
+    }
+  }
+}
+
+function triggerPlayerHitEffect() {
+  damageFlashIntensity = 0.45; // Soft translucent full-screen red hit flash
+  triggerCameraShake(); // Trigger screen rumble!
+}
+
 // Custom 16-Bit Graphics Preloader & Cache
 const CurrencyImages = {};
 const currencyListKeys = [
@@ -182,7 +205,7 @@ function initProceduralFog() {
   for (let i = 0; i < 6; i++) {
     forestFogParticles.push({
       x: Math.random() * 640,
-      y: 50 + Math.random() * 200, // keep them around the vertical middle/forest floor
+      y: 20 + Math.random() * 100, // strictly within the woods zone
       vx: (0.1 + Math.random() * 0.2) * (Math.random() < 0.5 ? 1 : -1),
       vy: (0.02 + Math.random() * 0.04) * (Math.random() < 0.5 ? 1 : -1),
       radius: 60 + Math.random() * 50,
@@ -215,7 +238,7 @@ function updateProceduralForestEffects() {
     // Bounce/wrap fog
     if (f.x < -120) f.x = 760;
     if (f.x > 760) f.x = -120;
-    if (f.y < 20 || f.y > 320) f.vy *= -1;
+    if (f.y < 10 || f.y > 150) f.vy *= -1;
     
     // Gentle opacity breath cycle
     f.opacity += f.fadeDir * 0.0005;
@@ -1029,7 +1052,7 @@ class Enemy {
               maxAge: 40
             });
             
-            triggerCameraShake();
+            triggerPlayerHitEffect(); // Damage red flash and camera rumble!
             if (!gameMuted) playRipAudioFallback(); // crash sound
             
             if (player.hp <= 0) {
@@ -1150,7 +1173,9 @@ class Enemy {
         
         // Edge clamping
         this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
-        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+        const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
+        const minY = forestLoaded ? 160 + this.radius : this.radius;
+        this.y = Math.max(minY, Math.min(canvas.height - this.radius, this.y));
         
         // Hop bounce offset for comical hopping animation
         this.bounceY = Math.abs(Math.sin(this.bankerTimer * 0.3)) * 14;
@@ -1175,6 +1200,13 @@ class Enemy {
           triggerBankerEscape(this.x, this.y);
         }
       }
+    }
+
+    // Constrain normal enemies to the active playfield bounds if forest is loaded
+    if (this.type !== "ape" && !this.isDead) {
+      const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
+      const minY = forestLoaded ? 160 + this.radius : this.radius;
+      this.y = Math.max(minY, Math.min(canvas.height - this.radius, this.y));
     }
   }
 
@@ -1325,15 +1357,29 @@ class Enemy {
     
     // Draw charging indicator lines
     if (this.type === "ghost" && this.beamCharging) {
-      // Pulsing cyan line showing beam path
+      ctx.save();
+      // Use a dashed line to make it look like a targeting guide, not a laser beam!
+      ctx.setLineDash([4, 4]);
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
       const targetX = this.x + Math.cos(this.beamTargetAngle) * 220;
       const targetY = this.y + Math.sin(this.beamTargetAngle) * 220;
       ctx.lineTo(targetX, targetY);
-      ctx.strokeStyle = "rgba(6, 182, 212, 0.4)";
-      ctx.lineWidth = 1 + (this.beamChargeTimer / 10);
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.55)";
+      ctx.lineWidth = 1.5;
       ctx.stroke();
+      
+      // Draw a small charging energy ball at the ghost itself
+      const chargeRadius = (this.beamChargeTimer / 45) * 12;
+      const chargeGrad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, chargeRadius + 4);
+      chargeGrad.addColorStop(0, "#ffffff");
+      chargeGrad.addColorStop(0.5, "#22d3ee");
+      chargeGrad.addColorStop(1, "rgba(34, 211, 238, 0)");
+      ctx.fillStyle = chargeGrad;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, chargeRadius + 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
     
     if (this.type === "ape") {
@@ -1571,28 +1617,30 @@ class GroundLoot {
     }
     
     // Floating Text Nameplate styled like PoE ground filters!
-    const paddingX = 4;
-    const paddingY = 2;
-    ctx.font = "bold 6.5px Inter";
-    const textWidth = ctx.measureText(this.config.name.toUpperCase()).width;
-    
-    const rectW = textWidth + paddingX * 2;
-    const rectH = 10 + paddingY * 2;
-    const rectX = this.x - rectW / 2;
-    const rectY = this.y + 11;
-    
-    // Loot filter backing
-    ctx.fillStyle = this.config.bg;
-    ctx.strokeStyle = this.config.border;
-    ctx.lineWidth = 1;
-    ctx.fillRect(rectX, rectY, rectW, rectH);
-    ctx.strokeRect(rectX, rectY, rectW, rectH);
-    
-    // Text color
-    ctx.fillStyle = this.config.color;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(this.config.name.toUpperCase(), this.x, rectY + rectH/2);
+    if (showItemLabels) {
+      const paddingX = 4;
+      const paddingY = 2;
+      ctx.font = "bold 6.5px Inter";
+      const textWidth = ctx.measureText(this.config.name.toUpperCase()).width;
+      
+      const rectW = textWidth + paddingX * 2;
+      const rectH = 10 + paddingY * 2;
+      const rectX = this.x - rectW / 2;
+      const rectY = this.y + 11;
+      
+      // Loot filter backing
+      ctx.fillStyle = this.config.bg;
+      ctx.strokeStyle = this.config.border;
+      ctx.lineWidth = 1;
+      ctx.fillRect(rectX, rectY, rectW, rectH);
+      ctx.strokeRect(rectX, rectY, rectW, rectH);
+      
+      // Text color
+      ctx.fillStyle = this.config.color;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(this.config.name.toUpperCase(), this.x, rectY + rectH/2);
+    }
     
     ctx.restore();
   }
@@ -1620,6 +1668,21 @@ class EnemyProjectile {
     this.x += this.vx;
     this.y += this.vy;
     
+    // Spawn custom frost trail particles! (increased rate and nicer look)
+    if (Math.random() < 0.75) {
+      particleEffects.push({
+        x: this.x + (Math.random() * 6 - 3),
+        y: this.y + (Math.random() * 6 - 3),
+        vx: -this.vx * 0.3 + (Math.random() * 0.6 - 0.3),
+        vy: -this.vy * 0.3 + (Math.random() * 0.6 - 0.3),
+        color: Math.random() < 0.5 ? "#22d3ee" : "#e0f2fe", // glowing cyan and bright frosty white
+        radius: Math.random() * 2.5 + 1,
+        age: 0,
+        maxAge: 20,
+        isTrail: true
+      });
+    }
+    
     // Boundary check
     if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
       this.active = false;
@@ -1627,13 +1690,43 @@ class EnemyProjectile {
   }
 
   draw() {
+    ctx.save();
+    
+    // Outer glowing ice halo
+    const glowGrad = ctx.createRadialGradient(this.x, this.y, 2, this.x, this.y, this.radius + 8);
+    glowGrad.addColorStop(0, "#ffffff");
+    glowGrad.addColorStop(0.3, "#06b6d4"); // cyan
+    glowGrad.addColorStop(0.6, "rgba(6, 182, 212, 0.4)");
+    glowGrad.addColorStop(1, "rgba(6, 182, 212, 0)");
+    
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Inner frosty ice core
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur = 8;
+    ctx.fillStyle = "#e0f2fe";
+    ctx.strokeStyle = "#0891b2";
+    ctx.lineWidth = 1.5;
     ctx.fill();
-    ctx.shadowBlur = 0; // reset
+    ctx.stroke();
+    
+    // Draw 6-pointed star detailing inside to look like a snowflake/crystal core!
+    ctx.strokeStyle = "#06b6d4";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      const x1 = this.x + Math.cos(angle) * (this.radius - 1.5);
+      const y1 = this.y + Math.sin(angle) * (this.radius - 1.5);
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(x1, y1);
+    }
+    ctx.stroke();
+    
+    ctx.restore();
   }
 }
 
@@ -1643,7 +1736,7 @@ function fireGhostProjectile(x, y, angle) {
   const vx = Math.cos(angle) * speed;
   const vy = Math.sin(angle) * speed;
   
-  enemyProjectiles.push(new EnemyProjectile(x, y, vx, vy, "#a5f3fc", 10, 5));
+  enemyProjectiles.push(new EnemyProjectile(x, y, vx, vy, "#a5f3fc", 10, 8));
   
   if (!gameMuted) {
     try {
@@ -2237,7 +2330,7 @@ function updateStashTabUI() {
     stashLabelText = `MY LIFETIME: ${totalNetWorth.toFixed(1)}c`;
   } 
   else {
-    // Guild Vault - derived mathematically from globalOverallGuildChaos!
+    // Guild Vault - derived from globalOverallGuildChaos
     const c = globalOverallGuildChaos;
     activeCounts = {
       mirror: Math.floor(c / 40000),
@@ -2261,67 +2354,74 @@ function updateStashTabUI() {
   
   document.getElementById("stashNetWorth").textContent = stashLabelText;
   
-  // 2. Render cells for visual grid
-  let slotIndex = 0;
-  
-  currencyKeys.forEach(key => {
-    const qty = activeCounts[key] || 0;
-    const conf = CURRENCY_CONFIG[key];
-    
-    if (qty > 0) {
-      const stackSize = key === "mirror" ? 1 : 20;
-      let remaining = qty;
-      let slotsCreatedForThisCurrency = 0;
-      
-      while (remaining > 0 && slotIndex < 144) {
-        slotsCreatedForThisCurrency++;
-        
-        let drawQty = Math.min(stackSize, remaining);
-        // Cap splits per currency at max 4 slots to keep the grid diverse
-        if (slotsCreatedForThisCurrency === 4 || remaining <= stackSize) {
-          drawQty = remaining;
-          remaining = 0; // stop loop
-        } else {
-          remaining -= drawQty;
+  // Dedicated PoE-style slot coordinate mapping for our 11 currencies (row, col in 12x12 grid)
+  const CURRENCY_SLOTS = {
+    divine: { row: 2, col: 4 },
+    mirror: { row: 2, col: 5 },
+    exalted: { row: 2, col: 6 },
+    annulment: { row: 2, col: 7 },
+    regal: { row: 3, col: 4 },
+    chaos: { row: 3, col: 5 },
+    vaal: { row: 3, col: 6 },
+    alchemy: { row: 3, col: 7 },
+    scroll: { row: 4, col: 4 },
+    transmute: { row: 4, col: 5 },
+    augmentation: { row: 4, col: 6 }
+  };
+
+  // 2. Render all 144 slots in the 12x12 grid
+  for (let r = 0; r < 12; r++) {
+    for (let c = 0; c < 12; c++) {
+      // Check if this grid cell belongs to any currency
+      let keyForThisSlot = null;
+      for (const key of Object.keys(CURRENCY_SLOTS)) {
+        if (CURRENCY_SLOTS[key].row === r && CURRENCY_SLOTS[key].col === c) {
+          keyForThisSlot = key;
+          break;
         }
-        
-        const cell = document.createElement("div");
-        cell.className = "stash-grid-cell";
-        cell.title = `${conf.name} (Qty: ${drawQty})`;
-        
-        // Render high-res custom sprite if loaded
-        const img = CurrencyImages[key];
-        if (img && img.complete && img.naturalWidth > 0) {
-          const iconImg = document.createElement("img");
-          iconImg.className = "stash-image-icon";
-          iconImg.src = img.src;
-          iconImg.alt = conf.name;
-          cell.appendChild(iconImg);
-        } else {
-          // Retro emoji character fallback
-          const icon = document.createElement("span");
-          icon.className = "stash-icon";
-          icon.textContent = conf.char;
-          cell.appendChild(icon);
-        }
-        
-        const qtyLabel = document.createElement("span");
-        qtyLabel.className = "stash-count";
-        qtyLabel.textContent = formatStashQty(drawQty);
-        
-        cell.appendChild(qtyLabel);
-        grid.appendChild(cell);
-        
-        slotIndex++;
       }
+
+      const cell = document.createElement("div");
+
+      if (keyForThisSlot) {
+        const qty = activeCounts[keyForThisSlot] || 0;
+        const conf = CURRENCY_CONFIG[keyForThisSlot];
+        const img = CurrencyImages[keyForThisSlot];
+
+        cell.className = "stash-grid-cell active-slot";
+        cell.title = `${conf.name} ${qty > 0 ? `(Qty: ${qty})` : '(Empty Slot)'}`;
+
+        // Create currency image element (active or ghosted)
+        const iconImg = document.createElement("img");
+        if (img && img.complete && img.naturalWidth > 0) {
+          iconImg.src = img.src;
+        } else {
+          // Fallback if image not loaded
+          iconImg.src = `assets/images/currency/item_${keyForThisSlot}.png`;
+        }
+        iconImg.alt = conf.name;
+
+        if (qty > 0) {
+          iconImg.className = "stash-image-icon";
+          cell.appendChild(iconImg);
+
+          // Render quantity label
+          const qtyLabel = document.createElement("span");
+          qtyLabel.className = "stash-count";
+          qtyLabel.textContent = formatStashQty(qty);
+          cell.appendChild(qtyLabel);
+        } else {
+          // GHOSTED VERSION of the currency
+          iconImg.className = "stash-image-icon ghosted-icon";
+          cell.appendChild(iconImg);
+        }
+      } else {
+        // Completely empty slot (invisible spacer to let wooden stash frame show through!)
+        cell.className = "stash-grid-cell empty-slot";
+      }
+
+      grid.appendChild(cell);
     }
-  });
-  
-  // Fill remaining empty cells
-  for (let i = slotIndex; i < 144; i++) {
-    const cell = document.createElement("div");
-    cell.className = "stash-grid-cell";
-    grid.appendChild(cell);
   }
   
   // 3. Text Summary panel items
@@ -2333,7 +2433,6 @@ function updateStashTabUI() {
       const item = document.createElement("span");
       item.className = "summary-item";
       
-      // Try displaying tiny image inside summary bar too!
       const img = CurrencyImages[key];
       if (img && img.complete && img.naturalWidth > 0) {
         item.innerHTML = `<img src="${img.src}" style="width: 10px; height: 10px; object-fit: contain; margin-right: 2px;" alt="${conf.name}"> <strong>${formatStashQty(qty)}</strong>`;
@@ -2929,9 +3028,11 @@ function processGamePhysics() {
     }
   }
 
-  // Bounds checks player
+  // Bounds checks player dynamically depending on active forest background horizon
   player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
-  player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+  const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
+  const minY = forestLoaded ? 160 + player.radius : player.radius;
+  player.y = Math.max(minY, Math.min(canvas.height - player.radius, player.y));
 
   // Poison damage over time ticking
   if (player.poisonRemaining > 0 && player.hp > 0) {
@@ -3011,7 +3112,7 @@ function processGamePhysics() {
               maxAge: 45
             });
             
-            triggerCameraShake();
+            triggerPlayerHitEffect(); // Damage red flash and camera rumble!
             if (!gameMuted) playRipAudioFallback(); // Boom impact sound
             
             if (player.hp <= 0) {
@@ -3189,6 +3290,7 @@ function processGamePhysics() {
       
       if (e.type === "spider") {
         player.poisonRemaining = (player.poisonRemaining || 0) + e.damage;
+        triggerPlayerHitEffect(); // Red flash and camera rumble!
         
         // Floating green poison warning text!
         particleEffects.push({
@@ -3201,6 +3303,7 @@ function processGamePhysics() {
         });
       } else {
         player.hp = Math.max(0, player.hp - e.damage);
+        triggerPlayerHitEffect(); // Red flash and camera rumble!
         
         // Floating damage text
         particleEffects.push({
@@ -3247,7 +3350,7 @@ function processGamePhysics() {
         maxAge: 35
       });
       
-      triggerCameraShake();
+      triggerPlayerHitEffect(); // Red flash and camera rumble!
       if (!gameMuted) playRipAudioFallback();
       
       if (player.hp <= 0) {
@@ -3264,6 +3367,11 @@ function processGamePhysics() {
   } else {
     cameraShake.x = 0;
     cameraShake.y = 0;
+  }
+
+  // Damage Flash Decay
+  if (damageFlashIntensity > 0) {
+    damageFlashIntensity = Math.max(0, damageFlashIntensity - 0.04); // decay smoothly over 11-12 updates
   }
 
   // Global death check (Triggers correctly regardless of damage source: lasers, slams, or contact)
@@ -3326,27 +3434,26 @@ function drawGamePlayScreen() {
   // 1. Far Background Matte Painting (Animated sequence of 8 frames)
   const bgImg = forestBgFrames[forestBgCurrentFrame];
   if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-    const bgW = bgImg.naturalWidth;
-    const bgH = bgImg.naturalHeight;
-    const bgDrawX = 320 - bgW / 2 + bgOffsetX;
-    const bgDrawY = 200 - bgH / 2 + bgOffsetY;
-    
-    ctx.save();
-    ctx.globalAlpha = 0.05; // Reduce dark forest background opacity to 5%!
-    ctx.drawImage(bgImg, bgDrawX, bgDrawY, bgW, bgH);
-    ctx.restore();
-    
     forestBgActive = true;
+  }
 
-    // 1a. Procedural Glowing Red Eyes (shifting relative to background coordinates)
+  if (forestBgActive) {
+    // Draw the forest sequence backdrop at 90% opacity, y from 0 to 160
+    ctx.save();
+    ctx.globalAlpha = 0.90;
+    const targetW = 720;
+    const bgDrawX = 320 - targetW / 2 + bgOffsetX;
+    ctx.drawImage(bgImg, bgDrawX, 0, targetW, 160);
+    ctx.restore();
+
+    // 1a. Procedural Glowing Red Eyes (strictly within woods zone)
     forestEyes.forEach(eye => {
       if (eye.opacity > 0) {
-        // Map 640x400 space onto the dynamically sized shifted background layer
-        const ex = bgDrawX + (eye.x / 640) * bgW;
-        const ey = bgDrawY + (eye.y / 400) * bgH;
+        // Map 640x400 space onto the top 160px with parallax
+        const ex = bgDrawX + (eye.x / 640) * targetW;
+        const ey = (eye.y / 400) * 160; // Constrained strictly within [0, 160]!
         
         ctx.save();
-        // Pulsing glow size/intensity
         const pulseAmt = Math.sin(eye.pulse) * 0.15 + 0.85;
         const alpha = eye.opacity * pulseAmt;
         
@@ -3377,14 +3484,13 @@ function drawGamePlayScreen() {
       }
     });
 
-    // 1b. Procedural Drifting Volumetric Fog (shifting relative to background coordinates)
+    // 1b. Procedural Drifting Volumetric Fog (strictly within woods zone)
     forestFogParticles.forEach(f => {
       ctx.save();
-      const fx = bgDrawX + (f.x / 640) * bgW;
-      const fy = bgDrawY + (f.y / 400) * bgH;
+      const fx = bgDrawX + (f.x / 640) * targetW;
+      const fy = (f.y / 400) * 160; // Constrained strictly within [0, 160]!
       
       const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, f.radius);
-      // Soft gothic green-grey mist
       grad.addColorStop(0, `rgba(45, 60, 52, ${f.opacity})`);
       grad.addColorStop(0.5, `rgba(30, 42, 36, ${f.opacity * 0.4})`);
       grad.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -3396,33 +3502,64 @@ function drawGamePlayScreen() {
       ctx.restore();
     });
 
-    // Subtle tactical gothic grid overlay (low opacity to be immersive!)
-    const tileSize = 40;
-    ctx.strokeStyle = "rgba(22, 17, 13, 0.08)";
-    ctx.lineWidth = 0.5;
-    for (let x = 0; x < canvas.width; x += tileSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += tileSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
-    }
-
-  } else {
-    // FALLBACK: Tiled terrain floor
+    // Draw the tiled grass/dirt floor ONLY in rows 4 to 9 (y from 160 to 400)
     const tileSize = 40;
     let allTerrainLoaded = true;
-    
-    // Verify all tiles are complete
     Object.values(TerrainTiles).forEach(img => {
       if (!img.complete || img.naturalWidth === 0) allTerrainLoaded = false;
     });
-    
+
+    if (allTerrainLoaded && terrainMap.length > 0) {
+      for (let r = 4; r < mapRows; r++) {
+        for (let c = 0; c < mapCols; c++) {
+          const tileKey = terrainMap[r][c];
+          const img = TerrainTiles[tileKey];
+          ctx.drawImage(img, c * tileSize, r * tileSize, tileSize, tileSize);
+        }
+      }
+      
+      // Grid lines for bottom 60%
+      ctx.strokeStyle = "rgba(22, 17, 13, 0.18)";
+      ctx.lineWidth = 0.5;
+      for (let x = 0; x < canvas.width; x += tileSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 160);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 160; y < canvas.height; y += tileSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    } else {
+      // Vector fallback grid for bottom 60%
+      ctx.fillStyle = "#2d3c34"; // Dark forest green floor
+      ctx.fillRect(0, 160, canvas.width, canvas.height - 160);
+      ctx.strokeStyle = "rgba(22, 17, 13, 0.3)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += tileSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 160);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 160; y < canvas.height; y += tileSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+  } else {
+    // DEFAULT FULL TILE FLOOR (if forest background is not active)
+    const tileSize = 40;
+    let allTerrainLoaded = true;
+    Object.values(TerrainTiles).forEach(img => {
+      if (!img.complete || img.naturalWidth === 0) allTerrainLoaded = false;
+    });
+
     if (allTerrainLoaded && terrainMap.length > 0) {
       for (let r = 0; r < mapRows; r++) {
         for (let c = 0; c < mapCols; c++) {
@@ -3431,8 +3568,6 @@ function drawGamePlayScreen() {
           ctx.drawImage(img, c * tileSize, r * tileSize, tileSize, tileSize);
         }
       }
-      
-      // Draw very subtle gothic grid overlays for arcade tactical positioning!
       ctx.strokeStyle = "rgba(22, 17, 13, 0.18)";
       ctx.lineWidth = 0.5;
       for (let x = 0; x < canvas.width; x += tileSize) {
@@ -3448,7 +3583,7 @@ function drawGamePlayScreen() {
         ctx.stroke();
       }
     } else {
-      // Fallback to vector grid lines
+      // Vector fallback full screen
       ctx.strokeStyle = "#16110d";
       ctx.lineWidth = 1;
       for (let x = 0; x < canvas.width; x += tileSize) {
@@ -3482,18 +3617,15 @@ function drawGamePlayScreen() {
   // 6. Render Particle animations
   drawParticles();
 
-  // 6.5 Render Foreground Canopy Parallax Layer (dynamically centered overhead branches at 0.20 parallax factor)
+  // 6.5 Render Foreground Canopy Parallax Layer (anchored strictly at the top 90px, at 90% opacity)
   if (canopyImg.complete && canopyImg.naturalWidth > 0) {
-    const canopyW = canopyImg.naturalWidth;
-    const canopyH = canopyImg.naturalHeight;
+    const targetCanopyW = 760;
     const canopyOffsetX = -(player.x - 320) * 0.20;
-    const canopyOffsetY = -(player.y - 200) * 0.20;
-    const canopyDrawX = 320 - canopyW / 2 + canopyOffsetX;
-    const canopyDrawY = 200 - canopyH / 2 + canopyOffsetY;
+    const canopyDrawX = 320 - targetCanopyW / 2 + canopyOffsetX;
     
     ctx.save();
-    ctx.globalAlpha = 0.15; // Set overhead branches to 15% transparent opacity
-    ctx.drawImage(canopyImg, canopyDrawX, canopyDrawY, canopyW, canopyH);
+    ctx.globalAlpha = 0.90; // Solid 90% opacity!
+    ctx.drawImage(canopyImg, canopyDrawX, 0, targetCanopyW, 90);
     ctx.restore();
   }
 
@@ -3548,6 +3680,28 @@ function drawGamePlayScreen() {
   }
 
   ctx.restore();
+
+  // 8. Render full-screen red damage vignette if damageFlashIntensity > 0
+  if (damageFlashIntensity > 0) {
+    ctx.save();
+    ctx.resetTransform();
+    
+    // Draw full-screen vignette
+    const grad = ctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, canvas.height / 3,
+      canvas.width / 2, canvas.height / 2, canvas.width / 2
+    );
+    grad.addColorStop(0, "rgba(239, 68, 68, 0)");
+    grad.addColorStop(1, `rgba(185, 28, 28, ${damageFlashIntensity})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Also draw a subtle full screen solid flash
+    ctx.fillStyle = `rgba(239, 68, 68, ${damageFlashIntensity * 0.25})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.restore();
+  }
 }
 
 function drawPlayerCharacter() {
@@ -3962,10 +4116,12 @@ function resetGame() {
     setRangerClass();
   }
   
-  // Hide panels & start screen overlay
+  // Hide panels, start screen & instructions overlays
   document.getElementById("deathScreen").classList.add("hidden");
   const startScr = document.getElementById("startScreen");
   if (startScr) startScr.classList.add("hidden");
+  const instScr = document.getElementById("instructionsScreen");
+  if (instScr) instScr.classList.add("hidden");
   
   // Show active game HUD overlay
   const hud = document.querySelector(".game-ui-overlay");
@@ -4138,6 +4294,12 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "e" || e.key === "E") {
     e.preventDefault();
     triggerPlayerSpreadshot();
+    return;
+  }
+
+  if (e.key === "v" || e.key === "V") {
+    e.preventDefault();
+    toggleItemLabels();
     return;
   }
   
@@ -4336,6 +4498,14 @@ function initGameEngine() {
     });
   }
 
+  // 3c. Item Labels Toggle button
+  const labelsBtn = document.getElementById("btnToggleLabels");
+  if (labelsBtn) {
+    labelsBtn.addEventListener("click", () => {
+      toggleItemLabels();
+    });
+  }
+
   // 3b. Floating Music Mute Button
   const floatMute = document.getElementById("btnFloatingMute");
   if (floatMute) {
@@ -4351,7 +4521,15 @@ function initGameEngine() {
     });
   }
 
-  // 4. Start Game Button Binding
+  // 4. Start Game & Instructions Button Bindings
+  const btnShowInstructions = document.getElementById("btnShowInstructions");
+  if (btnShowInstructions) {
+    btnShowInstructions.addEventListener("click", () => {
+      document.getElementById("startScreen").classList.add("hidden");
+      document.getElementById("instructionsScreen").classList.remove("hidden");
+    });
+  }
+
   const btnStartArcade = document.getElementById("btnStartArcadeGame");
   if (btnStartArcade) {
     btnStartArcade.addEventListener("click", () => {

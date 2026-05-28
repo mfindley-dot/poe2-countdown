@@ -1036,10 +1036,12 @@ document.addEventListener("DOMContentLoaded", () => {
         blurStacks++;
         lastClickTime = Date.now();
         
-        // Enter DRINKING animation sequence
-        steinState = "DRINKING";
-        steinFrame = 0;
-        steinTick = 0;
+        // Enter DRINKING animation sequence (but don't restart frame if already drinking to avoid stutter!)
+        if (steinState !== "DRINKING") {
+          steinState = "DRINKING";
+          steinFrame = 0;
+          steinTick = 0;
+        }
         
         // Update styling
         btnStein.classList.add("drinking-active");
@@ -1062,8 +1064,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function animateMugCanvas() {
       steinCtx.clearRect(0, 0, steinCanvas.width, steinCanvas.height);
       
-      const frameW = mugSpritesheet.naturalWidth / 4; // 4 columns!
-      const frameH = mugSpritesheet.naturalHeight / 4; // 4 rows!
+      // Prevent division by zero and default to spritesheet size 512x286
+      const frameW = mugSpritesheet.naturalWidth > 0 ? mugSpritesheet.naturalWidth / 4 : 128;
+      const frameH = mugSpritesheet.naturalHeight > 0 ? mugSpritesheet.naturalHeight / 4 : 71.5;
       
       let activeRow = 0; // Row 1: Full Mug (index 0)
       let activeCol = 0;
@@ -1110,8 +1113,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
       
-      const srcX = activeCol * frameW;
-      const srcY = activeRow * frameH;
+      // Floor the values to prevent horizontal subpixel lines or tearing
+      const srcX = Math.floor(activeCol * frameW);
+      const srcY = Math.floor(activeRow * frameH);
+      const drawW = Math.floor(frameW);
+      const drawH = Math.floor(frameH);
       
       // Draw slice accurately
       if (mugSpritesheet.complete && mugSpritesheet.naturalWidth > 0) {
@@ -1119,7 +1125,7 @@ document.addEventListener("DOMContentLoaded", () => {
         steinCtx.drawImage(
           mugSpritesheet,
           srcX, srcY,
-          frameW, frameH,
+          drawW, drawH,
           0, 0,
           steinCanvas.width, steinCanvas.height
         );
@@ -1205,6 +1211,104 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ==========================================================================
+  // SUNPRISM SPACE CAT COMPANION SYSTEM
+  // ==========================================================================
+  let lastCatTrickIndex = -1;
+
+  function playSynthCatCelestialChime() {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContextClass();
+      const now = ctx.currentTime;
+      
+      // Celestial swell (space cat sweep)
+      const oscSwell = ctx.createOscillator();
+      const gainSwell = ctx.createGain();
+      oscSwell.type = "sine";
+      oscSwell.frequency.setValueAtTime(300, now);
+      oscSwell.frequency.exponentialRampToValueAtTime(1200, now + 0.55);
+      
+      gainSwell.gain.setValueAtTime(0.01, now);
+      gainSwell.gain.linearRampToValueAtTime(0.06, now + 0.15);
+      gainSwell.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+      
+      oscSwell.connect(gainSwell);
+      gainSwell.connect(ctx.destination);
+      oscSwell.start(now);
+      oscSwell.stop(now + 0.55);
+      
+      // Starry high twinkle arpeggio
+      for (let i = 0; i < 3; i++) {
+        const starTime = now + 0.18 + i * 0.08;
+        const oscStar = ctx.createOscillator();
+        const gainStar = ctx.createGain();
+        oscStar.type = "triangle";
+        oscStar.frequency.setValueAtTime(2000 + i * 350, starTime);
+        
+        gainStar.gain.setValueAtTime(0.04, starTime);
+        gainStar.gain.exponentialRampToValueAtTime(0.0001, starTime + 0.15);
+        
+        oscStar.connect(gainStar);
+        gainStar.connect(ctx.destination);
+        oscStar.start(starTime);
+        oscStar.stop(starTime + 0.16);
+      }
+    } catch (e) {
+      console.warn("Cat synth chime failed:", e);
+    }
+  }
+
+  function initSunprismCatFeature() {
+    const btnCat = document.getElementById("btnSunprismCat");
+    if (!btnCat) return;
+    
+    btnCat.addEventListener("click", () => {
+      const container = document.body;
+      
+      // Determine random trick index between 1 and 6 with NO repeats in a row!
+      let trickIndex;
+      do {
+        trickIndex = Math.floor(Math.random() * 6) + 1; // 1 to 6
+      } while (trickIndex === lastCatTrickIndex);
+      lastCatTrickIndex = trickIndex;
+      
+      // Play high-fidelity synthesized celestial chime!
+      playSynthCatCelestialChime();
+      
+      // Create space cat HTML video element dynamically
+      const video = document.createElement("video");
+      video.className = "sunprism-cat-video";
+      video.src = `assets/animations/sunprism-cat/sunprism-cat_trick_${trickIndex}.webm`;
+      video.autoplay = true;
+      video.loop = false;
+      video.muted = true; // Required by browsers for dynamic autoplay
+      video.playsInline = true;
+      
+      // Size and overlay video across the entire viewport foreground!
+      video.style.position = "fixed";
+      video.style.zIndex = "9999";
+      video.style.width = "220px";
+      video.style.height = "auto";
+      video.style.pointerEvents = "none";
+      
+      // Trigger the 8-second Zero-G float keyframes across the screen!
+      video.style.animation = "floatCatAcross 8s cubic-bezier(0.25, 1, 0.5, 1) forwards";
+      
+      // Remove any existing active cat elements globally to avoid overlapping clutter on double click
+      const activeCats = document.querySelectorAll(".sunprism-cat-video");
+      activeCats.forEach(c => c.remove());
+      
+      // Clean up the node immediately when animation ends to save RAM
+      video.addEventListener("animationend", () => {
+        video.remove();
+      });
+      
+      container.appendChild(video);
+    });
+  }
+
   // Trigger init on DOM load
   initSteinAleChallenge();
+  initSunprismCatFeature();
 });
