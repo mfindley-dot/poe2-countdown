@@ -13,8 +13,8 @@ const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false; // Retro pixel feel
 
 // Live serverless dreamlo.com leaderboard keys (Pre-allocated for GLG Guild!)
-const DREAMLO_PUBLIC_KEY = "6654ef248f40bb8e945c7ba9";
-const DREAMLO_PRIVATE_KEY = "uK1WlH9CPE-XjFskW0R4Agz7r510_lMEC6t3fXGZwt_A";
+const DREAMLO_PUBLIC_KEY = "6a1a0f778f40bb17b021d0c5";
+const DREAMLO_PRIVATE_KEY = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A";
 
 // Game State Enum
 const GameState = {

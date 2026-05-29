@@ -442,7 +442,7 @@ class GLGOverlayApp:
             total_score = int(total_chaos * 10)
             
             # Fetch dreamlo key (default fallback)
-            dreamlo_key = "uK1WlH9CPE-XjFskW0R4Agz7r510_lMEC6t3fXGZwt_A"
+            dreamlo_key = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A"
             config_path = os.path.join(os.path.dirname(__file__), "config.json")
             if os.path.exists(config_path):
                 try:

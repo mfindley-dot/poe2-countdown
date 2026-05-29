@@ -241,7 +241,7 @@ def main():
             if args.push_to_guild or dreamlo_key:
                 if not dreamlo_key:
                     # Fallback to GLG pre-allocated guild private key if the user is GLG
-                    dreamlo_key = "uK1WlH9CPE-XjFskW0R4Agz7r510_lMEC6t3fXGZwt_A"
+                    dreamlo_key = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A"
                 
                 import urllib.parse
                 import requests
