@@ -601,10 +601,11 @@ let player = {
   maxHp: 100,
   level: 1,
   xp: 0,
-  maxXp: 150,
+  maxXp: 35, // balanced XP starting bound for 2-3 levelups before boss
   lastShotTime: 0,
   shotCooldown: 280, // ms
-  damage: 8,
+  damage: 6, // Ranger starting base damage
+  facingRight: true, // Ranger/Exile facing direction tracking
   lastDamageTime: 0,
   frozen: false,
   freezeTimer: 0,
@@ -639,7 +640,7 @@ function setWitchClass() {
   player.maxHp = 90;
   player.hp = 90;
   player.speed = 2.6;
-  player.damage = 18; // Increased player base damage (up from 12)
+  player.damage = 9; // Witch starting base damage (half damage for early wave resilience)
   player.shotCooldown = 480;
   
   const btnWitch = document.getElementById("btnSelectWitch");
@@ -653,7 +654,7 @@ function setRangerClass() {
   player.maxHp = 100;
   player.hp = 100;
   player.speed = 3.1;
-  player.damage = 14; // Increased player base damage (up from 8)
+  player.damage = 6; // Ranger starting base damage (half damage for early wave resilience)
   player.shotCooldown = 280;
   
   const btnWitch = document.getElementById("btnSelectWitch");
@@ -806,17 +807,17 @@ class Enemy {
     // Stats base on types
     if (type === "spider") {
       this.radius = 55;
-      this.hp = 14 + (wave * 1.5); // base HP shifted higher to wave 6 scaling
+      this.hp = 50 + (wave * 3.0); // doubled early base health and wave scaling
       this.maxHp = this.hp;
-      this.speed = 1.3 + Math.random() * 0.4;
+      this.speed = 1.6 + Math.random() * 0.4; // boosted speed for early tension
       this.color = "#4b5563"; // slate grey
       this.damage = 3; // reduced from 8 to make poison-dot tick survivable!
     } 
     else if (type === "ghost") {
       this.radius = 65;
-      this.hp = 29 + (wave * 2.5); // base HP shifted higher to wave 6 scaling
+      this.hp = 90 + (wave * 5.0); // doubled early base health and wave scaling
       this.maxHp = this.hp;
-      this.speed = 0.9;
+      this.speed = 1.1; // boosted speed for early tension
       this.color = "#a5f3fc"; // glowing freeze cyan
       this.damage = 7; // reduced from 12
       this.lastFreezeBeamTime = 0;
@@ -826,9 +827,9 @@ class Enemy {
     } 
     else if (type === "zombie") {
       this.radius = 60;
-      this.hp = 20 + (wave * 2.0); // base HP shifted higher to wave 6 scaling
+      this.hp = 70 + (wave * 4.0); // doubled early base health and wave scaling
       this.maxHp = this.hp;
-      this.speed = 1.0 + Math.random() * 0.3;
+      this.speed = 1.3 + Math.random() * 0.3; // boosted speed for early tension
       this.color = "#15803d"; // green zombie
       this.damage = 5;
     }
@@ -993,7 +994,7 @@ class Enemy {
                 isSlamRing: true,
                 x: this.x,
                 y: this.y + 60, // Align with feet shadow
-                radius: 130 + i * 30, // Visual maximum radius
+                radius: (80 + i * 18) * 0.6, // Reduced by 40%
                 color: i % 2 === 0 ? "rgba(239, 68, 68, 0.45)" : "rgba(251, 191, 36, 0.45)",
                 age: 0,
                 maxAge: 35 + i * 5,
@@ -1403,20 +1404,21 @@ class Enemy {
             executeApeSlam(this.x, this.y);
             
             const offsets = [
-              { dx: -180, dy: 0 },
-              { dx: 180, dy: 0 },
-              { dx: 0, dy: -180 },
-              { dx: 0, dy: 180 },
-              { dx: -130, dy: -130 },
-              { dx: 130, dy: -130 },
-              { dx: 130, dy: 130 },
-              { dx: -130, dy: 130 }
+              { dx: -66, dy: 0 },
+              { dx: 66, dy: 0 },
+              { dx: 0, dy: -66 },
+              { dx: 0, dy: 66 },
+              { dx: -48, dy: -48 },
+              { dx: 48, dy: -48 },
+              { dx: 48, dy: 48 },
+              { dx: -48, dy: 48 }
             ];
             offsets.forEach(off => {
               delayedSlams.push({
                 delay: 15,
                 x: this.x + off.dx,
-                y: this.y + off.dy
+                y: this.y + off.dy,
+                radius: 60 // scaled down by 40%
               });
             });
             
@@ -1573,35 +1575,34 @@ class Enemy {
           executeApeSlam(this.slamTargetX, this.slamTargetY);
           
           if (this.currentCombo === "crossslam") {
-            // Outward radiating static sequence: 1st ring around gorilla at delay 12 (half-sized)
+            // Outward radiating static sequence (scaled down)
             const offsets1 = [
-              { dx: 0, dy: -180 },
-              { dx: 180, dy: 0 },
-              { dx: 0, dy: 180 },
-              { dx: -180, dy: 0 }
+              { dx: 0, dy: -66 },
+              { dx: 66, dy: 0 },
+              { dx: 0, dy: 66 },
+              { dx: -66, dy: 0 }
             ];
             offsets1.forEach(off => {
               delayedSlams.push({
                 delay: 12,
                 x: this.x + off.dx,
                 y: this.y + off.dy,
-                radius: 160
+                radius: 60
               });
             });
             
-            // 2nd ring further out at delay 24 (half-sized)
             const offsets2 = [
-              { dx: 0, dy: -360 },
-              { dx: 360, dy: 0 },
-              { dx: 0, dy: 360 },
-              { dx: -360, dy: 0 }
+              { dx: 0, dy: -132 },
+              { dx: 132, dy: 0 },
+              { dx: 0, dy: 132 },
+              { dx: -132, dy: 0 }
             ];
             offsets2.forEach(off => {
               delayedSlams.push({
                 delay: 24,
                 x: this.x + off.dx,
                 y: this.y + off.dy,
-                radius: 160
+                radius: 60
               });
             });
             
@@ -1612,35 +1613,33 @@ class Enemy {
             });
           }
           else if (this.currentCombo === "xslam") {
-            // Outward radiating static sequence: 1st diagonal ring around gorilla at delay 12 (half-sized)
             const offsets1 = [
-              { dx: -130, dy: -130 },
-              { dx: 130, dy: -130 },
-              { dx: 130, dy: 130 },
-              { dx: -130, dy: 130 }
+              { dx: -48, dy: -48 },
+              { dx: 48, dy: -48 },
+              { dx: 48, dy: 48 },
+              { dx: -48, dy: 48 }
             ];
             offsets1.forEach(off => {
               delayedSlams.push({
                 delay: 12,
                 x: this.x + off.dx,
                 y: this.y + off.dy,
-                radius: 160
+                radius: 60
               });
             });
             
-            // 2nd diagonal ring further out at delay 24 (half-sized)
             const offsets2 = [
-              { dx: -260, dy: -260 },
-              { dx: 260, dy: -260 },
-              { dx: 260, dy: 260 },
-              { dx: -260, dy: 260 }
+              { dx: -96, dy: -96 },
+              { dx: 96, dy: -96 },
+              { dx: 96, dy: 96 },
+              { dx: -96, dy: 96 }
             ];
             offsets2.forEach(off => {
               delayedSlams.push({
                 delay: 24,
                 x: this.x + off.dx,
                 y: this.y + off.dy,
-                radius: 160
+                radius: 60
               });
             });
             
@@ -1881,13 +1880,28 @@ class Enemy {
         drawY = this.y - (this.bounceY || 0);
       }
       
-      ctx.drawImage(
-        img,
-        srcX, srcY,
-        frameW, frameH,
-        this.x - drawW / 2, drawY - drawH / 2,
-        drawW, drawH
-      );
+      ctx.save();
+      // Apply horizontal flip for zombie based on velocity vx (moving left faces left)
+      if (this.vx < -0.1) {
+        ctx.translate(this.x, drawY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(
+          img,
+          srcX, srcY,
+          frameW, frameH,
+          -drawW / 2, -drawH / 2,
+          drawW, drawH
+        );
+      } else {
+        ctx.drawImage(
+          img,
+          srcX, srcY,
+          frameW, frameH,
+          this.x - drawW / 2, drawY - drawH / 2,
+          drawW, drawH
+        );
+      }
+      ctx.restore();
       
       drewSprite = true;
       if (alphaSaved) {
@@ -2380,7 +2394,7 @@ function fireGhostProjectile(x, y, angle) {
 }
 
 // Ape Pillar of Doom Slam
-function executeApeSlam(tx, ty, radius = 320) {
+function executeApeSlam(tx, ty, radius = 120) {
   // Shockwave particle - expands dynamically and is dodge-rollable!
   particleEffects.push({
     isSlamRing: true,
@@ -4064,16 +4078,16 @@ function processGamePhysics() {
             });
           } else {
             p.hasHitPlayer = true;
-            player.hp = Math.max(0, player.hp - 45);
+            player.hp = Math.max(0, player.hp - 10); // Halved shockwave damage again to prevent sudden overlapping one-shots
             player.lastDamageTime = Date.now();
             
             particleEffects.push({
               x: player.x,
               y: player.y - 12,
-              text: "PILLAR SLAMMED!",
+              text: "-10 HP",
               color: "#ef4444",
               age: 0,
-              maxAge: 45
+              maxAge: 40
             });
             
             triggerPlayerHitEffect();
@@ -4818,7 +4832,37 @@ function drawGamePlayScreen() {
 }
 
 function drawPlayerCharacter() {
+  // Update facing direction dynamically based on movement or closest enemy if shooting
+  if (Date.now() - player.lastShotTime < 150) {
+    let closestEnemy = null;
+    let closestDist = Infinity;
+    enemies.forEach(e => {
+      if (e.isDead || !e.active) return;
+      const dx = e.x - player.x;
+      const dy = e.y - player.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestEnemy = e;
+      }
+    });
+    if (closestEnemy) {
+      player.facingRight = (closestEnemy.x > player.x);
+    } else if (player.vx !== 0) {
+      player.facingRight = (player.vx > 0);
+    }
+  } else if (player.vx !== 0) {
+    player.facingRight = (player.vx > 0);
+  }
+
   ctx.save();
+  
+  // Apply horizontal flip scale transform if facing left!
+  if (player.class === "Ranger" && !player.facingRight) {
+    ctx.translate(player.x, player.y);
+    ctx.scale(-1, 1);
+    ctx.translate(-player.x, -player.y);
+  }
   
   // Glowing freeze indicator if frozen
   if (player.frozen) {
@@ -4838,8 +4882,8 @@ function drawPlayerCharacter() {
     const frameW = img.naturalWidth / cols;
     const frameH = img.naturalHeight / rows;
     
-    // Row selection logic based on state
-    let activeRow = 0; // Default Row 1: Idle (index 0)
+    // Row selection logic based on state, defaulting to last walked direction row to persist face direction
+    let activeRow = player.lastWalkRow !== undefined ? player.lastWalkRow : 0; 
     
     if (player.hp <= 0) {
       activeRow = 1; // Row 2: Death (index 1)
@@ -4851,8 +4895,14 @@ function drawPlayerCharacter() {
       activeRow = 5; // Row 6: Spreadshot (index 5)
     } 
     else if (Math.abs(player.vx) > 0.1 || Math.abs(player.vy) > 0.1) {
-      const isMovingDiagonally = (player.vx !== 0 && player.vy !== 0);
-      activeRow = isMovingDiagonally ? 3 : 2; // Row 4: Turning (index 3) OR Row 3: Walk (index 2)
+      // Map to correct direction rows based on movement vector (down vs up vs sideways)
+      if (Math.abs(player.vy) > Math.abs(player.vx)) {
+        activeRow = player.vy > 0 ? 0 : 2; // Row 1: Walk Down (index 0) OR Row 3: Walk Up (index 2)
+        player.lastWalkRow = activeRow;
+      } else {
+        activeRow = 4; // Row 5: Walk Sideways (index 4)
+        player.lastWalkRow = activeRow;
+      }
     }
     
     // Column frame index select
@@ -4863,6 +4913,9 @@ function drawPlayerCharacter() {
       // Sync frame column indices perfectly to physics progression ratio
       const ratio = (player.rollDuration - player.rollTimer) / player.rollDuration;
       activeCol = Math.min(7, Math.floor(ratio * 8));
+    } else if (Math.abs(player.vx) <= 0.1 && Math.abs(player.vy) <= 0.1 && Date.now() - player.lastShotTime >= 150) {
+      // Lock to standing still frame 0 when idle (not moving and not shooting)
+      activeCol = 0;
     }
     
     const srcX = activeCol * frameW;
@@ -5341,7 +5394,7 @@ function resetGame() {
   player.vy = 0;
   player.level = 1;
   player.xp = 0;
-  player.maxXp = 150;
+  player.maxXp = 35; // balanced starting XP limit
   player.radius = 30;
   player.frozen = false;
   player.freezeTimer = 0;
