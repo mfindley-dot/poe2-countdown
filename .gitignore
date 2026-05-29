@@ -1,0 +1,5 @@
+# PoE2 Countdown Stash Scanner Ignore List
+scanner_prototype/config.json
+scanner_prototype.zip
+scanner_prototype/__pycache__/
+scanner_prototype/debug/

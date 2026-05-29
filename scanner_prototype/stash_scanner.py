@@ -77,7 +77,19 @@ def main():
     args = parse_args()
     
     # 1. Fetch Gemini API Key
-    api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
+    # Try loading from local git-ignored config.json first (safeguard for easy guild sharing)
+    default_key = None
+    try:
+        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                cfg = json.load(f)
+                default_key = cfg.get("default_api_key")
+    except Exception:
+        pass
+        
+    api_key = args.api_key or os.environ.get("GEMINI_API_KEY") or default_key
+    
     if not api_key:
         print("Error: Gemini API Key not found.")
         print("Please set the GEMINI_API_KEY environment variable or pass it using --api-key.")
