@@ -496,6 +496,73 @@
                   <option value="all">🔮 Guild (All)</option>
                 </select>
               </div>
+
+              <button id="btnToggleAdvanced" onclick="toggleAdvancedFilters()" style="background: #1c1917; border: 1px solid rgba(197, 168, 128, 0.35); color: #ffd700; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: bold; transition: all 0.2s ease;">
+                ⚙️ ADVANCED FILTERS
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible Advanced Search Panel (V2.4) -->
+          <div id="advancedSearchPanel" style="display: none; background: rgba(10, 8, 6, 0.9); border: 1px solid #c5a880; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 10px rgba(0,0,0,0.8); flex-direction: column; gap: 10px; box-sizing: border-box;">
+            <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+              <span>🛡️ ADVANCED STASH SEARCH FILTERS (GGG-STYLE)</span>
+              <span style="font-size: 0.58rem; background: rgba(197, 168, 128, 0.15); color: #c5a880; padding: 1px 4px; border-radius: 2px; border: 1px solid rgba(197, 168, 128, 0.3);">V2.4</span>
+            </div>
+
+            <!-- Categories and Ranges Grid -->
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; border-bottom: 1px solid rgba(197,168,128,0.15); padding-bottom: 10px;">
+              <!-- Category dropdown -->
+              <div style="display: flex; flex-direction: column; gap: 4px; min-width: 120px;">
+                <label for="advCategory" style="font-size: 0.62rem; color: #a2a1a0; font-weight: bold;">ITEM CATEGORY:</label>
+                <select id="advCategory" onchange="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
+                  <option value="all">Any Category</option>
+                  <option value="ring">Ring</option>
+                  <option value="belt">Belt</option>
+                  <option value="amulet">Amulet</option>
+                  <option value="weapon">Weapon</option>
+                  <option value="armour">Armour / Shield</option>
+                  <option value="boots">Boots</option>
+                  <option value="gloves">Gloves</option>
+                  <option value="helmet">Helmet</option>
+                </select>
+              </div>
+
+              <!-- Item Level Range -->
+              <div style="display: flex; flex-direction: column; gap: 4px; width: 140px;">
+                <label style="font-size: 0.62rem; color: #a2a1a0; font-weight: bold;">ITEM LEVEL (ilvl):</label>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <input type="number" id="advIlvlMin" placeholder="Min" oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
+                  <span style="color: #a2a1a0; font-size: 0.65rem;">to</span>
+                  <input type="number" id="advIlvlMax" placeholder="Max" oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
+                </div>
+              </div>
+
+              <!-- Level Requirement Range -->
+              <div style="display: flex; flex-direction: column; gap: 4px; width: 140px;">
+                <label style="font-size: 0.62rem; color: #a2a1a0; font-weight: bold;">LEVEL REQUIREMENT:</label>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <input type="number" id="advLvlMin" placeholder="Min" oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
+                  <span style="color: #a2a1a0; font-size: 0.65rem;">to</span>
+                  <input type="number" id="advLvlMax" placeholder="Max" oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Stat Filters Builder Card -->
+            <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(197, 168, 128, 0.15); padding: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="font-size: 0.68rem; color: #ffd700; font-weight: bold; letter-spacing: 0.5px;">
+                AND STAT MODIFIERS GROUP:
+              </div>
+              
+              <!-- Stat Filters Rows Container -->
+              <div id="statFiltersList" style="display: flex; flex-direction: column; gap: 6px;">
+                <!-- Dynamically added filter rows go here -->
+              </div>
+
+              <button onclick="addStatFilterRow()" style="background: rgba(197, 168, 128, 0.05); border: 1px dashed #c5a880; color: #ffd700; padding: 5px; font-size: 0.68rem; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; margin-top: 4px; font-weight: bold; font-family: 'Outfit', sans-serif;">
+                ➕ ADD STAT FILTER ROW
+              </button>
             </div>
           </div>
           
@@ -897,12 +964,185 @@
     }
 
     // 3. Render weapons and gear grid dynamically inside Depot Stash tab
+    // 3. Advanced query filter engine & GGG Trade-style evaluation helpers (V2.4)
+    function toggleAdvancedFilters() {
+      const panel = document.getElementById("advancedSearchPanel");
+      const btn = document.getElementById("btnToggleAdvanced");
+      if (!panel || !btn) return;
+      
+      if (panel.style.display === "none" || panel.style.display === "") {
+        panel.style.display = "flex";
+        btn.textContent = "⚙️ HIDE ADVANCED FILTERS";
+        btn.style.background = "#ffd700";
+        btn.style.color = "#0c0a09";
+      } else {
+        panel.style.display = "none";
+        btn.textContent = "⚙️ ADVANCED FILTERS";
+        btn.style.background = "#1c1917";
+        btn.style.color = "#ffd700";
+      }
+    }
+
+    const SUPPORTED_STATS = [
+      { key: "fire_res", label: "🔥 Fire Resistance (%)" },
+      { key: "cold_res", label: "❄️ Cold Resistance (%)" },
+      { key: "lightning_res", label: "⚡ Lightning Resistance (%)" },
+      { key: "total_res", label: "🔮 Total Elemental Resistance (%)" },
+      { key: "max_life", label: "❤️ Maximum Life" },
+      { key: "max_mana", label: "💧 Maximum Mana" },
+      { key: "strength", label: "💪 Strength" },
+      { key: "dexterity", label: "🎯 Dexterity" },
+      { key: "intelligence", label: "🧠 Intelligence" },
+      { key: "armour", label: "🛡️ Armour" },
+      { key: "evasion", label: "👟 Evasion Rating" },
+      { key: "energy_shield", label: "⚡ Energy Shield" }
+    ];
+
+    function addStatFilterRow() {
+      const list = document.getElementById("statFiltersList");
+      if (!list) return;
+      
+      const rowId = `row_${Date.now()}`;
+      const row = document.createElement("div");
+      row.id = rowId;
+      row.className = "stat-filter-row";
+      row.style.display = "flex";
+      row.style.gap = "6px";
+      row.style.alignItems = "center";
+      row.style.marginTop = "4px";
+      
+      // Select element
+      let selectHtml = `<select onchange="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; flex: 1; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif;">`;
+      SUPPORTED_STATS.forEach(s => {
+        selectHtml += `<option value="${s.key}">${s.label}</option>`;
+      });
+      selectHtml += `</select>`;
+      
+      row.innerHTML = `
+        ${selectHtml}
+        <input type="number" placeholder="Min" oninput="filterStash()" class="stat-min" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 60px; outline: none; box-sizing: border-box;">
+        <input type="number" placeholder="Max" oninput="filterStash()" class="stat-max" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 60px; outline: none; box-sizing: border-box;">
+        <button onclick="removeStatFilterRow('${rowId}')" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer; padding: 2px 5px;">❌</button>
+      `;
+      
+      list.appendChild(row);
+      filterStash();
+    }
+
+    function removeStatFilterRow(rowId) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.remove();
+      }
+      filterStash();
+    }
+
+    function getStatValue(item, statKey) {
+      if (!item.affixes || !Array.isArray(item.affixes)) return 0;
+      
+      let sum = 0;
+      
+      item.affixes.forEach(mod => {
+        const text = mod.toLowerCase();
+        
+        if (statKey === "fire_res") {
+          let match = text.match(/(\+?\d+)% to fire resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/(\+?\d+)% to all elemental resistances/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "cold_res") {
+          let match = text.match(/(\+?\d+)% to cold resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/(\+?\d+)% to all elemental resistances/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "lightning_res") {
+          let match = text.match(/(\+?\d+)% to lightning resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/(\+?\d+)% to all elemental resistances/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "total_res") {
+          let match = text.match(/(\+?\d+)% to fire resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/(\+?\d+)% to cold resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/(\+?\d+)% to lightning resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/(\+?\d+)% to all elemental resistances/);
+          if (match) {
+            const val = parseInt(match[1], 10);
+            sum += val * 3;
+          }
+        }
+        else if (statKey === "max_life") {
+          let match = text.match(/\+(\d+) to maximum life/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "max_mana") {
+          let match = text.match(/\+(\d+) to maximum mana/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "strength") {
+          let match = text.match(/\+(\d+) to strength/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/\+(\d+) to all attributes/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "dexterity") {
+          let match = text.match(/\+(\d+) to dexterity/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/\+(\d+) to all attributes/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "intelligence") {
+          let match = text.match(/\+(\d+) to intelligence/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/\+(\d+) to all attributes/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "armour") {
+          let match = text.match(/\+(\d+) to armour/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/(\d+)% increased armour/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "evasion") {
+          let match = text.match(/\+(\d+) to evasion rating/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/(\d+)% increased evasion rating/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "energy_shield") {
+          let match = text.match(/\+(\d+) to energy shield/);
+          if (match) sum += parseInt(match[1], 10);
+          
+          match = text.match(/(\d+)% increased energy shield/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+      });
+      
+      return sum;
+    }
+
     function renderDepotGrid() {
       const depotGrid = document.getElementById("depotGrid");
       if (!depotGrid) return;
       depotGrid.innerHTML = "";
       
-      // Get filter input elements
+      // Get basic filter input elements
       const searchInput = document.getElementById("stashSearchText");
       const raritySelect = document.getElementById("stashRarityFilter");
       const ownerSelect = document.getElementById("stashOwnerFilter");
@@ -911,28 +1151,57 @@
       const selectedRarity = raritySelect ? raritySelect.value.toLowerCase() : "all";
       const selectedOwner = ownerSelect ? ownerSelect.value.toLowerCase() : "all";
       
-      // Combine mock/pre-loaded items with live scanned gear from the database
-      // Ensure mock gear is marked under Shared Guild Vault
+      // Get advanced filter input elements (V2.4)
+      const advCategorySelect = document.getElementById("advCategory");
+      const advIlvlMinInput = document.getElementById("advIlvlMin");
+      const advIlvlMaxInput = document.getElementById("advIlvlMax");
+      const advLvlMinInput = document.getElementById("advLvlMin");
+      const advLvlMaxInput = document.getElementById("advLvlMax");
+      
+      const category = advCategorySelect ? advCategorySelect.value.toLowerCase() : "all";
+      const ilvlMin = advIlvlMinInput && advIlvlMinInput.value !== "" ? parseInt(advIlvlMinInput.value, 10) : null;
+      const ilvlMax = advIlvlMaxInput && advIlvlMaxInput.value !== "" ? parseInt(advIlvlMaxInput.value, 10) : null;
+      const lvlMin = advLvlMinInput && advLvlMinInput.value !== "" ? parseInt(advLvlMinInput.value, 10) : null;
+      const lvlMax = advLvlMaxInput && advLvlMaxInput.value !== "" ? parseInt(advLvlMaxInput.value, 10) : null;
+      
+      // Gather active dynamic stat filters row by row
+      const statFilterRows = document.querySelectorAll("#statFiltersList .stat-filter-row");
+      const activeStatFilters = [];
+      statFilterRows.forEach(row => {
+        const select = row.querySelector("select");
+        const minInput = row.querySelector(".stat-min");
+        const maxInput = row.querySelector(".stat-max");
+        
+        if (select) {
+          activeStatFilters.push({
+            key: select.value,
+            min: minInput && minInput.value !== "" ? parseInt(minInput.value, 10) : null,
+            max: maxInput && maxInput.value !== "" ? parseInt(maxInput.value, 10) : null
+          });
+        }
+      });
+      
+      // Combine mock/pre-loaded items with live scanned gear
       const allGear = [
         ...MOCK_GEAR.map(g => ({ ...g, owner: "Shared Guild Vault" })),
         ...scannedItems
       ];
       
-      // Apply filters: Search + Rarity + Owner
+      // Apply filters: Basic + Category + ilvl + reqLvl + Stats
       const filteredGear = allGear.filter(item => {
-        // 1. Owner Filter
+        // 1. Basic Owner Filter
         if (selectedOwner !== "all") {
           const ownerMatch = item.owner && item.owner.toLowerCase() === selectedOwner;
           if (!ownerMatch) return false;
         }
         
-        // 2. Rarity Filter
+        // 2. Basic Rarity Filter
         if (selectedRarity !== "all") {
           const rarityMatch = item.rarity && item.rarity.toLowerCase() === selectedRarity;
           if (!rarityMatch) return false;
         }
         
-        // 3. Keyword Search (evaluates name, base typeLine, explicit mods)
+        // 3. Basic Keyword Search (name, base typeLine, explicit mods)
         if (query) {
           const nameLower = item.name ? item.name.toLowerCase() : "";
           const baseLower = item.base ? item.base.toLowerCase() : "";
@@ -944,8 +1213,60 @@
           if (!keywordMatch) return false;
         }
         
+        // 4. Advanced Category Filter
+        if (category !== "all") {
+          const baseLower = item.base ? item.base.toLowerCase() : "";
+          const nameLower = item.name ? item.name.toLowerCase() : "";
+          
+          if (category === "ring" && !baseLower.includes("ring") && !nameLower.includes("ring")) return false;
+          if (category === "belt" && !baseLower.includes("belt") && !nameLower.includes("belt")) return false;
+          if (category === "amulet" && !baseLower.includes("amulet") && !nameLower.includes("amulet")) return false;
+          if (category === "weapon" && !baseLower.includes("sword") && !baseLower.includes("blade") && !baseLower.includes("bow") && !baseLower.includes("wand") && !baseLower.includes("staff") && !baseLower.includes("axe") && !baseLower.includes("mace") && !baseLower.includes("dagger")) return false;
+          if (category === "armour" && !baseLower.includes("armour") && !baseLower.includes("plate") && !baseLower.includes("shield") && !baseLower.includes("chest") && !baseLower.includes("vest")) return false;
+          if (category === "boots" && !baseLower.includes("boots") && !baseLower.includes("greaves") && !baseLower.includes("shoes")) return false;
+          if (category === "gloves" && !baseLower.includes("gloves") && !baseLower.includes("gauntlets") && !baseLower.includes("mitts")) return false;
+          if (category === "helmet" && !baseLower.includes("helmet") && !baseLower.includes("circlet") && !baseLower.includes("cap") && !baseLower.includes("mask") && !baseLower.includes("crown")) return false;
+        }
+        
+        // 5. Advanced Item Level Range
+        const itemIlvl = item.ilvl || item.item_level || 0;
+        if (ilvlMin !== null && itemIlvl < ilvlMin) return false;
+        if (ilvlMax !== null && itemIlvl > ilvlMax) return false;
+        
+        // 6. Advanced Level Requirement Range
+        const itemLvlReq = item.level || item.level_req || 0;
+        if (lvlMin !== null && itemLvlReq < lvlMin) return false;
+        if (lvlMax !== null && itemLvlReq > lvlMax) return false;
+        
+        // 7. Advanced Stat Modifiers Evaluation (AND logical query)
+        for (const filter of activeStatFilters) {
+          const itemValue = getStatValue(item, filter.key);
+          if (filter.min !== null && itemValue < filter.min) return false;
+          if (filter.max !== null && itemValue > filter.max) return false;
+        }
+        
         return true;
       });
+      
+      // If no items match, render a gorgeous gothic empty-state placeholder!
+      if (filteredGear.length === 0) {
+        const emptyDiv = document.createElement("div");
+        emptyDiv.style.gridColumn = "1 / -1";
+        emptyDiv.style.background = "rgba(10, 8, 6, 0.6)";
+        emptyDiv.style.border = "1px dashed rgba(197, 168, 128, 0.3)";
+        emptyDiv.style.borderRadius = "4px";
+        emptyDiv.style.padding = "35px 20px";
+        emptyDiv.style.textAlign = "center";
+        emptyDiv.style.color = "#a2a1a0";
+        emptyDiv.style.fontFamily = "'Outfit', sans-serif";
+        emptyDiv.innerHTML = `
+          <div style="font-size: 1.5rem; margin-bottom: 8px;">🔮</div>
+          <div style="color: #ffd700; font-size: 0.85rem; font-weight: bold; letter-spacing: 0.5px;">NO MATCHING GEAR IN DEPOT DROP</div>
+          <div style="font-size: 0.65rem; color: #a2a1a0; margin-top: 4px;">Try loosening your advanced stat filters or search terms.</div>
+        `;
+        depotGrid.appendChild(emptyDiv);
+        return;
+      }
       
       filteredGear.forEach(item => {
         const cell = document.createElement("div");
