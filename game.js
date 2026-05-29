@@ -376,6 +376,23 @@ function updateProceduralForestEffects() {
     }
   });
 
+  // Spawn drifting forest ambient leaves (4% chance per frame if game is active)
+  if (currentGameState === GameState.PLAY && Math.random() < 0.04) {
+    particleEffects.push({
+      x: 1650, // slightly off-screen right
+      y: Math.random() * 900,
+      vx: -1.2 - Math.random() * 1.8, // drift left
+      vy: 0.4 + Math.random() * 1.0,  // drift down
+      isAmbientLeaf: true,
+      color: ["#166534", "#15803d", "#14532d", "#854d0e", "#a16207", "#ca8a04"][Math.floor(Math.random() * 6)], // greens and autumn tones
+      radius: 3 + Math.random() * 4,
+      angle: Math.random() * Math.PI * 2,
+      va: (Math.random() - 0.5) * 0.03, // slow spin
+      age: 0,
+      maxAge: 600 // long max lifetime fallback
+    });
+  }
+
   // Tick the dark forest backgrounds sequence animator
   updateForestBgAnimation();
 }
@@ -1434,12 +1451,19 @@ class Enemy {
       
       let activeCol = this.animFrame;
       if (this.isDead) {
-        // Death splat progression mapped to deathTimer
-        activeCol = Math.min(7, 7 - Math.floor(this.deathTimer / 6));
+        // Death splat progression mapped to deathTimer at double-speed, then lingering on frame 7
+        activeCol = Math.max(0, Math.min(7, Math.floor((45 - this.deathTimer) / 2)));
       }
       
       const srcX = activeCol * frameW;
       const srcY = activeRow * frameH;
+      
+      let alphaSaved = false;
+      if (this.isDead && this.deathTimer < 14) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, this.deathTimer / 14));
+        alphaSaved = true;
+      }
       
       // Underfoot perspective shadow (Fainter and larger for floating ghosts!)
       ctx.beginPath();
@@ -1476,6 +1500,9 @@ class Enemy {
       );
       
       drewSprite = true;
+      if (alphaSaved) {
+        ctx.restore();
+      }
     } 
     else if (this.type === "ape") {
       const apeImg = getProcessedApeImg();
@@ -1499,15 +1526,27 @@ class Enemy {
         
         let activeCol = this.animFrame;
         if (this.isDead) {
-          // Death collapse frame progression
-          activeCol = Math.min(7, 7 - Math.floor(this.deathTimer / 6));
+          // Death collapse frame progression (starts at 60, double-speed 16 frames collapse, then linger)
+          activeCol = Math.max(0, Math.min(7, Math.floor((60 - this.deathTimer) / 2)));
         } else if (this.slamCharging) {
           // Slam charge progress animation synced to 40-frame charge
           activeCol = Math.min(7, Math.floor((this.slamChargeTimer / 40) * 8));
+        } else if (this.isRolling) {
+          // Map rolling animation directly to rollTimer progress
+          const rollMax = (this.currentCombo === "tripleroll") ? 35 : 45;
+          const rollElapsed = Math.max(0, rollMax - this.rollTimer);
+          activeCol = Math.min(7, Math.floor((rollElapsed / rollMax) * 8));
         }
         
         const srcX = activeCol * frameW;
         const srcY = activeRow * frameH;
+        
+        let alphaSaved = false;
+        if (this.isDead && this.deathTimer < 14) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, Math.min(1, this.deathTimer / 14));
+          alphaSaved = true;
+        }
         
         // Underfoot perspective radial glow shadow for the giant boss
         ctx.save();
@@ -1540,6 +1579,9 @@ class Enemy {
         }
         
         drewSprite = true;
+        if (alphaSaved) {
+          ctx.restore();
+        }
       }
     }
     
@@ -3256,6 +3298,7 @@ function executePlayerAutoShooting() {
     let closestDist = Infinity;
     
     enemies.forEach(e => {
+      if (e.isDead || !e.active) return;
       const dx = e.x - player.x;
       const dy = e.y - player.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -3292,6 +3335,7 @@ function executePlayerAutoShooting() {
     let closestDist = Infinity;
     
     enemies.forEach(e => {
+      if (e.isDead || !e.active) return;
       const dx = e.x - player.x;
       const dy = e.y - player.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -3549,6 +3593,18 @@ function processGamePhysics() {
       return;
     }
     
+    if (p.isAmbientLeaf) {
+      if (p.vx) p.x += p.vx;
+      if (p.vy) p.y += p.vy;
+      if (p.va) p.angle += p.va;
+      
+      // Memory leak guard: instantly expire when off-screen boundary is crossed!
+      if (p.x < -50 || p.y > 950) {
+        p.age = p.maxAge;
+      }
+      return;
+    }
+    
     if (p.isSlamRing) {
       // Dynamic dodge-rollable shockwave check
       if (!p.hasHitPlayer && player.hp > 0 && currentGameState === GameState.PLAY) {
@@ -3606,7 +3662,7 @@ function processGamePhysics() {
   // 1. PROJECTILE VS ENEMY COLLISIONS
   projectiles.forEach(p => {
     enemies.forEach(e => {
-      if (!p.active || !e.active) return;
+      if (!p.active || !e.active || e.isDead) return;
       
       const dx = p.x - e.x;
       const dy = p.y - e.y;
@@ -3614,20 +3670,62 @@ function processGamePhysics() {
       
       if (dist < p.radius + e.radius) {
         // Hit!
-        if (e.type === "ape" && e.isEnrageCasting) {
-          // Boss is invulnerable while enraging/channeling!
-          p.active = false;
-          if (Math.random() < 0.15) {
-            particleEffects.push({
-              x: e.x + (Math.random() * 20 - 10),
-              y: e.y - 20,
-              text: "🛡️ SHIELDED",
-              color: "#fbbf24",
-              age: 0,
-              maxAge: 30
-            });
+        if (e.type === "ape") {
+          if (e.isEnrageCasting) {
+            // Boss is invulnerable while enraging/channeling!
+            p.active = false;
+            if (Math.random() < 0.15) {
+              particleEffects.push({
+                x: e.x + (Math.random() * 20 - 10),
+                y: e.y - 20,
+                text: "🛡️ SHIELDED",
+                color: "#fbbf24",
+                age: 0,
+                maxAge: 30
+              });
+            }
+            return;
           }
-          return;
+          
+          if (!e.enraged) {
+            // Clamp health at exactly 33.3% and trigger enrage invincibility casting!
+            const threshold = e.maxHp / 3;
+            if (e.hp - p.damage < threshold) {
+              e.hp = threshold;
+              e.isEnrageCasting = true;
+              e.enrageTimer = 90;
+              e.vx = 0;
+              e.vy = 0;
+              
+              // Spark breaks, arrow pierces
+              if (p.isSpark) {
+                p.active = false;
+              } else {
+                p.pierceCount--;
+                if (p.pierceCount <= 0) p.active = false;
+              }
+              
+              // Spawn enrage shield indicator
+              particleEffects.push({
+                x: e.x,
+                y: e.y - 45,
+                text: "🚨 BOSS ENRAGING! SHIELD UP!",
+                color: "#dc2626",
+                age: 0,
+                maxAge: 90
+              });
+              
+              if (!gameMuted) {
+                try {
+                  playSynthRoarSound();
+                } catch (err) {
+                  console.log("Synth roar error:", err);
+                }
+              }
+              
+              return;
+            }
+          }
         }
         
         e.hp -= p.damage;
@@ -3695,7 +3793,7 @@ function processGamePhysics() {
           if (e.type === "spider" || e.type === "ape") {
             // Melee classic zombie or Ape Boss death collapse!
             e.isDead = true;
-            e.deathTimer = 48; // collapses over 48 updates
+            e.deathTimer = e.type === "ape" ? 60 : 45; // Spiders collapse over 45 updates, Ape Boss over 60
             e.vx = 0;
             e.vy = 0;
             
