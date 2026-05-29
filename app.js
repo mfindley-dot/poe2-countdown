@@ -707,13 +707,19 @@ const TOTAL_CLICKS_KEY = "poe_guild_dopamine_clicks";
 let currentClicks = parseInt(localStorage.getItem(TOTAL_CLICKS_KEY) || "0", 10);
 
 function initializeDopamineCount() {
-  document.getElementById("clickCountDisplay").textContent = currentClicks;
+  const display = document.getElementById("clickCountDisplay");
+  if (display) {
+    display.textContent = currentClicks;
+  }
 }
 
 function incrementClicks() {
   currentClicks++;
   localStorage.setItem(TOTAL_CLICKS_KEY, currentClicks);
-  document.getElementById("clickCountDisplay").textContent = currentClicks;
+  const display = document.getElementById("clickCountDisplay");
+  if (display) {
+    display.textContent = currentClicks;
+  }
 }
 
 // Discord Webhook Logic
