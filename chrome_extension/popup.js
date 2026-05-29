@@ -938,7 +938,15 @@ async function bulkSyncStashTab() {
     const dlRes = await fetch(dlGetUrl);
     let dlData = null;
     if (dlRes.ok) {
-      dlData = await dlRes.json();
+      const text = await dlRes.text();
+      if (text.startsWith("ERROR:")) {
+        throw new Error(`Dreamlo database error: ${text}`);
+      }
+      try {
+        dlData = JSON.parse(text);
+      } catch (jsonErr) {
+        console.warn("Dreamlo did not return valid JSON, skipping stale checks:", jsonErr);
+      }
     }
     
     // Naming prefixes sanitized
