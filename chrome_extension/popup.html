@@ -254,6 +254,28 @@
     .appraisal-btn-sync:hover {
       filter: brightness(1.15);
     }
+    
+    .keybind-btn {
+      background: #1c1917;
+      border: 1px solid rgba(197, 168, 128, 0.25);
+      color: #ffd700;
+      font-size: 0.68rem;
+      font-family: monospace;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .keybind-btn:hover {
+      border-color: #ffd700;
+      box-shadow: 0 0 5px rgba(255,215,0,0.3);
+    }
+    .keybind-btn:focus {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
   </style>
   <title>GLG Stash Sync</title>
 </head>
@@ -278,6 +300,27 @@
   <div class="field-group">
     <label for="dreamloKey">DREAMLO PRIVATE KEY:</label>
     <input type="password" id="dreamloKey" placeholder="Paste Dreamlo Private Key">
+  </div>
+
+  <div class="field-group" style="margin-bottom: 12px;">
+    <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" id="btnToggleHotkeys">
+      <span>🛠️ SCANNER HOTKEYS:</span>
+      <span style="color: #ffd700; font-size: 0.65rem;" id="hotkeysLabel">Configure Bindings ▾</span>
+    </label>
+    
+    <div id="hotkeysConfig" style="display: none; background: #090705; border: 1px solid rgba(197, 168, 128, 0.15); padding: 8px; border-radius: 4px; margin-top: 6px; flex-direction: column; gap: 8px; box-sizing: border-box;">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.68rem;">
+        <span style="color: #a2a1a0;">IDENTIFY & SYNC:</span>
+        <button id="btnBindIdentify" class="keybind-btn">Alt+I</button>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.68rem;">
+        <span style="color: #a2a1a0;">APPRAISE ONLY:</span>
+        <button id="btnBindAppraise" class="keybind-btn">Alt+O</button>
+      </div>
+      <div style="font-size: 0.55rem; color: #a2a1a0; text-align: center; line-height: 1.35; border-top: 1px dashed rgba(197,168,128,0.15); padding-top: 4px; margin-top: 2px;">
+        Click button, then press any key (or Alt + Key) to bind.
+      </div>
+    </div>
   </div>
 
   <!-- Stash Tab Mode Section -->

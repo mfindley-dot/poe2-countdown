@@ -31,6 +31,18 @@ const appPrice = document.getElementById("appPrice");
 const appCullingLogs = document.getElementById("appCullingLogs");
 const btnSyncItem = document.getElementById("btnSyncItem");
 
+// Hotkey Configuration Elements and Modalities
+const btnToggleHotkeys = document.getElementById("btnToggleHotkeys");
+const hotkeysLabel = document.getElementById("hotkeysLabel");
+const hotkeysConfig = document.getElementById("hotkeysConfig");
+const btnBindIdentify = document.getElementById("btnBindIdentify");
+const btnBindAppraise = document.getElementById("btnBindAppraise");
+
+// Default keybindings: Alt+I for Identify, Alt+O for Appraise
+let hotkeyIdentify = { ctrl: false, alt: true, shift: false, key: "i" };
+let hotkeyAppraise = { ctrl: false, alt: true, shift: false, key: "o" };
+let activeRemapTarget = null; // "identify" or "appraise"
+
 // Spatial visual prompt coordinate guides matching true PoE2 stash tab layout
 const SYSTEM_INSTRUCTION = `You are an expert Path of Exile 2 Currency Stash Tab indexer. 
 Analyze the Currency Stash Tab screenshot and match numbers/quantities carefully. Use this spatial visual guide:
@@ -132,6 +144,23 @@ const APPRAISER_SCHEMA = {
   required: ["name", "base_type", "rarity", "item_level", "level_req", "explicit_mods", "estimated_price_string", "bot_culling_logs"]
 };
 
+// Helper to format hotkeys human-readably (e.g. "Alt+I")
+function formatHotkey(hk) {
+  let parts = [];
+  if (hk.ctrl) parts.push("Ctrl");
+  if (hk.alt) parts.push("Alt");
+  if (hk.shift) parts.push("Shift");
+  
+  let k = hk.key;
+  if (k.length === 1) {
+    k = k.toUpperCase();
+  } else {
+    k = k.charAt(0).toUpperCase() + k.slice(1);
+  }
+  parts.push(k);
+  return parts.join("+");
+}
+
 // Initialize settings
 document.addEventListener("DOMContentLoaded", async () => {
   // Try to load default keys from git-ignored config.json
@@ -146,9 +175,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.warn("Failed to load local config.json:", err);
   }
 
-  chrome.storage.local.get(["geminiKey", "dreamloKey"], (data) => {
+  chrome.storage.local.get(["geminiKey", "dreamloKey", "hotkeyIdentify", "hotkeyAppraise"], (data) => {
     geminiInput.value = data.geminiKey || defaultGeminiKey;
     dreamloInput.value = data.dreamloKey || defaultDreamloKey;
+    
+    if (data.hotkeyIdentify) {
+      hotkeyIdentify = data.hotkeyIdentify;
+    }
+    if (data.hotkeyAppraise) {
+      hotkeyAppraise = data.hotkeyAppraise;
+    }
+    
+    btnBindIdentify.textContent = formatHotkey(hotkeyIdentify);
+    btnBindAppraise.textContent = formatHotkey(hotkeyAppraise);
   });
 
   // Attempt auto-clipboard read on startup if in Appraiser mode
@@ -357,10 +396,10 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
 // V2.0 ITEM APPRAISER / TOOLTIP SCAN LOGIC
 // ==========================================
 
-btnAppraise.addEventListener("click", async () => {
+// Refactored modular appraisal function
+async function appraiseItemText(itemText, autoSync = false) {
   const geminiKey = geminiInput.value.trim();
   const dreamloKey = dreamloInput.value.trim();
-  const itemText = clipboardPaste.value.trim();
   
   if (!geminiKey) {
     log("Error: Gemini API Key required.", "error");
@@ -376,7 +415,7 @@ btnAppraise.addEventListener("click", async () => {
   }
   
   chrome.storage.local.set({ geminiKey, dreamloKey });
-  logBox.innerHTML = "Status: Appraising item text stats via Gemini AI...";
+  logBox.innerHTML = `Status: Appraising item text stats via Gemini AI... ${autoSync ? '(Auto-Syncing)' : ''}`;
   appraisalCard.style.display = "none";
   
   try {
@@ -438,16 +477,20 @@ btnAppraise.addEventListener("click", async () => {
     appPrice.textContent = appraisedItem.estimated_price_string;
     appCullingLogs.textContent = appraisedItem.bot_culling_logs;
     
-    appraisalCard.style.display = "block";
+    if (autoSync) {
+      log("Direct hotkey detected: Syncing appraised item immediately...");
+      await syncAppraisedItemDirectly(dreamloKey);
+    } else {
+      appraisalCard.style.display = "block";
+    }
     
   } catch (err) {
     log(`Appraisal failed: ${err.message}`, "error");
   }
-});
+}
 
-// Sync appraised item to online leaderboard Creg's Depot tab!
-btnSyncItem.addEventListener("click", async () => {
-  const dreamloKey = dreamloInput.value.trim();
+// Refactored modular sync function
+async function syncAppraisedItemDirectly(dreamloKey) {
   if (!appraisedItem) return;
   
   logBox.innerHTML = "Status: Syncing appraised gear to visual stash online...";
@@ -484,6 +527,148 @@ btnSyncItem.addEventListener("click", async () => {
     
   } catch (err) {
     log(`Website sync failed: ${err.message}`, "error");
+    // If auto-sync fails, keep card open so they can retry manually
+    appraisalCard.style.display = "block";
+  }
+}
+
+// Hook up appraiser and sync buttons
+btnAppraise.addEventListener("click", () => {
+  appraiseItemText(clipboardPaste.value.trim(), false);
+});
+
+btnSyncItem.addEventListener("click", () => {
+  const dreamloKey = dreamloInput.value.trim();
+  syncAppraisedItemDirectly(dreamloKey);
+});
+
+// ==========================================
+// CUSTOM BINDINGS & KEY REMAPPER
+// ==========================================
+
+// Toggle Hotkeys panel visibility
+btnToggleHotkeys.addEventListener("click", () => {
+  if (hotkeysConfig.style.display === "none") {
+    hotkeysConfig.style.display = "flex";
+    hotkeysLabel.textContent = "Close Panel ▴";
+  } else {
+    hotkeysConfig.style.display = "none";
+    hotkeysLabel.textContent = "Configure Bindings ▾";
+  }
+});
+
+// Bind button listening state
+btnBindIdentify.addEventListener("click", () => {
+  activeRemapTarget = "identify";
+  btnBindIdentify.textContent = "Press key...";
+  btnBindIdentify.focus();
+});
+
+btnBindAppraise.addEventListener("click", () => {
+  activeRemapTarget = "appraise";
+  btnBindAppraise.textContent = "Press key...";
+  btnBindAppraise.focus();
+});
+
+// Hotkey triggers from active clipboard
+async function triggerIdentifyAndSync() {
+  switchToAppraiserTab();
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && (text.includes("Rarity:") || text.includes("Item Class:"))) {
+      clipboardPaste.value = text;
+      log("Item clipboard text captured.", "success");
+      await appraiseItemText(text, true);
+    } else {
+      log("Error: Clipboard does not contain a valid Path of Exile item copy! Hover over your item in-game, press Ctrl+C, then trigger the hotkey.", "error");
+    }
+  } catch (err) {
+    log(`Failed to read clipboard: ${err.message}. If clipboard access is blocked, paste manually into the text area.`, "error");
+  }
+}
+
+async function triggerAppraiseOnly() {
+  switchToAppraiserTab();
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && (text.includes("Rarity:") || text.includes("Item Class:"))) {
+      clipboardPaste.value = text;
+      log("Item clipboard text captured.", "success");
+      await appraiseItemText(text, false);
+    } else {
+      log("Error: Clipboard does not contain a valid Path of Exile item copy! Hover over your item in-game, press Ctrl+C, then trigger the hotkey.", "error");
+    }
+  } catch (err) {
+    log(`Failed to read clipboard: ${err.message}. If clipboard access is blocked, paste manually into the text area.`, "error");
+  }
+}
+
+function switchToAppraiserTab() {
+  activeMode = "appraiser";
+  btnModeAppraiser.classList.add("active");
+  btnModeStash.classList.remove("active");
+  sectionStash.style.display = "none";
+  sectionAppraiser.style.display = "block";
+}
+
+function matchHotkey(e, hk) {
+  return e.ctrlKey === hk.ctrl &&
+         e.altKey === hk.alt &&
+         e.shiftKey === hk.shift &&
+         e.key.toLowerCase() === hk.key.toLowerCase();
+}
+
+// Window Keyboard Listener for Hotkey capturing and Remapping logic
+window.addEventListener("keydown", async (e) => {
+  // 1. If currently in remapping mode
+  if (activeRemapTarget) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Ignore stand-alone modifier keystrokes
+    if (["control", "alt", "shift", "meta"].includes(e.key.toLowerCase())) {
+      return;
+    }
+    
+    const newHotkey = {
+      ctrl: e.ctrlKey,
+      alt: e.altKey,
+      shift: e.shiftKey,
+      key: e.key.toLowerCase()
+    };
+    
+    if (activeRemapTarget === "identify") {
+      hotkeyIdentify = newHotkey;
+      chrome.storage.local.set({ hotkeyIdentify });
+      btnBindIdentify.textContent = formatHotkey(hotkeyIdentify);
+      log(`Identify hotkey rebound to: ${formatHotkey(hotkeyIdentify)}`, "success");
+    } else if (activeRemapTarget === "appraise") {
+      hotkeyAppraise = newHotkey;
+      chrome.storage.local.set({ hotkeyAppraise });
+      btnBindAppraise.textContent = formatHotkey(hotkeyAppraise);
+      log(`Appraise hotkey rebound to: ${formatHotkey(hotkeyAppraise)}`, "success");
+    }
+    
+    activeRemapTarget = null;
+    btnBindIdentify.blur();
+    btnBindAppraise.blur();
+    return;
+  }
+  
+  // 2. If focus is inside input/textarea fields, ignore macro triggers to prevent typing conflicts
+  if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) {
+    return;
+  }
+  
+  // 3. Match keys
+  if (matchHotkey(e, hotkeyIdentify)) {
+    e.preventDefault();
+    log(`Hotkey Triggered: Identify & Sync (${formatHotkey(hotkeyIdentify)})`);
+    await triggerIdentifyAndSync();
+  } else if (matchHotkey(e, hotkeyAppraise)) {
+    e.preventDefault();
+    log(`Hotkey Triggered: Appraise Only (${formatHotkey(hotkeyAppraise)})`);
+    await triggerAppraiseOnly();
   }
 });
 
