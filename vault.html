@@ -473,12 +473,30 @@
 
         <!-- TAB CONTENT 2: WEAPONS & GEAR -->
         <div id="tabContentDepot" class="tab-content">
-          <!-- Stash Owner Selection Dropdown (V2.2) -->
-          <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-family: 'Outfit', sans-serif;">
-            <label for="stashOwnerFilter" style="font-size: 0.72rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px;">👤 STASH OWNER:</label>
-            <select id="stashOwnerFilter" onchange="filterStashByOwner()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.3); color: #ffd700; padding: 4px 10px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.2s ease; box-shadow: 0 0 5px rgba(255, 215, 0, 0.05);">
-              <option value="all">🔮 Shared Guild Vault (All)</option>
-            </select>
+          <!-- Stash Filters Bar (V2.3) -->
+          <div style="background: rgba(10, 8, 6, 0.8); border: 1px solid rgba(197, 168, 128, 0.2); padding: 10px; border-radius: 4px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; font-family: 'Outfit', sans-serif;">
+            <div style="display: flex; flex: 1; min-width: 200px; gap: 6px;">
+              <input type="text" id="stashSearchText" placeholder="🔍 Search name, base, or explicit stats..." oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 5px 8px; border-radius: 4px; font-size: 0.72rem; flex: 1; outline: none; transition: all 0.2s ease;">
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <label for="stashRarityFilter" style="font-size: 0.68rem; color: #a2a1a0; font-weight: bold;">RARITY:</label>
+                <select id="stashRarityFilter" onchange="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
+                  <option value="all">All Rarities</option>
+                  <option value="normal">Normal</option>
+                  <option value="magic">Magic</option>
+                  <option value="rare">Rare</option>
+                  <option value="unique">Unique</option>
+                </select>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <label for="stashOwnerFilter" style="font-size: 0.68rem; color: #a2a1a0; font-weight: bold;">OWNER:</label>
+                <select id="stashOwnerFilter" onchange="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
+                  <option value="all">🔮 Guild (All)</option>
+                </select>
+              </div>
+            </div>
           </div>
           
           <div class="depot-stash-grid" id="depotGrid">
@@ -884,8 +902,14 @@
       if (!depotGrid) return;
       depotGrid.innerHTML = "";
       
-      const filterSelect = document.getElementById("stashOwnerFilter");
-      const selectedOwner = filterSelect ? filterSelect.value : "all";
+      // Get filter input elements
+      const searchInput = document.getElementById("stashSearchText");
+      const raritySelect = document.getElementById("stashRarityFilter");
+      const ownerSelect = document.getElementById("stashOwnerFilter");
+      
+      const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+      const selectedRarity = raritySelect ? raritySelect.value.toLowerCase() : "all";
+      const selectedOwner = ownerSelect ? ownerSelect.value.toLowerCase() : "all";
       
       // Combine mock/pre-loaded items with live scanned gear from the database
       // Ensure mock gear is marked under Shared Guild Vault
@@ -894,11 +918,34 @@
         ...scannedItems
       ];
       
-      // Filter based on selected dropdown value
-      let filteredGear = allGear;
-      if (selectedOwner !== "all") {
-        filteredGear = allGear.filter(item => item.owner && item.owner.toLowerCase() === selectedOwner);
-      }
+      // Apply filters: Search + Rarity + Owner
+      const filteredGear = allGear.filter(item => {
+        // 1. Owner Filter
+        if (selectedOwner !== "all") {
+          const ownerMatch = item.owner && item.owner.toLowerCase() === selectedOwner;
+          if (!ownerMatch) return false;
+        }
+        
+        // 2. Rarity Filter
+        if (selectedRarity !== "all") {
+          const rarityMatch = item.rarity && item.rarity.toLowerCase() === selectedRarity;
+          if (!rarityMatch) return false;
+        }
+        
+        // 3. Keyword Search (evaluates name, base typeLine, explicit mods)
+        if (query) {
+          const nameLower = item.name ? item.name.toLowerCase() : "";
+          const baseLower = item.base ? item.base.toLowerCase() : "";
+          const modsLower = item.affixes ? item.affixes.join(" ").toLowerCase() : "";
+          
+          const keywordMatch = nameLower.includes(query) || 
+                               baseLower.includes(query) || 
+                               modsLower.includes(query);
+          if (!keywordMatch) return false;
+        }
+        
+        return true;
+      });
       
       filteredGear.forEach(item => {
         const cell = document.createElement("div");
@@ -927,12 +974,12 @@
       });
     }
 
-    // Dynamic Populator for Owner dropdown (V2.2)
+    // Dynamic Populator for Owner dropdown (V2.3)
     function populateOwnerDropdown() {
       const filterSelect = document.getElementById("stashOwnerFilter");
       if (!filterSelect) return;
       
-      filterSelect.innerHTML = `<option value="all">🔮 Shared Guild Vault (All)</option>`;
+      filterSelect.innerHTML = `<option value="all">🔮 Guild (All)</option>`;
       
       const owners = new Set();
       scannedItems.forEach(item => {
@@ -949,8 +996,8 @@
       });
     }
 
-    // Dropdown change trigger
-    function filterStashByOwner() {
+    // Unified filters change trigger (V2.3)
+    function filterStash() {
       renderDepotGrid();
     }
 
