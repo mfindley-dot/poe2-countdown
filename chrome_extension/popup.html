@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 320px;
+      background: #0c0a09;
+      color: #cbd5e1;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 15px;
+      box-sizing: border-box;
+      border: 1px solid #c5a880;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px dashed rgba(197, 168, 128, 0.25);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #ffd700;
+      margin: 0;
+      letter-spacing: 1px;
+    }
+    
+    .badge {
+      background: #ef4444;
+      color: white;
+      font-size: 0.6rem;
+      font-weight: bold;
+      padding: 2px 5px;
+      border-radius: 2px;
+      animation: pulse 1.5s infinite;
+    }
+    
+    .field-group {
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    label {
+      font-size: 0.7rem;
+      color: #a2a1a0;
+      font-weight: bold;
+    }
+    
+    input {
+      background: #1c1917;
+      border: 1px solid rgba(197, 168, 128, 0.25);
+      color: #f8fafc;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    
+    input:focus {
+      border-color: #ffd700;
+      box-shadow: 0 0 4px rgba(255, 215, 0, 0.2);
+    }
+    
+    .btn-sync {
+      width: 100%;
+      background: linear-gradient(180deg, #ffd700 0%, #c5a880 100%);
+      border: 1px solid #ffd700;
+      color: #0c0a09;
+      padding: 8px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+      transition: all 0.2s ease;
+      margin-top: 5px;
+    }
+    
+    .btn-sync:hover {
+      filter: brightness(1.15);
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+    }
+    
+    .log-box {
+      margin-top: 12px;
+      background: #090705;
+      border: 1px solid rgba(197, 168, 128, 0.15);
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-family: monospace;
+      color: #a2a1a0;
+      max-height: 80px;
+      overflow-y: auto;
+      line-height: 1.4;
+    }
+    
+    .success {
+      color: #10b981;
+      font-weight: bold;
+    }
+    
+    .error {
+      color: #ef4444;
+      font-weight: bold;
+    }
+    
+    .preview-canvas {
+      display: none;
+      width: 100%;
+      margin-top: 10px;
+      border: 1px solid rgba(197, 168, 128, 0.2);
+      border-radius: 4px;
+    }
+  </style>
+  <title>GLG Stash Sync</title>
+</head>
+<body>
+
+  <div class="header">
+    <span class="title">🔮 GLG STASH SCANNER</span>
+    <span class="badge">V1.0</span>
+  </div>
+
+  <div class="field-group">
+    <label for="geminiKey">GEMINI API KEY:</label>
+    <input type="password" id="geminiKey" placeholder="Paste Gemini API Key from Google AI Studio">
+  </div>
+
+  <div class="field-group">
+    <label for="dreamloKey">DREAMLO PRIVATE KEY:</label>
+    <input type="password" id="dreamloKey" placeholder="Paste Dreamlo Private Key">
+  </div>
+
+  <button class="btn-sync" id="btnSync">🔮 CAPTURE & SYNC STASH</button>
+
+  <div class="log-box" id="logBox">
+    Status: Idle. Click button to capture stash.
+  </div>
+  
+  <canvas id="previewCanvas" class="preview-canvas"></canvas>
+  <video id="tempVideo" style="display:none;"></video>
+
+  <script src="popup.js"></script>
+</body>
+</html>
