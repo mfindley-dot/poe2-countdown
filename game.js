@@ -5733,6 +5733,7 @@ function initGameEngine() {
   let leagueEconomy = {
     mirror: { name: "Mirror of Kalandra", char: "🪞", base: 40000, trend: [39600, 39800, 39950, 40100, 39900, 40200, 40500], curPrice: 40500 },
     divine: { name: "Divine Orb", char: "🪙", base: 160, trend: [152, 155, 158, 156, 160, 163, 162], curPrice: 162 },
+    exalted: { name: "Exalted Orb", char: "👑", base: 15, trend: [14.2, 14.5, 14.8, 14.6, 15.0, 15.3, 15.2], curPrice: 15.2 },
     chaos: { name: "Chaos Orb", char: "🌀", base: 1.0, trend: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], curPrice: 1.0 },
     mageblood: { name: "Mageblood Heavy Belt", char: "🩸", base: 34000, trend: [32500, 33000, 33400, 33100, 33900, 34200, 34650], curPrice: 34650 },
     headhunter: { name: "Headhunter Leather Belt", char: "💀", base: 9200, trend: [9500, 9300, 9150, 8900, 9200, 9100, 9410], curPrice: 9410 }
@@ -5743,6 +5744,7 @@ function initGameEngine() {
 
   let activeTrendItemId = "mirror";
   let mouseOnTrendsChartX = -1;
+  let baseCurrency = "chaos";
 
   async function fetchLiveLeaguePrices() {
     try {
@@ -5871,11 +5873,24 @@ function initGameEngine() {
         const isUp = diff >= 0;
         const arrow = isUp ? "▲" : "▼";
         const pctClass = isUp ? "ticker-pct-up" : "ticker-pct-down";
-        const priceStr = key === "chaos" ? "1.00 chaos" : `${formatPrice(item.curPrice)}c`;
+        
+        let priceStr = "";
+        if (baseCurrency === "exalted") {
+          const exPrice = leagueEconomy.exalted ? leagueEconomy.exalted.curPrice : 15.2;
+          const priceInEx = item.curPrice / exPrice;
+          priceStr = `${priceInEx.toFixed(2)} ex`;
+        } else {
+          priceStr = key === "chaos" ? "1.00 chaos" : `${formatPrice(item.curPrice)}c`;
+        }
+        
+        const hasIcon = CurrencyImages[key] && CurrencyImages[key].src;
+        const iconHTML = hasIcon 
+          ? `<img src="${CurrencyImages[key].src}" class="ticker-currency-icon" alt="${item.name}">`
+          : `<span>${item.char}</span>`;
         
         html += `
           <span class="ticker-item" data-item="${key}">
-            <span>${item.char}</span>
+            ${iconHTML}
             <span>${item.name}:</span>
             <span class="text-white font-bold">${priceStr}</span>
             <span class="${pctClass}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>
@@ -5946,7 +5961,15 @@ function initGameEngine() {
     const changeEl = document.getElementById("chartItemChange");
     
     if (nameEl) nameEl.textContent = item.name;
-    if (priceEl) priceEl.textContent = itemId === "chaos" ? "1.00 chaos" : `${formatPrice(item.curPrice)}c`;
+    if (priceEl) {
+      if (baseCurrency === "exalted") {
+        const exPrice = leagueEconomy.exalted ? leagueEconomy.exalted.curPrice : 15.2;
+        const priceInEx = item.curPrice / exPrice;
+        priceEl.textContent = `${priceInEx.toFixed(2)} ex`;
+      } else {
+        priceEl.textContent = itemId === "chaos" ? "1.00 chaos" : `${formatPrice(item.curPrice)}c`;
+      }
+    }
     
     const diff = item.curPrice - item.base;
     const pct = (diff / item.base) * 100;
@@ -6050,7 +6073,14 @@ function initGameEngine() {
         
         // Tooltip card box
         ctx.save();
-        const txt = itemId === "chaos" ? "1.00 chaos" : `${closestNode.val.toLocaleString()}c`;
+        let txt = "";
+        if (baseCurrency === "exalted") {
+          const exPrice = leagueEconomy.exalted ? leagueEconomy.exalted.curPrice : 15.2;
+          const priceInEx = closestNode.val / exPrice;
+          txt = `${priceInEx.toFixed(2)} ex`;
+        } else {
+          txt = itemId === "chaos" ? "1.00 chaos" : `${closestNode.val.toLocaleString()}c`;
+        }
         ctx.font = "bold 9px Inter";
         const txtW = ctx.measureText(txt).width;
         
@@ -6113,8 +6143,34 @@ function initGameEngine() {
       });
     }
     
-    // Header trends toggle button click to launch Modal popup
-    const btnOpenTrends = document.getElementById("btnOpenMarketTrends");
+    // Base Currency Controls
+    const btnBaseChaos = document.getElementById("btnBaseChaos");
+    const btnBaseExalted = document.getElementById("btnBaseExalted");
+    if (btnBaseChaos && btnBaseExalted) {
+      btnBaseChaos.addEventListener("click", () => {
+        baseCurrency = "chaos";
+        btnBaseChaos.classList.add("active");
+        btnBaseExalted.classList.remove("active");
+        syncStockTickerUI();
+        const modalTrends = document.getElementById("marketTrendsModal");
+        if (modalTrends && !modalTrends.classList.contains("hidden")) {
+          drawMarketTrendsChart(activeTrendItemId);
+        }
+      });
+      btnBaseExalted.addEventListener("click", () => {
+        baseCurrency = "exalted";
+        btnBaseExalted.classList.add("active");
+        btnBaseChaos.classList.remove("active");
+        syncStockTickerUI();
+        const modalTrends = document.getElementById("marketTrendsModal");
+        if (modalTrends && !modalTrends.classList.contains("hidden")) {
+          drawMarketTrendsChart(activeTrendItemId);
+        }
+      });
+    }
+    
+    // Left sidebar column trends toggle button click to launch Modal popup
+    const btnOpenTrends = document.getElementById("btnSidebarTrends");
     const modalTrends = document.getElementById("marketTrendsModal");
     if (btnOpenTrends && modalTrends) {
       btnOpenTrends.addEventListener("click", (e) => {

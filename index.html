@@ -37,6 +37,14 @@
         <!-- Dynamically filled by simulator -->
       </div>
     </div>
+    <div class="ticker-base-controls">
+      <button class="base-currency-btn active" id="btnBaseChaos" title="Base: Chaos Orb">
+        <img src="assets/images/currency/item_chaos.png" alt="Chaos">
+      </button>
+      <button class="base-currency-btn" id="btnBaseExalted" title="Base: Exalted Orb">
+        <img src="assets/images/currency/item_exalted.png" alt="Exalted">
+      </button>
+    </div>
     <button class="stock-ticker-toggle-btn" id="btnToggleStockTicker" title="Toggle Ticker">▲</button>
   </div>
 
@@ -390,6 +398,11 @@
             <div class="dopamine-counter text-gold-faded">
               Dopamine Injections Count: <span id="clickCountDisplay" class="text-gold">0</span> Orbs clicked
             </div>
+            
+            <button class="gothic-btn border-gold" id="btnSidebarTrends" style="width: 100%; margin-top: 15px; font-weight: bold; font-size: 0.72rem;">
+              <span class="btn-shine"></span>
+              <span>📈 VIEW LEAGUE PRICE TRENDS</span>
+            </button>
           </div>
           
         </div>
@@ -399,7 +412,6 @@
           <div class="stash-tab-container border-gold">
             <div class="stash-header">
               <span class="text-gold">GUILD STASH TAB</span>
-              <button class="trends-toggle-btn text-gold" id="btnOpenMarketTrends" title="View Market Trends">📈 TRENDS</button>
               <span class="net-worth-badge" id="stashNetWorth">WORTH: 0c</span>
             </div>
             
@@ -531,7 +543,10 @@
   <!-- Server Economy Price Trends Gothic Modal -->
   <div class="market-trends-modal hidden" id="marketTrendsModal">
     <div class="trends-modal-header">
-      <h3 class="trends-modal-title text-gold">📈 LEAGUE ECONOMY TRENDS</h3>
+      <h3 class="trends-modal-title text-gold">
+        <img src="assets/images/icons/divine-hands_icon.png" class="trends-header-icon" alt="Divine Hands">
+        LEAGUE ECONOMY TRENDS
+      </h3>
       <button class="close-trends-btn" id="btnCloseMarketTrends">&times;</button>
     </div>
     <div class="trends-modal-body">
