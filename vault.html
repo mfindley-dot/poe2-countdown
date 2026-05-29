@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GLG PoE2 Guild Vault Visualizer</title>
+  
+  <!-- Font face integration -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Load standard styles -->
+  <link rel="stylesheet" href="style.css?v=3.2">
+  
+  <style>
+    body {
+      background-color: #0c0a09;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #cbd5e1;
+      overflow-x: hidden;
+    }
+    
+    .vault-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 30px;
+      width: 100%;
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+    
+    @media (max-width: 900px) {
+      .vault-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Stash Visualizer styling */
+    .vault-stash-wrapper {
+      position: relative;
+      background: rgba(10, 8, 6, 0.95);
+      border: 2px solid #c5a880;
+      border-radius: 6px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 0 20px rgba(197, 168, 128, 0.05);
+    }
+    
+    .vault-stash-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: repeat(12, 1fr);
+      background-image: url('assets/images/currency/stash-tab_frame.png');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border: 2px solid #292524;
+      border-radius: 4px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.9);
+      position: relative;
+    }
+    
+    .vault-cell {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    
+    .vault-cell:hover {
+      background: rgba(197, 168, 128, 0.1);
+      box-shadow: inset 0 0 12px rgba(197, 168, 128, 0.2);
+    }
+    
+    .vault-icon {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+    }
+    
+    .vault-count {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #fff;
+      background: rgba(8, 6, 5, 0.85);
+      border: 1px solid rgba(197, 168, 128, 0.3);
+      border-radius: 3px;
+      padding: 1px 4px;
+      line-height: 1;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Full Screen Loop Video Background Wrapper -->
+  <div class="background-overlay-wrapper" id="backgroundOverlayWrapper">
+    <video id="bgVideoLoop" class="bg-video-loop" autoplay loop muted playsinline poster="assets/images/backgrounds/GLG_guild-hall_background-image.png">
+      <source src="assets/animations/GLG_guild-hall-bg_(looped).webm" type="video/webm">
+    </video>
+  </div>
+
+  <!-- Guild Sign logo hanging from top of page -->
+  <img src="assets/images/logos/GLG_guild-hall_logo.png" alt="GLG GUILD HALL" class="header-logo-img static-logo" style="margin-bottom: -20px;" />
+
+  <div class="app-container" style="position: relative; z-index: 10;">
+    <!-- Header -->
+    <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px 20px 10px 20px; box-sizing: border-box;">
+      <div>
+        <p class="subtitle text-gold-faded" style="margin: 0; text-align: left;">GOOD LOOT GANG</p>
+        <h1 class="text-gold" style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; margin: 5px 0 0 0; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; text-shadow: 0 0 8px rgba(197, 168, 128, 0.3);">🛡️ PoE2 Guild Vault</h1>
+      </div>
+      <div>
+        <a href="index.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
+          🔙 BACK TO COUNTDOWN
+        </a>
+      </div>
+    </header>
+
+    <main class="vault-layout">
+      <!-- Left Column: QVC Showroom & Tally -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Live Status Panel -->
+        <div class="vault-stash-wrapper" style="padding: 15px;">
+          <h3 class="text-gold" style="margin-top: 0; font-family: 'Outfit', sans-serif; letter-spacing: 1px;">📡 VAULT STATUS</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(197, 168, 128, 0.15); padding: 10px; border-radius: 4px;">
+            <span style="font-size: 0.8rem; color: #a2a1a0;">SYNC STATUS:</span>
+            <span id="syncStatus" style="font-size: 0.8rem; color: #10b981; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+              <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 5px #10b981; animation: pulse 1.5s infinite;"></span>
+              CONNECTED (LIVE)
+            </span>
+          </div>
+          <p style="font-size: 0.72rem; color: #a2a1a0; margin: 8px 0 0 0; line-height: 1.35;">
+            Officers run our local Python Gemini Vision Scanner to capture the in-game stash, automatically pushing updates to this webpage database!
+          </p>
+        </div>
+
+        <!-- GLG Shopping Network QVC Showroom Frame -->
+        <div class="vault-stash-wrapper" style="padding: 15px; border-color: #ffd700;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(197, 168, 128, 0.25); padding-bottom: 6px; margin-bottom: 8px; font-family: 'Outfit', sans-serif; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;">
+            <span style="color: #ffd700; display: flex; align-items: center; gap: 4px;">
+              📺 GLG SHOP NETWORK (VAULT LIVE)
+            </span>
+            <span style="background: #ef4444; color: #fff; padding: 1px 4px; border-radius: 2px; font-size: 0.6rem; font-weight: bold; box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);">LIVE EST.</span>
+          </div>
+          <div id="qvcShowroom" style="display: flex; gap: 10px; align-items: center; min-height: 100px; transition: opacity 0.5s ease-in-out; opacity: 1;">
+            <!-- Dynamically generated content -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Stash Visualizer Frame -->
+      <div class="vault-stash-wrapper">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span class="text-gold" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: bold; letter-spacing: 1px;">🔮 SCANNED GUILD VAULT</span>
+          <span class="net-worth-badge" id="vaultNetWorth" style="background: rgba(197, 168, 128, 0.15); border: 1px solid #c5a880; color: #ffd700; font-family: 'Outfit', sans-serif; padding: 3px 8px; font-size: 0.85rem; font-weight: bold; border-radius: 4px;">WORTH: 0c</span>
+        </div>
+        
+        <div class="vault-stash-grid" id="vaultGrid">
+          <!-- Symmetrical cells generated by JS -->
+        </div>
+
+        <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(197, 168, 128, 0.1); border-radius: 4px; font-size: 0.72rem; color: #a2a1a0; text-align: center;">
+          Vault net worth maps Core currencies at standard exchange rates.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Serverless Dreamlo API Keys
+    const DREAMLO_PUBLIC_KEY = "6654ef248f40bb8e945c7ba9";
+    
+    // Core currencies config
+    const CURRENCY_CONFIG = {
+      scroll: { name: "Scroll of Wisdom", char: "📜", worth: 0.05, file: "item_scroll.png" },
+      transmute: { name: "Orb of Transmutation", char: "🔵", worth: 0.2, file: "item_transmutation.png" },
+      augmentation: { name: "Orb of Augmentation", char: "🟡", worth: 0.15, file: "item_augmentation.png" },
+      alchemy: { name: "Orb of Alchemy", char: "🪙", worth: 0.5, file: "orb_alchemy.png" },
+      regal: { name: "Regal Orb", char: "👑", worth: 0.8, file: "item_regal.png" },
+      chaos: { name: "Chaos Orb", char: "🌀", worth: 1.0, file: "item_chaos.png" },
+      vaal: { name: "Vaal Orb", char: "🔴", worth: 2.0, file: "item_vaal.png" },
+      annulment: { name: "Orb of Annulment", char: "⚪", worth: 5.0, file: "item_annulment.png" },
+      exalted: { name: "Exalted Orb", char: "🔱", worth: 15.0, file: "item_exalted.png" },
+      divine: { name: "Divine Orb", char: "🪙", worth: 150.0, file: "item_divine.png" },
+      mirror: { name: "Mirror of Kalandra", char: "🪞", worth: 40000.0, file: "item_mirror.png" }
+    };
+    
+    // Symmetrical 12x12 PoE Grid Area slot mappings
+    const CURRENCY_SLOTS = {
+      scroll: { row: 3, col: 2 },
+      transmute: { row: 3, col: 4 },
+      augmentation: { row: 3, col: 6 },
+      alchemy: { row: 3, col: 8 },
+      regal: { row: 3, col: 10 },
+      chaos: { row: 7, col: 2 },
+      vaal: { row: 7, col: 4 },
+      annulment: { row: 7, col: 6 },
+      exalted: { row: 7, col: 8 },
+      divine: { row: 7, col: 10 },
+      mirror: { row: 10, col: 6 }
+    };
+
+    let scannedCounts = {};
+
+    // 1. Fetch real scanned database counts from online Dreamlo API
+    async function loadScannedStash() {
+      const grid = document.getElementById("vaultGrid");
+      const worthBadge = document.getElementById("vaultNetWorth");
+      const status = document.getElementById("syncStatus");
+      if (!grid) return;
+      
+      try {
+        const response = await fetch(`https://dreamlo.com/lb/${DREAMLO_PUBLIC_KEY}/json`);
+        if (!response.ok) throw new Error("Leaderboard API returned: " + response.status);
+        const data = await response.json();
+        
+        let foundVault = false;
+        if (data && data.dreamlo && data.dreamlo.leaderboard && data.dreamlo.leaderboard.entry) {
+          let entries = data.dreamlo.leaderboard.entry;
+          if (!Array.isArray(entries)) entries = [entries];
+          
+          const vaultEntry = entries.find(e => e.name === "__GUILD_VAULT__");
+          if (vaultEntry && vaultEntry.text) {
+            const decoded = decodeURIComponent(vaultEntry.text);
+            const parts = decoded.split("|");
+            if (parts.length === 11) {
+              const keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
+              keys.forEach((key, idx) => {
+                scannedCounts[key] = parseInt(parts[idx], 10) || 0;
+              });
+              foundVault = true;
+            }
+          }
+        }
+        
+        if (!foundVault) {
+          // Default fallback mock counts if online entry doesn't exist yet
+          scannedCounts = {
+            scroll: 3040, transmute: 2054, augmentation: 510, alchemy: 195,
+            regal: 38, chaos: 74, vaal: 386, annulment: 18,
+            exalted: 2190, divine: 169, mirror: 0
+          };
+          if (status) status.textContent = "CONNECTED (OFFLINE / FALLBACK)";
+        }
+        
+        renderVaultGrid();
+        
+      } catch (err) {
+        console.warn("Online database fetch failed. Loading local simulated fallback:", err);
+        scannedCounts = {
+          scroll: 3040, transmute: 2054, augmentation: 510, alchemy: 195,
+          regal: 38, chaos: 74, vaal: 386, annulment: 18,
+          exalted: 2190, divine: 169, mirror: 0
+        };
+        renderVaultGrid();
+        if (status) {
+          status.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; background: #ea580c; border-radius: 50%; box-shadow: 0 0 5px #ea580c; animation: pulse 1.5s infinite;"></span> OFFLINE MODE`;
+          status.style.color = "#ea580c";
+        }
+      }
+    }
+
+    // 2. Render vault stash cells positioned explicitly in the 12x12 grid
+    function renderVaultGrid() {
+      const grid = document.getElementById("vaultGrid");
+      const worthBadge = document.getElementById("vaultNetWorth");
+      grid.innerHTML = "";
+      
+      let totalWorth = 0;
+      
+      Object.keys(CURRENCY_SLOTS).forEach(key => {
+        const slot = CURRENCY_SLOTS[key];
+        const qty = scannedCounts[key] || 0;
+        const config = CURRENCY_CONFIG[key];
+        
+        totalWorth += qty * config.worth;
+        
+        const cell = document.createElement("div");
+        cell.className = "vault-cell";
+        
+        // CSS Grid placement centered symmetrically on 12x12 grid spanning 2x2 blocks
+        cell.style.gridRow = `${slot.row} / span 2`;
+        cell.style.gridColumn = `${slot.col} / span 2`;
+        cell.title = `${config.name}: ${qty}x`;
+        
+        const iconImg = document.createElement("img");
+        iconImg.src = `assets/images/currency/${config.file}`;
+        iconImg.className = "vault-icon";
+        iconImg.alt = config.name;
+        
+        if (qty === 0) {
+          iconImg.style.opacity = "0.2";
+          iconImg.style.filter = "grayscale(100%)";
+        }
+        
+        const qtyLabel = document.createElement("span");
+        qtyLabel.className = "vault-count";
+        qtyLabel.textContent = qty >= 1000 ? (qty / 1000).toFixed(1) + "k" : qty;
+        
+        if (qty === 0) {
+          qtyLabel.style.display = "none";
+        }
+        
+        cell.appendChild(iconImg);
+        cell.appendChild(qtyLabel);
+        grid.appendChild(cell);
+      });
+      
+      if (worthBadge) {
+        worthBadge.textContent = `WORTH: ${totalWorth.toLocaleString(undefined, {maximumFractionDigits: 0})}c (approx ${(totalWorth / 150).toFixed(1)} EX)`;
+      }
+    }
+
+    // 📺 GLG SHOPPING NETWORK (QVC SHOWROOM WIDGET)
+    const QVC_ITEMS = [
+      {
+        name: "Dreamfeather",
+        sub: "Eternal Sword",
+        icon: "🗡️",
+        price: "4.5 Divine Orbs",
+        desc: "Perfect evasion rating scaling damage rolls! Phase map bosses in Early Access.",
+        reviews: [
+          { text: "Tapped a yellow mob once, woke up in a different act. 10/10 evasion.", author: "Evasion_Enjoyer" },
+          { text: "Best sword in the guild, currently clearing low-tier maps at sound speed.", author: "GLG_Slasher" }
+        ]
+      },
+      {
+        name: "Headhunter",
+        sub: "Leather Belt",
+        icon: "💀",
+        price: "142.0 Divine Orbs",
+        desc: "Copies rare monster mods. Temporarily turns your character into a 40-foot giant.",
+        reviews: [
+          { text: "Felt like a god for 20 seconds, then got deleted by a ground slam. Worth every penny.", author: "Wreaclast_Runner" },
+          { text: "Highly recommend. Turns the Witch into an absolute tanking monster.", author: "GLG_Leader" }
+        ]
+      },
+      {
+        name: "Mageblood",
+        sub: "Heavy Belt",
+        icon: "🩸",
+        price: "248.0 Divine Orbs",
+        desc: "Utility flasks are constantly active. Speed cap exceeded by 300%.",
+        reviews: [
+          { text: "I haven't clicked a flask button in three days. My index finger has finally healed.", author: "Flask_Spammer" },
+          { text: "Total dopamine overload. You literally float across the map.", author: "Ranger_Speed" }
+        ]
+      },
+      {
+        name: "Runic Topaz Ring",
+        sub: "Mirror-Tier Crafted",
+        icon: "💍",
+        price: "35 Chaos Orbs",
+        desc: "+35% Lightning Res, +65 Max Life, +42 Mana. Sizzling rolls ready!",
+        reviews: [
+          { text: "Wait, I spent 100c on trade for a worse ring when we had this sitting in the stash?!", author: "Mike_GLG" },
+          { text: "Snagged it for my lightning build. Absolutely solved my intelligence needs.", author: "Topaz_Fan" }
+        ]
+      },
+      {
+        name: "Autographed Photo of Chris Wilson",
+        sub: "Sacred Relic",
+        icon: "🖼️",
+        price: "690 Divine Orbs",
+        desc: "Provides +1000% increased loot filter dopamine and guarantees luck.",
+        reviews: [
+          { text: "Placed it next to my PC. Dropped a Divine Orb on the very next map. Sane, indeed!", author: "Sane_Exile" },
+          { text: "Absolute holy grail of GLG. Do NOT sell this Creg.", author: "Guild_Officer" }
+        ]
+      }
+    ];
+
+    let currentQvcIndex = 0;
+
+    function initQVCShowroom() {
+      const showroom = document.getElementById("qvcShowroom");
+      if (!showroom) return;
+      
+      function rotateQVCItem() {
+        try {
+          showroom.style.opacity = 0;
+          
+          setTimeout(() => {
+            const item = QVC_ITEMS[currentQvcIndex];
+            const randomReview = item.reviews[Math.floor(Math.random() * item.reviews.length)];
+            
+            showroom.innerHTML = `
+              <div style="font-size: 2.2rem; background: rgba(197, 168, 128, 0.05); padding: 8px; border: 1px solid rgba(197, 168, 128, 0.25); border-radius: 4px; display: flex; align-items: center; justify-content: center; min-width: 50px; height: 50px; box-shadow: inset 0 0 5px rgba(0,0,0,0.8);">${item.icon}</div>
+              <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; font-family: 'Outfit', sans-serif;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <span class="text-gold" style="font-size: 0.85rem; font-weight: bold; text-shadow: 0 0 4px rgba(255, 215, 0, 0.2);">${item.name}</span>
+                  <span style="font-size: 0.75rem; color: #a855f7; font-weight: bold; background: rgba(168, 85, 247, 0.1); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(168, 85, 247, 0.2);">${item.price}</span>
+                </div>
+                <div style="font-size: 0.6rem; color: #a2a1a0; font-style: italic; margin-bottom: 2px;">${item.sub} - ${item.desc}</div>
+                <div style="border-top: 1px solid rgba(197, 168, 128, 0.15); padding-top: 3px; font-size: 0.65rem; color: #cbd5e1; line-height: 1.15;">
+                  <span style="color: #ffd700; font-weight: bold;">💬 Review:</span> "${randomReview.text}" 
+                  <span style="color: #a855f7; font-size: 0.55rem; font-weight: bold; margin-left: 2px;">-${randomReview.author}</span>
+                </div>
+              </div>
+            `;
+            
+            showroom.style.opacity = 1;
+            currentQvcIndex = (currentQvcIndex + 1) % QVC_ITEMS.length;
+          }, 500);
+          
+        } catch (err) {
+          console.error("QVC Showroom failed:", err);
+        }
+      }
+      
+      rotateQVCItem();
+      setInterval(rotateQVCItem, 10000);
+    }
+
+    // Initialize triggers
+    document.addEventListener("DOMContentLoaded", () => {
+      loadScannedStash();
+      initQVCShowroom();
+    });
+  </script>
+</body>
+</html>
