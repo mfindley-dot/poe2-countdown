@@ -175,21 +175,53 @@ function getProcessedApeImg() {
   try {
     const imgData = ctx.getImageData(0, 0, originalW, targetH);
     const data = imgData.data;
+    
+    // First pass: clear very faint pixels
     for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i+1];
-      const b = data[i+2];
-      const a = data[i+3];
-      
-      // If the pixel is very faint/translucent (alpha < 60), clear it completely
-      if (a < 60) {
-        data[i+3] = 0;
-      }
-      // If it is semi-transparent and close to white/grey, eliminate the border halo glow
-      else if (a < 200 && r > 160 && g > 160 && b > 160) {
+      if (data[i+3] < 60) {
         data[i+3] = 0;
       }
     }
+    
+    // Second pass: detect and eliminate white/grey border halo jaggies using 3x3 neighborhood edge check
+    const tempAlpha = new Uint8Array(originalW * targetH);
+    for (let i = 0; i < data.length; i += 4) {
+      tempAlpha[i/4] = data[i+3];
+    }
+    
+    for (let y = 1; y < targetH - 1; y++) {
+      for (let x = 1; x < originalW - 1; x++) {
+        const idx = (y * originalW + x) * 4;
+        const r = data[idx];
+        const g = data[idx+1];
+        const b = data[idx+2];
+        const a = data[idx+3];
+        
+        if (a > 0) {
+          // If the pixel is white-ish or grey-ish
+          if (r > 165 && g > 165 && b > 165) {
+            // Check if it borders a transparent pixel (anti-aliasing artifact!)
+            let bordersTransparency = false;
+            for (let ny = -1; ny <= 1; ny++) {
+              for (let nx = -1; nx <= 1; nx++) {
+                const nIdx = ((y + ny) * originalW + (x + nx));
+                if (tempAlpha[nIdx] < 30) {
+                  bordersTransparency = true;
+                  break;
+                }
+              }
+              if (bordersTransparency) break;
+            }
+            
+            // Clear the pixel completely if it borders transparency
+            if (bordersTransparency) {
+              data[idx+3] = 0;
+            }
+          }
+        }
+      }
+    }
+    
     ctx.putImageData(imgData, 0, 0);
   } catch (e) {
     console.warn("Could not clean up sprite halos programmatically:", e);
@@ -584,7 +616,7 @@ let activeApeBoss = null;
 
 let wave = 1;
 let lastWaveSpawnTime = 0;
-let baseEnemyCount = 6;
+let baseEnemyCount = 4;
 let enemyWorthMultiplier = 1.0;
 
 class GameProjectile {
@@ -697,19 +729,19 @@ class Enemy {
     // Stats base on types
     if (type === "spider") {
       this.radius = 55;
-      this.hp = 8 + (wave * 2.2);
+      this.hp = 5 + (wave * 1.5);
       this.maxHp = this.hp;
       this.speed = 1.3 + Math.random() * 0.4;
       this.color = "#4b5563"; // slate grey
-      this.damage = 8;
+      this.damage = 3; // reduced from 8 to make poison-dot tick survivable!
     } 
     else if (type === "ghost") {
       this.radius = 65;
-      this.hp = 18 + (wave * 3.5);
+      this.hp = 14 + (wave * 2.5);
       this.maxHp = this.hp;
       this.speed = 0.9;
       this.color = "#a5f3fc"; // glowing freeze cyan
-      this.damage = 12;
+      this.damage = 7; // reduced from 12
       this.lastFreezeBeamTime = 0;
       this.beamCharging = false;
       this.beamChargeTimer = 0;
@@ -718,20 +750,16 @@ class Enemy {
     else if (type === "ape") {
       // The pillar of doom Boss!
       this.radius = 80; // Scaled to 80 to match 270px visual size
-      this.hp = 450 + (wave * 150);
+      this.hp = 350 + (wave * 100); // reduced from 450 + 150 wave
       this.maxHp = this.hp;
       this.speed = 0.75;
       this.color = "#7c2d12"; // dark brick red ape
-      this.damage = 30;
+      this.damage = 20; // reduced from 30
       this.lastSlamTime = Date.now();
       this.slamCharging = false;
       this.slamTargetX = 0;
       this.slamTargetY = 0;
       this.slamChargeTimer = 0;
-      this.isBoss = true;
-      
-      // Roll charge states
-      this.isRolling = false;
       this.rollTimer = 0;
       this.lastRollTime = 0;
       this.rollVx = 0;
@@ -752,12 +780,12 @@ class Enemy {
     else if (type === "banker") {
       // Creg the Guild Banker!
       this.radius = 65;
-      this.hp = 250; // Tanky sack-carrier, harder to kill but drops jackpot!
+      this.hp = 200; // slightly lower HP so beating loot out of him is faster
       this.maxHp = this.hp;
-      this.speed = player.speed * 1.25 + 0.4; // Runs faster than the player!
+      this.speed = player.speed * 1.05; // catchable speed (down from 1.25 + 0.4)
       this.color = "#fbbf24"; // Golden amber
       this.damage = 0; // Banker does not attack player
-      this.bankerTimer = 600; // 10 seconds at 60 FPS
+      this.bankerTimer = 1500; // 25 seconds stay (increased from 10 seconds!)
       this.bounceY = 0;
       this.isBoss = false;
     }
@@ -1227,7 +1255,7 @@ class Enemy {
           if (fleeLen > 0) {
             // Comical rapid sprint dashes: every 50 frames, do a high-speed sprint burst for 12 frames
             const isDashing = (this.bankerTimer % 50) < 12;
-            const currentSpeed = isDashing ? this.speed * 1.8 : this.speed;
+            const currentSpeed = isDashing ? this.speed * 1.4 : this.speed;
             
             this.vx = (fleeX / fleeLen) * currentSpeed;
             this.vy = (fleeY / fleeLen) * currentSpeed;
@@ -3202,8 +3230,8 @@ function handleEnemySpawning() {
   if (now - lastWaveSpawnTime > 4500) {
     lastWaveSpawnTime = now;
     
-    // Wave calculations
-    const count = baseEnemyCount + (wave * 2);
+    // Wave calculations: smooth exponential curves (fewer mobs early, ramps up later!)
+    const count = baseEnemyCount + Math.floor(wave * 0.8 + Math.pow(wave, 1.3) * 0.4);
     
     // Choose spawn positions offscreen
     const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
