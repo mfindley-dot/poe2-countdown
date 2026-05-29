@@ -417,28 +417,39 @@
           </p>
         </div>
 
-        <!-- Stash Scanner Extension Control Panel -->
+        <!-- Stash Scanner & Overlay Control Panel (V2.4) -->
         <div class="vault-stash-wrapper" style="padding: 15px; border-color: #c5a880;">
           <h3 class="text-gold" style="margin-top: 0; font-family: 'Outfit', sans-serif; letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between;">
-            <span>🔮 STASH SCANNER</span>
-            <span id="extensionBadge" style="background: rgba(197, 168, 128, 0.15); border: 1px solid #c5a880; color: #ffd700; font-size: 0.65rem; padding: 2px 6px; border-radius: 3px;">V1.0</span>
+            <span>🛡️ GUILD UTILITIES</span>
+            <span id="extensionBadge" style="background: rgba(197, 168, 128, 0.15); border: 1px solid #c5a880; color: #ffd700; font-size: 0.65rem; padding: 2px 6px; border-radius: 3px;">V2.4</span>
           </h3>
-          <p style="font-size: 0.72rem; color: #cbd5e1; margin: 0 0 10px 0; line-height: 1.4;">
-            Capture your in-game screen and sync live currency counts to our vault page in one click. No terminal commands required!
+          <p style="font-size: 0.72rem; color: #cbd5e1; margin: 0 0 12px 0; line-height: 1.4;">
+            Equip your exiles with our official shared guild toolkits. No Python or command lines required!
           </p>
           
           <div id="updateAlertBox" style="display: none; margin-bottom: 10px; padding: 8px; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 4px; font-size: 0.7rem; color: #f87171; line-height: 1.3;">
             <!-- Out-of-date alert content injected here -->
           </div>
 
-          <a href="chrome_extension.zip" download class="gothic-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #ffd700 0%, #c5a880 100%); color: #0c0a09; font-weight: bold; border-radius: 4px; padding: 8px 12px; font-family: 'Outfit', sans-serif; font-size: 0.8rem; letter-spacing: 1px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease; text-align: center;">
-            ⚡ DOWNLOAD SCANNER (ZIP)
-          </a>
-          
-          <div style="font-size: 0.6rem; color: #a2a1a0; margin-top: 6px; text-align: center;">
-            Drag-and-drop load in <code style="color: #ffd700;">chrome://extensions</code> (Developer Mode)
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Tool 1: Chrome Extension Stash Sync -->
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(197, 168, 128, 0.15); padding: 8px 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 0.7rem; font-weight: bold; color: #ffd700; display: flex; align-items: center; gap: 4px;">🔮 BROWSER STASH SCANNER (V1.0)</span>
+              <span style="font-size: 0.62rem; color: #a2a1a0; line-height: 1.3;">Visually captures your currency tab or syncs your GGG stash tab in one click.</span>
+              <a href="chrome_extension.zip" download class="gothic-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #ffd700; background: linear-gradient(180deg, #ffd700 0%, #c5a880 100%); color: #0c0a09; font-weight: bold; border-radius: 4px; padding: 6px 10px; font-family: 'Outfit', sans-serif; font-size: 0.72rem; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease; text-align: center;">
+                ⚡ DOWNLOAD SCANNER EXTENSION (ZIP)
+              </a>
+            </div>
+
+            <!-- Tool 2: Standalone Windows Overlay EXE -->
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(197, 168, 128, 0.15); padding: 8px 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 0.7rem; font-weight: bold; color: #ffd700; display: flex; align-items: center; gap: 4px;">🏰 STANDALONE IN-GAME OVERLAY (EXE)</span>
+              <span style="font-size: 0.62rem; color: #a2a1a0; line-height: 1.3;">Borderless transparent pricing overlay overlaying your game. Run Alt+O to appraise.</span>
+              <a href="glg_stash_overlay.zip" download class="gothic-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #a855f7; background: linear-gradient(180deg, #a855f7 0%, #6366f1 100%); color: #ffffff; font-weight: bold; border-radius: 4px; padding: 6px 10px; font-family: 'Outfit', sans-serif; font-size: 0.72rem; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease; text-align: center;">
+                🔮 DOWNLOAD IN-GAME OVERLAY (ZIP)
+              </a>
+            </div>
           </div>
-        </div>
 
         <!-- GLG Shopping Network QVC Showroom Frame -->
         <div class="vault-stash-wrapper" style="padding: 15px; border-color: #ffd700;">
