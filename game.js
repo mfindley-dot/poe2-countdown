@@ -5738,10 +5738,93 @@ function initGameEngine() {
     headhunter: { name: "Headhunter Leather Belt", char: "💀", base: 9200, trend: [9500, 9300, 9150, 8900, 9200, 9100, 9410], curPrice: 9410 }
   };
 
+  const ACTIVE_LEAGUE_NAME = "Standard"; // Can be easily updated to new PoE 2 league names tomorrow!
+  let apiFetchActive = false;
+
   let activeTrendItemId = "mirror";
   let mouseOnTrendsChartX = -1;
 
+  async function fetchLiveLeaguePrices() {
+    try {
+      // 1. Fetch currency pricing details from poe.ninja via allorigins proxy
+      const currencyUrl = `https://poe.ninja/api/data/currencyoverview?league=${ACTIVE_LEAGUE_NAME}&type=Currency`;
+      const curResponse = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent(currencyUrl));
+      if (!curResponse.ok) throw new Error("CORS Proxy Currency query failed");
+      const curJson = await curResponse.json();
+      const curData = JSON.parse(curJson.contents);
+      
+      // 2. Fetch unique belt pricing details (for Mageblood and Headhunter)
+      const beltUrl = `https://poe.ninja/api/data/itemoverview?league=${ACTIVE_LEAGUE_NAME}&type=UniqueBelt`;
+      const beltResponse = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent(beltUrl));
+      if (!beltResponse.ok) throw new Error("CORS Proxy UniqueBelt query failed");
+      const beltJson = await beltResponse.json();
+      const beltData = JSON.parse(beltJson.contents);
+      
+      if (!curData || !curData.lines || !beltData || !beltData.lines) {
+        throw new Error("Invalid pricing payload structure returned");
+      }
+      
+      // 3. Map currency prices to leagueEconomy structure
+      const mapCurrency = (key, name) => {
+        const row = curData.lines.find(l => l.currencyTypeName === name);
+        if (row && row.chaosEquivalent) {
+          const val = row.chaosEquivalent;
+          leagueEconomy[key].curPrice = Math.round(val * 100) / 100;
+        }
+      };
+      
+      mapCurrency("mirror", "Mirror of Kalandra");
+      mapCurrency("divine", "Divine Orb");
+      mapCurrency("exalted", "Exalted Orb");
+      mapCurrency("annulment", "Orb of Annulment");
+      mapCurrency("vaal", "Vaal Orb");
+      mapCurrency("regal", "Regal Orb");
+      mapCurrency("alchemy", "Orb of Alchemy");
+      mapCurrency("augmentation", "Orb of Augmentation");
+      mapCurrency("transmute", "Orb of Transmutation");
+      mapCurrency("scroll", "Scroll of Wisdom");
+      
+      // 4. Map unique belt prices
+      const mapUnique = (key, name) => {
+        const row = beltData.lines.find(l => l.name === name);
+        if (row && row.chaosValue) {
+          const val = row.chaosValue;
+          leagueEconomy[key].curPrice = Math.round(val * 100) / 100;
+        }
+      };
+      
+      mapUnique("mageblood", "Mageblood");
+      mapUnique("headhunter", "Headhunter");
+      
+      // Update price trends data
+      Object.keys(leagueEconomy).forEach(key => {
+        const item = leagueEconomy[key];
+        item.trend.push(item.curPrice);
+        if (item.trend.length > 7) {
+          item.trend.shift();
+        }
+      });
+      
+      apiFetchActive = true;
+      console.log(`Live prices successfully fetched from ${ACTIVE_LEAGUE_NAME} league API!`);
+      
+      // Re-draw ticker and graph modal
+      syncStockTickerUI();
+      const modal = document.getElementById("marketTrendsModal");
+      if (modal && !modal.classList.contains("hidden")) {
+        drawMarketTrendsChart(activeTrendItemId);
+      }
+    } catch (err) {
+      apiFetchActive = false;
+      console.warn("Live API blocked or league not active yet. Falling back to local economy simulator.", err);
+    }
+  }
+
   function updateLeagueEconomyPrices() {
+    // If the live API is actively running and updating, skip local fluctuations to maintain exact accuracy
+    if (apiFetchActive) return;
+    
+    // Otherwise, execute Brownian motion random walk local simulator!
     Object.keys(leagueEconomy).forEach(key => {
       if (key === "chaos") return; // Pegged to base
       const item = leagueEconomy[key];
@@ -6010,8 +6093,14 @@ function initGameEngine() {
     // Render initial UI marquee track
     syncStockTickerUI();
     
-    // Simulated live prices updating every 20 seconds
+    // Attempt to pull live prices from poe.ninja initially
+    fetchLiveLeaguePrices();
+    
+    // Simulated local price updates tick every 20 seconds
     setInterval(updateLeagueEconomyPrices, 20000);
+    
+    // Poll the live poe.ninja API every 60 seconds (safe rate-limit)
+    setInterval(fetchLiveLeaguePrices, 60000);
     
     // Toggle stock ticker marquee bar
     const btnToggleStock = document.getElementById("btnToggleStockTicker");
