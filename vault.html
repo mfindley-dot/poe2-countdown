@@ -1128,32 +1128,54 @@
           showroom.style.opacity = 0;
           
           setTimeout(() => {
-            const item = QVC_ITEMS[currentQvcIndex];
-            const randomReview = item.reviews[Math.floor(Math.random() * item.reviews.length)];
-            
-            showroom.innerHTML = `
-              <div style="background: rgba(197, 168, 128, 0.03); padding: 5px; border: 1px solid rgba(197, 168, 128, 0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; min-width: 50px; box-shadow: inset 0 0 8px rgba(0,0,0,0.8); box-sizing: border-box;">
-                <img src="${item.url}" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
-              </div>
-              <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; font-family: 'Outfit', sans-serif;">
-                <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                  <span class="text-gold" style="font-size: 0.85rem; font-weight: bold; text-shadow: 0 0 4px rgba(255, 215, 0, 0.2);">${item.name}</span>
-                  <span style="font-size: 0.75rem; color: #a855f7; font-weight: bold; background: rgba(168, 85, 247, 0.1); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(168, 85, 247, 0.2);">${item.price}</span>
+            try {
+              const item = QVC_ITEMS[currentQvcIndex];
+              const randomReview = item.reviews[Math.floor(Math.random() * item.reviews.length)];
+              
+              showroom.innerHTML = `
+                <div style="background: rgba(197, 168, 128, 0.03); padding: 5px; border: 1px solid rgba(197, 168, 128, 0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; min-width: 50px; box-shadow: inset 0 0 8px rgba(0,0,0,0.8); box-sizing: border-box;">
+                  <img src="${item.url}" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
                 </div>
-                <div style="font-size: 0.6rem; color: #a2a1a0; font-style: italic; margin-bottom: 2px;">${item.sub} - ${item.desc}</div>
-                <div style="border-top: 1px solid rgba(197, 168, 128, 0.15); padding-top: 3px; font-size: 0.65rem; color: #cbd5e1; line-height: 1.15;">
-                  <span style="color: #ffd700; font-weight: bold;">💬 Review:</span> "${randomReview.text}" 
-                  <span style="color: #a855f7; font-size: 0.55rem; font-weight: bold; margin-left: 2px;">-${randomReview.author}</span>
+                <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; font-family: 'Outfit', sans-serif;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <span class="text-gold" style="font-size: 0.85rem; font-weight: bold; text-shadow: 0 0 4px rgba(255, 215, 0, 0.2);">${item.name}</span>
+                    <span style="font-size: 0.75rem; color: #a855f7; font-weight: bold; background: rgba(168, 85, 247, 0.1); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(168, 85, 247, 0.2);">${item.price}</span>
+                  </div>
+                  <div style="font-size: 0.6rem; color: #a2a1a0; font-style: italic; margin-bottom: 2px;">${item.sub} - ${item.desc}</div>
+                  <div style="border-top: 1px solid rgba(197, 168, 128, 0.15); padding-top: 3px; font-size: 0.65rem; color: #cbd5e1; line-height: 1.15;">
+                    <span style="color: #ffd700; font-weight: bold;">💬 Review:</span> "${randomReview.text}" 
+                    <span style="color: #a855f7; font-size: 0.55rem; font-weight: bold; margin-left: 2px;">-${randomReview.author}</span>
+                  </div>
                 </div>
-              </div>
-            `;
-            
-            showroom.style.opacity = 1;
-            currentQvcIndex = (currentQvcIndex + 1) % QVC_ITEMS.length;
+              `;
+              
+              showroom.style.opacity = 1;
+              currentQvcIndex = (currentQvcIndex + 1) % QVC_ITEMS.length;
+            } catch (innerErr) {
+              console.error("QVC Showroom inner failed, using fallback:", innerErr);
+              // Fail-safe fallback to the sacred relic
+              showroom.innerHTML = `
+                <div style="background: rgba(197, 168, 128, 0.03); padding: 5px; border: 1px solid rgba(197, 168, 128, 0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; min-width: 50px; box-shadow: inset 0 0 8px rgba(0,0,0,0.8); box-sizing: border-box;">
+                  <img src="https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyDuplicate.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
+                </div>
+                <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; font-family: 'Outfit', sans-serif;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <span class="text-gold" style="font-size: 0.85rem; font-weight: bold; text-shadow: 0 0 4px rgba(255, 215, 0, 0.2);">Autographed Photo of Chris Wilson</span>
+                    <span style="font-size: 0.75rem; color: #a855f7; font-weight: bold; background: rgba(168, 85, 247, 0.1); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(168, 85, 247, 0.2);">690 Divine Orbs</span>
+                  </div>
+                  <div style="font-size: 0.6rem; color: #a2a1a0; font-style: italic; margin-bottom: 2px;">Sacred Relic - Provides +1000% increased loot filter dopamine.</div>
+                  <div style="border-top: 1px solid rgba(197, 168, 128, 0.15); padding-top: 3px; font-size: 0.65rem; color: #cbd5e1; line-height: 1.15;">
+                    <span style="color: #ffd700; font-weight: bold;">💬 Review:</span> "Dropped a Divine Orb on the very next map. Sane, indeed!" 
+                    <span style="color: #a855f7; font-size: 0.55rem; font-weight: bold; margin-left: 2px;">-Sane_Exile</span>
+                  </div>
+                </div>
+              `;
+              showroom.style.opacity = 1;
+            }
           }, 500);
           
         } catch (err) {
-          console.error("QVC Showroom failed:", err);
+          console.error("QVC Showroom outer failed:", err);
         }
       }
       

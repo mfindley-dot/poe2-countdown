@@ -397,48 +397,62 @@
     <button class="appraisal-btn-sync" id="btnSyncItem">💍 SYNC ITEM TO WEBSITE</button>
   </div>
 
-  <!-- Build Deficiency Optimizer Section (V2.3) -->
+  <!-- Build Deficiency Optimizer Section (V2.3 Pivot) -->
   <div style="border-top: 1px dashed rgba(197, 168, 128, 0.25); margin-top: 15px; padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
     <div style="font-family: 'Outfit', sans-serif; font-size: 0.72rem; color: #ffd700; font-weight: bold; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between;">
       <span>🔮 BUILD DEFICIENCY OPTIMIZER</span>
       <span style="font-size: 0.58rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 1px 4px; border-radius: 2px; border: 1px solid rgba(245, 158, 11, 0.3);">V2.3</span>
     </div>
 
+    <!-- Auditing options -->
     <div style="display: flex; gap: 8px;">
-      <div class="field-group" style="flex: 1; margin-bottom: 0;">
-        <label for="auditAccount">GGG ACCOUNT:</label>
-        <input type="text" id="auditAccount" placeholder="e.g. Mike" style="padding: 4px 6px; font-size: 0.68rem;">
-      </div>
-      <div class="field-group" style="flex: 1; margin-bottom: 0;">
-        <label for="auditCharacter">CHARACTER:</label>
-        <input type="text" id="auditCharacter" placeholder="e.g. Creg" style="padding: 4px 6px; font-size: 0.68rem;">
-      </div>
+      <button class="btn-sync" id="btnCaptureChar" style="flex: 1; padding: 5px; font-size: 0.62rem; background: linear-gradient(180deg, #ffd700 0%, #c5a880 100%); border-color: #ffd700; color: #0c0a09; margin-top: 0; font-weight: bold;">
+        📸 CAPTURE STATS (C KEY)
+      </button>
+      <button class="btn-sync" id="btnToggleManualAudit" style="flex: 1; padding: 5px; font-size: 0.62rem; background: #1c1917; border-color: rgba(197,168,128,0.25); color: #cbd5e1; margin-top: 0; font-weight: bold;">
+        ✍️ TYPE STATS MANUALLY
+      </button>
     </div>
 
-    <button class="btn-sync" id="btnAuditBuild" style="background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); border-color: #f59e0b; color: #0c0a09; padding: 6px; font-size: 0.72rem; margin-top: 4px;">
-      ⚡ AUDIT CHARACTER GEAR
-    </button>
-    
-    <div style="font-size: 0.55rem; color: #a2a1a0; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 2px;" id="btnTogglePrivacyHelp">
-      ⚠️ Private profile? Click for Privacy Settings Setup Tutorial
-    </div>
-
-    <!-- Privacy Help Modal Container -->
-    <div id="privacyHelp" style="display: none; background: #090705; border: 1px solid rgba(197,168,128,0.25); padding: 8px; border-radius: 4px; font-size: 0.62rem; color: #cbd5e1; line-height: 1.35; flex-direction: column; gap: 4px; box-sizing: border-box;">
-      <div style="font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.15); padding-bottom: 3px; margin-bottom: 3px;">
-        👤 GGG PROFILE PUBLIC SETUP:
+    <!-- Manual Inputs Section -->
+    <div id="manualAuditInputs" style="display: none; background: #090705; border: 1px solid rgba(197, 168, 128, 0.15); padding: 8px; border-radius: 4px; flex-direction: column; gap: 6px; box-sizing: border-box;">
+      <div style="display: flex; gap: 6px;">
+        <div class="field-group" style="flex: 1; margin-bottom: 0;">
+          <label style="font-size: 0.52rem;">🔥 FIRE RES (%):</label>
+          <input type="number" id="manualFireRes" value="45" style="padding: 3px; font-size: 0.65rem;">
+        </div>
+        <div class="field-group" style="flex: 1; margin-bottom: 0;">
+          <label style="font-size: 0.52rem;">❄️ COLD RES (%):</label>
+          <input type="number" id="manualColdRes" value="75" style="padding: 3px; font-size: 0.65rem;">
+        </div>
+        <div class="field-group" style="flex: 1; margin-bottom: 0;">
+          <label style="font-size: 0.52rem;">⚡ LIGHT RES (%):</label>
+          <input type="number" id="manualLightRes" value="60" style="padding: 3px; font-size: 0.65rem;">
+        </div>
       </div>
-      1. Log into your account on <a href="https://www.pathofexile.com" target="_blank" style="color: #ffd700;">pathofexile.com</a>.<br>
-      2. Click your Account Name at top-left to go to Profile.<br>
-      3. Click <strong>Privacy Settings</strong> in right menu column.<br>
-      4. <strong>Uncheck</strong> both "Set profile to private" and "Hide Character Tabs".<br>
-      5. Click <strong>Update</strong> to save!
+      <div style="display: flex; gap: 6px;">
+        <div class="field-group" style="flex: 1; margin-bottom: 0;">
+          <label style="font-size: 0.52rem;">STR:</label>
+          <input type="number" id="manualStr" value="95" style="padding: 3px; font-size: 0.65rem;">
+        </div>
+        <div class="field-group" style="flex: 1; margin-bottom: 0;">
+          <label style="font-size: 0.52rem;">DEX:</label>
+          <input type="number" id="manualDex" value="120" style="padding: 3px; font-size: 0.65rem;">
+        </div>
+        <div class="field-group" style="flex: 1; margin-bottom: 0;">
+          <label style="font-size: 0.52rem;">INT:</label>
+          <input type="number" id="manualInt" value="80" style="padding: 3px; font-size: 0.65rem;">
+        </div>
+      </div>
+      <button class="btn-sync" id="btnRunManualAudit" style="background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); border-color: #f59e0b; color: #0c0a09; padding: 4px; font-size: 0.68rem; margin-top: 4px;">
+        ⚡ CALCULATE MANUALLY
+      </button>
     </div>
 
     <!-- Audit Results Display -->
     <div id="auditResults" style="display: none; background: #090705; border: 1px solid rgba(197, 168, 128, 0.15); padding: 8px; border-radius: 4px; flex-direction: column; gap: 6px; font-size: 0.68rem; box-sizing: border-box;">
       <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.15); padding-bottom: 2px;">
-        📊 AUDIT: <span id="resCharName" style="color: #cbd5e1;">Creg</span>
+        📊 AUDIT RESULTS:
       </div>
       
       <!-- Resistance Gauges -->

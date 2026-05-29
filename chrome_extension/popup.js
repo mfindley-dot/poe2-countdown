@@ -39,14 +39,19 @@ const groupBulkAccountName = document.getElementById("groupBulkAccountName");
 const bulkAccountNameInput = document.getElementById("bulkAccountName");
 const btnBulkSync = document.getElementById("btnBulkSync");
 
-// Build Deficiency Optimizer Elements
-const auditAccountInput = document.getElementById("auditAccount");
-const auditCharacterInput = document.getElementById("auditCharacter");
-const btnAuditBuild = document.getElementById("btnAuditBuild");
-const btnTogglePrivacyHelp = document.getElementById("btnTogglePrivacyHelp");
-const privacyHelp = document.getElementById("privacyHelp");
+// Build Deficiency Optimizer Elements (V2.3 Pivot)
+const btnCaptureChar = document.getElementById("btnCaptureChar");
+const btnToggleManualAudit = document.getElementById("btnToggleManualAudit");
+const manualAuditInputs = document.getElementById("manualAuditInputs");
+const manualFireRes = document.getElementById("manualFireRes");
+const manualColdRes = document.getElementById("manualColdRes");
+const manualLightRes = document.getElementById("manualLightRes");
+const manualStr = document.getElementById("manualStr");
+const manualDex = document.getElementById("manualDex");
+const manualInt = document.getElementById("manualInt");
+const btnRunManualAudit = document.getElementById("btnRunManualAudit");
+
 const auditResults = document.getElementById("auditResults");
-const resCharName = document.getElementById("resCharName");
 const resFireVal = document.getElementById("resFireVal");
 const resFireBar = document.getElementById("resFireBar");
 const resColdVal = document.getElementById("resColdVal");
@@ -203,7 +208,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.warn("Failed to load local config.json:", err);
   }
 
-  chrome.storage.local.get(["geminiKey", "dreamloKey", "hotkeyIdentify", "hotkeyAppraise", "bulkLeague", "bulkTabIndex", "bulkStashType", "bulkAccountName", "auditAccount", "auditCharacter"], (data) => {
+  chrome.storage.local.get([
+    "geminiKey", "dreamloKey", "hotkeyIdentify", "hotkeyAppraise", 
+    "bulkLeague", "bulkTabIndex", "bulkStashType", "bulkAccountName",
+    "manualFireRes", "manualColdRes", "manualLightRes", "manualStr", "manualDex", "manualInt"
+  ], (data) => {
     geminiInput.value = data.geminiKey || defaultGeminiKey;
     dreamloInput.value = data.dreamloKey || defaultDreamloKey;
     
@@ -231,8 +240,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (data.bulkAccountName) bulkAccountNameInput.value = data.bulkAccountName;
 
     // V2.3 inputs loading
-    if (data.auditAccount) auditAccountInput.value = data.auditAccount;
-    if (data.auditCharacter) auditCharacterInput.value = data.auditCharacter;
+    if (data.manualFireRes !== undefined) manualFireRes.value = data.manualFireRes;
+    if (data.manualColdRes !== undefined) manualColdRes.value = data.manualColdRes;
+    if (data.manualLightRes !== undefined) manualLightRes.value = data.manualLightRes;
+    if (data.manualStr !== undefined) manualStr.value = data.manualStr;
+    if (data.manualDex !== undefined) manualDex.value = data.manualDex;
+    if (data.manualInt !== undefined) manualInt.value = data.manualInt;
   });
 
   // Attempt auto-clipboard read on startup if in Appraiser mode
@@ -996,232 +1009,279 @@ bulkStashTypeSelect.addEventListener("change", () => {
 });
 
 // ==========================================
-// V2.3 BUILD DEFICIENCY OPTIMIZER LOGIC
+// V2.3 BUILD DEFICIENCY OPTIMIZER LOGIC (PIVOT)
 // ==========================================
 
-// Collapsible Privacy Settings Help panel
-btnTogglePrivacyHelp.addEventListener("click", () => {
-  if (privacyHelp.style.display === "none") {
-    privacyHelp.style.display = "flex";
-  } else {
-    privacyHelp.style.display = "none";
-  }
-});
+const CHAR_AUDIT_SYSTEM_INSTRUCTION = `You are an expert Path of Exile 2 Character Panel OCR extractor.
+Analyze the screenshot of the character sheet (opened via the in-game 'C' panel showing defense and attributes stats) and extract the active net values for:
+1. Fire Resistance (look for "Fire Resistance", net percentage value, e.g. 45% or 75% (80%), extract the active net value which is the first number, in this case 45 or 75).
+2. Cold Resistance (look for "Cold Resistance", net percentage value, e.g. 75).
+3. Lightning Resistance (look for "Lightning Resistance", net percentage value, e.g. -15 or 60).
+4. Strength (look for "Strength", e.g. 95).
+5. Dexterity (look for "Dexterity", e.g. 120).
+6. Intelligence (look for "Intelligence", e.g. 80).
 
-// Run character gear audit fetch and parse
-async function auditCharacterBuild() {
-  const accountName = auditAccountInput.value.trim();
-  const characterName = auditCharacterInput.value.trim();
-  
-  if (!accountName) {
-    log("Error: GGG Account Name required.", "error");
-    return;
-  }
-  if (!characterName) {
-    log("Error: Character Name required.", "error");
-    return;
-  }
-  
-  // Persist input values
+If a stat is not found, return 0. Only return the net active value (do not include the percentage sign, return as an integer).`;
+
+const CHAR_AUDIT_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    fire_res: { type: "INTEGER" },
+    cold_res: { type: "INTEGER" },
+    lightning_res: { type: "INTEGER" },
+    strength: { type: "INTEGER" },
+    dexterity: { type: "INTEGER" },
+    intelligence: { type: "INTEGER" }
+  },
+  required: ["fire_res", "cold_res", "lightning_res", "strength", "dexterity", "intelligence"]
+};
+
+// Render Audit Results visually and build Trade Solver URL
+function renderAuditResults(fire, cold, light, str, dex, int) {
+  // Persist to local storage to prevent state loss
   chrome.storage.local.set({
-    auditAccount: accountName,
-    auditCharacter: characterName
+    manualFireRes: fire,
+    manualColdRes: cold,
+    manualLightRes: light,
+    manualStr: str,
+    manualDex: dex,
+    manualInt: int
   });
-  
-  logBox.innerHTML = `Status: Fetching active equipped items for ${characterName}...`;
-  auditResults.style.display = "none";
-  
-  try {
-    const gggCharUrl = `https://www.pathofexile.com/character-window/get-items?accountName=${encodeURIComponent(accountName)}&character=${encodeURIComponent(characterName)}`;
-    
-    log(`Connecting to GGG Character Window...`);
-    const res = await fetch(gggCharUrl);
-    
-    if (res.status === 403 || res.redirected) {
-      throw new Error("Access Denied (403). Make sure your GGG account profile and character tabs are set to Public in your Privacy Settings!");
-    }
-    if (!res.ok) {
-      throw new Error(`GGG Character API returned status ${res.status}`);
-    }
-    
-    const charData = await res.json();
-    if (!charData || !charData.items) {
-      throw new Error("No equipped items found on this character. Is the character name typed correctly?");
-    }
-    
-    log("Character gear loaded successfully. Auditing stats...", "success");
-    
-    // Accumulators for resistances and attributes
-    let totals = {
-      fire: 0, cold: 0, light: 0,
-      str: 0, dex: 0, int: 0
-    };
-    
-    // Scan all equipped items
-    charData.items.forEach(item => {
-      // We only care about equipped gear slots (exclude inventory, flasks, etc.)
-      const slot = item.inventoryId;
-      if (!slot || ["MainInventory", "Flasks"].includes(slot)) {
-        return;
+
+  const TARGET_RES = 75; // Active in-game target resistance cap
+
+  // Fire Res Gauge
+  resFireVal.textContent = `${fire}% / ${TARGET_RES}%`;
+  const firePercent = Math.max(0, Math.min(100, Math.floor((fire / TARGET_RES) * 100)));
+  resFireBar.style.width = `${firePercent}%`;
+  if (fire >= TARGET_RES) {
+    resFireVal.style.color = "#10b981"; // Green
+    resFireBar.style.backgroundColor = "#10b981";
+  } else {
+    resFireVal.style.color = "#ef4444"; // Red
+    resFireBar.style.backgroundColor = "#ef4444";
+  }
+
+  // Cold Res Gauge
+  resColdVal.textContent = `${cold}% / ${TARGET_RES}%`;
+  const coldPercent = Math.max(0, Math.min(100, Math.floor((cold / TARGET_RES) * 100)));
+  resColdBar.style.width = `${coldPercent}%`;
+  if (cold >= TARGET_RES) {
+    resColdVal.style.color = "#10b981"; // Green
+    resColdBar.style.backgroundColor = "#10b981";
+  } else {
+    resColdVal.style.color = "#ef4444"; // Red
+    resColdBar.style.backgroundColor = "#ef4444";
+  }
+
+  // Lightning Res Gauge
+  resLightVal.textContent = `${light}% / ${TARGET_RES}%`;
+  const lightPercent = Math.max(0, Math.min(100, Math.floor((light / TARGET_RES) * 100)));
+  resLightBar.style.width = `${lightPercent}%`;
+  if (light >= TARGET_RES) {
+    resLightVal.style.color = "#10b981"; // Green
+    resLightBar.style.backgroundColor = "#10b981";
+  } else {
+    resLightVal.style.color = "#ef4444"; // Red
+    resLightBar.style.backgroundColor = "#ef4444";
+  }
+
+  // Attributes
+  resStrVal.textContent = `${str}`;
+  resDexVal.textContent = `${dex}`;
+  resIntVal.textContent = `${int}`;
+
+  // Identify worst deficiency for trade query solver
+  let deficiencies = [
+    { name: "Fire Resistance", key: "fire", current: fire, gggId: "explicit.stat_3372524274", label: "🔥 BUY FIRE RES RING" },
+    { name: "Cold Resistance", key: "cold", current: cold, gggId: "explicit.stat_4220027924", label: "❄️ BUY COLD RES RING" },
+    { name: "Lightning Resistance", key: "light", current: light, gggId: "explicit.stat_1676847064", label: "⚡ BUY LIGHTNING RES RING" }
+  ];
+
+  deficiencies.sort((a, b) => a.current - b.current);
+  const worst = deficiencies[0];
+  const gap = TARGET_RES - worst.current;
+
+  if (gap > 0) {
+    resGapWarning.textContent = `⚠️ Lacking ${gap}% ${worst.name}!`;
+    resGapWarning.style.color = "#f59e0b"; // Orange
+    btnBuyDeficiency.style.display = "block";
+    btnBuyDeficiency.textContent = worst.label;
+
+    // GGG official trade query object for Ring slot with deficiency filter
+    const league = bulkLeagueInput.value.trim() || "Standard";
+    const tradeQuery = {
+      query: {
+        status: { option: "online" },
+        type: "Ring",
+        stats: [
+          {
+            type: "and",
+            filters: [
+              {
+                id: worst.gggId,
+                value: { min: Math.min(45, gap) } // query at least what is missing (capped at 45)
+              }
+            ]
+          }
+        ]
       }
-      
-      let mods = [];
-      if (item.implicitMods) mods.push(...item.implicitMods);
-      if (item.explicitMods) mods.push(...item.explicitMods);
-      
-      mods.forEach(mod => {
-        const text = mod.toLowerCase();
-        
-        // 1. Single elemental resistances
-        let match = text.match(/(\+?\d+)% to fire resistance/);
-        if (match) totals.fire += parseInt(match[1], 10);
-        
-        match = text.match(/(\+?\d+)% to cold resistance/);
-        if (match) totals.cold += parseInt(match[1], 10);
-        
-        match = text.match(/(\+?\d+)% to lightning resistance/);
-        if (match) totals.light += parseInt(match[1], 10);
-        
-        // 2. All elemental resistances
-        match = text.match(/(\+?\d+)% to all elemental resistances/);
-        if (match) {
-          const val = parseInt(match[1], 10);
-          totals.fire += val;
-          totals.cold += val;
-          totals.light += val;
-        }
-        
-        // 3. Single attributes
-        match = text.match(/\+(\d+) to strength/);
-        if (match) totals.str += parseInt(match[1], 10);
-        
-        match = text.match(/\+(\d+) to dexterity/);
-        if (match) totals.dex += parseInt(match[1], 10);
-        
-        match = text.match(/\+(\d+) to intelligence/);
-        if (match) totals.int += parseInt(match[1], 10);
-        
-        // 4. All attributes
-        match = text.match(/\+(\d+) to all attributes/);
-        if (match) {
-          const val = parseInt(match[1], 10);
-          totals.str += val;
-          totals.dex += val;
-          totals.int += val;
-        }
-      });
+    };
+
+    btnBuyDeficiency.onclick = () => {
+      const tradeUrl = `https://www.pathofexile.com/trade/search/${encodeURIComponent(league)}?q=${encodeURIComponent(JSON.stringify(tradeQuery))}`;
+      window.open(tradeUrl, "_blank");
+    };
+  } else {
+    resGapWarning.textContent = "🏆 ALL RESISTANCES CAPPED!";
+    resGapWarning.style.color = "#10b981"; // Green
+    btnBuyDeficiency.style.display = "none";
+  }
+
+  auditResults.style.display = "flex";
+}
+
+// Heuristic manual input calculation
+function runManualAudit() {
+  const fire = parseInt(manualFireRes.value, 10) || 0;
+  const cold = parseInt(manualColdRes.value, 10) || 0;
+  const light = parseInt(manualLightRes.value, 10) || 0;
+  const str = parseInt(manualStr.value, 10) || 0;
+  const dex = parseInt(manualDex.value, 10) || 0;
+  const int = parseInt(manualInt.value, 10) || 0;
+
+  renderAuditResults(fire, cold, light, str, dex, int);
+  logBox.innerHTML = `Status: Manual stats audit computed!`;
+}
+
+// Visual OCR capture and processing
+async function runCharOcrAudit() {
+  const geminiKey = geminiInput.value.trim();
+  if (!geminiKey) {
+    log("Error: Gemini API Key required for Visual OCR Mode.", "error");
+    return;
+  }
+
+  logBox.innerHTML = "Status: Initializing display grab for Character Sheet...";
+  log("Please ensure your in-game Character Panel (C key) is open on your screen!");
+
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { displaySurface: "window" },
+      audio: false
     });
-    
-    // Display results in visual gauges
-    resCharName.textContent = characterName;
-    
-    // In PoE Merciless, you get -60% resistance penalty, so target capped on gear is 135%
-    const TARGET_RES = 135;
-    
-    // Fire Res Gauge
-    const firePercent = Math.min(100, Math.floor((totals.fire / TARGET_RES) * 100));
-    resFireBar.style.width = `${firePercent}%`;
-    const fireActive = totals.fire - 60;
-    resFireVal.textContent = `${fireActive}% (${totals.fire}% Gear)`;
-    if (totals.fire >= TARGET_RES) {
-      resFireVal.style.color = "#10b981"; // Green
-      resFireBar.style.backgroundColor = "#10b981";
-    } else {
-      resFireVal.style.color = "#ef4444"; // Red
-      resFireBar.style.backgroundColor = "#ef4444";
-    }
-    
-    // Cold Res Gauge
-    const coldPercent = Math.min(100, Math.floor((totals.cold / TARGET_RES) * 100));
-    resColdBar.style.width = `${coldPercent}%`;
-    const coldActive = totals.cold - 60;
-    resColdVal.textContent = `${coldActive}% (${totals.cold}% Gear)`;
-    if (totals.cold >= TARGET_RES) {
-      resColdVal.style.color = "#10b981"; // Green
-      resColdBar.style.backgroundColor = "#10b981";
-    } else {
-      resColdVal.style.color = "#ef4444"; // Red
-      resColdBar.style.backgroundColor = "#ef4444";
-    }
-    
-    // Lightning Res Gauge
-    const lightPercent = Math.min(100, Math.floor((totals.light / TARGET_RES) * 100));
-    resLightBar.style.width = `${lightPercent}%`;
-    const lightActive = totals.light - 60;
-    resLightVal.textContent = `${lightActive}% (${totals.light}% Gear)`;
-    if (totals.light >= TARGET_RES) {
-      resLightVal.style.color = "#10b981"; // Green
-      resLightBar.style.backgroundColor = "#10b981";
-    } else {
-      resLightVal.style.color = "#ef4444"; // Red
-      resLightBar.style.backgroundColor = "#ef4444";
-    }
-    
-    // Attributes
-    resStrVal.textContent = `+${totals.str}`;
-    resDexVal.textContent = `+${totals.dex}`;
-    resIntVal.textContent = `+${totals.int}`;
-    
-    // 5. Identify the single biggest resistance deficiency (poe trade solver)
-    let deficiencies = [
-      { name: "Fire Resistance", key: "fire", current: totals.fire, gggId: "explicit.stat_3372524274", label: "🔥 BUY FIRE RES RING" },
-      { name: "Cold Resistance", key: "cold", current: totals.cold, gggId: "explicit.stat_4220027924", label: "❄️ BUY COLD RES RING" },
-      { name: "Lightning Resistance", key: "light", current: totals.light, gggId: "explicit.stat_1676847064", label: "⚡ BUY LIGHTNING RES RING" }
-    ];
-    
-    // Sort deficiencies lowest first
-    deficiencies.sort((a, b) => a.current - b.current);
-    const worst = deficiencies[0];
-    
-    const gap = TARGET_RES - worst.current;
-    if (gap > 0) {
-      resGapWarning.textContent = `⚠️ Lacking ${gap}% ${worst.name}!`;
-      resGapWarning.style.color = "#f59e0b"; // Orange/Yellow
-      btnBuyDeficiency.style.display = "block";
-      btnBuyDeficiency.textContent = worst.label;
-      
-      // Wire up trade search query string using safe URL-encoded Option A method (minimal payload)
-      // Query specifically for a Ring that satisfies the missing resistance gap
-      const league = bulkLeagueInput.value.trim() || "Standard";
-      const tradeQuery = {
-        query: {
-          status: { option: "online" },
-          type: "Ring",
-          stats: [
-            {
-              type: "and",
-              filters: [
-                {
-                  id: worst.gggId,
-                  value: { min: Math.min(45, gap) } // Ask for at least what's missing, cap search request min value at 45%
-                }
-              ]
-            }
-          ]
-        }
-      };
-      
-      btnBuyDeficiency.onclick = () => {
-        const tradeUrl = `https://www.pathofexile.com/trade/search/${encodeURIComponent(league)}?q=${encodeURIComponent(JSON.stringify(tradeQuery))}`;
-        window.open(tradeUrl, "_blank");
-      };
-    } else {
-      resGapWarning.textContent = "🏆 ALL RESISTANCES CAPPED!";
-      resGapWarning.style.color = "#10b981"; // Green
-      btnBuyDeficiency.style.display = "none";
-    }
-    
-    // Display result panel
-    auditResults.style.display = "flex";
-    logBox.innerHTML = `Status: Audit complete! Fire: ${totals.fire}%, Cold: ${totals.cold}%, Light: ${totals.light}%`;
-    
+
+    log("Character Panel screen grab connected.");
+    tempVideo.srcObject = stream;
+    tempVideo.play();
+
+    tempVideo.onloadedmetadata = () => {
+      setTimeout(() => {
+        captureAndOcrCharacter(stream, geminiKey);
+      }, 600);
+    };
+
   } catch (err) {
-    log(`Audit failed: ${err.message}`, "error");
+    log(`Character grab aborted or failed: ${err.message}`, "error");
   }
 }
 
-// Bind audit trigger button
-btnAuditBuild.addEventListener("click", auditCharacterBuild);
+async function captureAndOcrCharacter(stream, geminiKey) {
+  try {
+    const videoWidth = tempVideo.videoWidth;
+    const videoHeight = tempVideo.videoHeight;
+
+    const ctx = previewCanvas.getContext("2d");
+    previewCanvas.width = videoWidth;
+    previewCanvas.height = videoHeight;
+
+    ctx.drawImage(tempVideo, 0, 0, videoWidth, videoHeight);
+
+    // Stop video tracks
+    stream.getTracks().forEach(track => track.stop());
+    log("Screen frame captured successfully.");
+
+    const dataUrl = previewCanvas.toDataURL("image/png");
+    const base64Data = dataUrl.split(",")[1];
+
+    previewCanvas.style.display = "block";
+    log("Running Gemini Vision character sheet OCR analysis...");
+
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+
+    const payload = {
+      contents: [{
+        parts: [
+          { text: "Extract active character resistances and attributes from this Character Panel sheet image." },
+          {
+            inlineData: {
+              mimeType: "image/png",
+              data: base64Data
+            }
+          }
+        ]
+      }],
+      generationConfig: {
+        systemInstruction: {
+          parts: [{ text: CHAR_AUDIT_SYSTEM_INSTRUCTION }]
+        },
+        responseMimeType: "application/json",
+        responseSchema: CHAR_AUDIT_SCHEMA
+      }
+    };
+
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errTxt = await res.text();
+      throw new Error(`Gemini API returned status ${res.status}: ${errTxt}`);
+    }
+
+    const resJson = await res.json();
+    const responseText = resJson.candidates[0].content.parts[0].text;
+    log("Gemini parsed character stats successfully.");
+
+    const data = JSON.parse(responseText);
+
+    const fire = data.fire_res !== undefined ? data.fire_res : 0;
+    const cold = data.cold_res !== undefined ? data.cold_res : 0;
+    const light = data.lightning_res !== undefined ? data.lightning_res : 0;
+    const str = data.strength !== undefined ? data.strength : 0;
+    const dex = data.dexterity !== undefined ? data.dexterity : 0;
+    const int = data.intelligence !== undefined ? data.intelligence : 0;
+
+    // Autofill manual inputs with OCR values
+    manualFireRes.value = fire;
+    manualColdRes.value = cold;
+    manualLightRes.value = light;
+    manualStr.value = str;
+    manualDex.value = dex;
+    manualInt.value = int;
+
+    renderAuditResults(fire, cold, light, str, dex, int);
+    log(`✅ OCR Audit Complete! Stats successfully synchronized!`, "success");
+
+  } catch (err) {
+    log(`Character OCR failed: ${err.message}`, "error");
+  }
+}
+
+// Bind V2.3 Event Listeners
+btnCaptureChar.addEventListener("click", runCharOcrAudit);
+btnToggleManualAudit.addEventListener("click", () => {
+  if (manualAuditInputs.style.display === "none") {
+    manualAuditInputs.style.display = "flex";
+    btnToggleManualAudit.textContent = "🙈 HIDE MANUAL INPUTS";
+  } else {
+    manualAuditInputs.style.display = "none";
+    btnToggleManualAudit.textContent = "✍️ TYPE STATS MANUALLY";
+  }
+});
+btnRunManualAudit.addEventListener("click", runManualAudit);
 
 // Map item names and types to standard high-quality GGG CDN icon graphics
 function getIconUrl(name, baseType) {
