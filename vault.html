@@ -473,6 +473,14 @@
 
         <!-- TAB CONTENT 2: WEAPONS & GEAR -->
         <div id="tabContentDepot" class="tab-content">
+          <!-- Stash Owner Selection Dropdown (V2.2) -->
+          <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-family: 'Outfit', sans-serif;">
+            <label for="stashOwnerFilter" style="font-size: 0.72rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px;">👤 STASH OWNER:</label>
+            <select id="stashOwnerFilter" onchange="filterStashByOwner()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.3); color: #ffd700; padding: 4px 10px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.2s ease; box-shadow: 0 0 5px rgba(255, 215, 0, 0.05);">
+              <option value="all">🔮 Shared Guild Vault (All)</option>
+            </select>
+          </div>
+          
           <div class="depot-stash-grid" id="depotGrid">
             <!-- Live & mockup items populated dynamically -->
           </div>
@@ -737,6 +745,16 @@
                 const decodedText = decodeURIComponent(e.text);
                 const itemParts = decodedText.split("|");
                 if (itemParts.length >= 8) {
+                  // Determine owner based on prefix (V2.2)
+                  let ownerName = "Shared Guild Vault";
+                  if (e.name.startsWith("ITEM_PERS_")) {
+                    const prefixParts = e.name.split("_");
+                    if (prefixParts.length >= 3) {
+                      const rawName = prefixParts[2];
+                      ownerName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+                    }
+                  }
+                  
                   const newItem = {
                     rarity: itemParts[0] || "Rare",
                     name: itemParts[1] || "Identified Item",
@@ -747,7 +765,8 @@
                     price: itemParts[6] || "10 Chaos Orbs",
                     flavor: itemParts[7] || "",
                     logs: itemParts[8] || "Direct Clipboard Appraisal V1.0",
-                    url: itemParts[9] || "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png"
+                    url: itemParts[9] || "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png",
+                    owner: ownerName
                   };
                   scannedItems.push(newItem);
                   
@@ -773,6 +792,7 @@
         }
         
         renderVaultGrid();
+        populateOwnerDropdown();
         
       } catch (err) {
         console.warn("Online database fetch failed. Loading local simulated fallback:", err);
@@ -864,10 +884,23 @@
       if (!depotGrid) return;
       depotGrid.innerHTML = "";
       
-      // Combine mock/pre-loaded items with live scanned gear from the database
-      const allGear = [...MOCK_GEAR, ...scannedItems];
+      const filterSelect = document.getElementById("stashOwnerFilter");
+      const selectedOwner = filterSelect ? filterSelect.value : "all";
       
-      allGear.forEach(item => {
+      // Combine mock/pre-loaded items with live scanned gear from the database
+      // Ensure mock gear is marked under Shared Guild Vault
+      const allGear = [
+        ...MOCK_GEAR.map(g => ({ ...g, owner: "Shared Guild Vault" })),
+        ...scannedItems
+      ];
+      
+      // Filter based on selected dropdown value
+      let filteredGear = allGear;
+      if (selectedOwner !== "all") {
+        filteredGear = allGear.filter(item => item.owner && item.owner.toLowerCase() === selectedOwner);
+      }
+      
+      filteredGear.forEach(item => {
         const cell = document.createElement("div");
         cell.className = "gear-cell";
         cell.onclick = () => showPoeTooltip(item);
@@ -892,6 +925,33 @@
         cell.appendChild(label);
         depotGrid.appendChild(cell);
       });
+    }
+
+    // Dynamic Populator for Owner dropdown (V2.2)
+    function populateOwnerDropdown() {
+      const filterSelect = document.getElementById("stashOwnerFilter");
+      if (!filterSelect) return;
+      
+      filterSelect.innerHTML = `<option value="all">🔮 Shared Guild Vault (All)</option>`;
+      
+      const owners = new Set();
+      scannedItems.forEach(item => {
+        if (item.owner && item.owner !== "Shared Guild Vault") {
+          owners.add(item.owner);
+        }
+      });
+      
+      Array.from(owners).sort().forEach(owner => {
+        const opt = document.createElement("option");
+        opt.value = owner.toLowerCase();
+        opt.textContent = `👤 ${owner}'s Stash`;
+        filterSelect.appendChild(opt);
+      });
+    }
+
+    // Dropdown change trigger
+    function filterStashByOwner() {
+      renderDepotGrid();
     }
 
     // 4. Interactive PoE Styled Tooltips Logic

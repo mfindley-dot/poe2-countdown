@@ -31,6 +31,14 @@ const appPrice = document.getElementById("appPrice");
 const appCullingLogs = document.getElementById("appCullingLogs");
 const btnSyncItem = document.getElementById("btnSyncItem");
 
+// Bulk Syncer Elements
+const bulkLeagueInput = document.getElementById("bulkLeague");
+const bulkTabIndexInput = document.getElementById("bulkTabIndex");
+const bulkStashTypeSelect = document.getElementById("bulkStashType");
+const groupBulkAccountName = document.getElementById("groupBulkAccountName");
+const bulkAccountNameInput = document.getElementById("bulkAccountName");
+const btnBulkSync = document.getElementById("btnBulkSync");
+
 // Hotkey Configuration Elements and Modalities
 const btnToggleHotkeys = document.getElementById("btnToggleHotkeys");
 const hotkeysLabel = document.getElementById("hotkeysLabel");
@@ -175,7 +183,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.warn("Failed to load local config.json:", err);
   }
 
-  chrome.storage.local.get(["geminiKey", "dreamloKey", "hotkeyIdentify", "hotkeyAppraise"], (data) => {
+  chrome.storage.local.get(["geminiKey", "dreamloKey", "hotkeyIdentify", "hotkeyAppraise", "bulkLeague", "bulkTabIndex", "bulkStashType", "bulkAccountName"], (data) => {
     geminiInput.value = data.geminiKey || defaultGeminiKey;
     dreamloInput.value = data.dreamloKey || defaultDreamloKey;
     
@@ -188,6 +196,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     btnBindIdentify.textContent = formatHotkey(hotkeyIdentify);
     btnBindAppraise.textContent = formatHotkey(hotkeyAppraise);
+
+    // V2.2 inputs loading
+    if (data.bulkLeague) bulkLeagueInput.value = data.bulkLeague;
+    if (data.bulkTabIndex !== undefined) bulkTabIndexInput.value = data.bulkTabIndex;
+    if (data.bulkStashType) {
+      bulkStashTypeSelect.value = data.bulkStashType;
+      if (data.bulkStashType === "personal") {
+        groupBulkAccountName.style.display = "flex";
+      } else {
+        groupBulkAccountName.style.display = "none";
+      }
+    }
+    if (data.bulkAccountName) bulkAccountNameInput.value = data.bulkAccountName;
   });
 
   // Attempt auto-clipboard read on startup if in Appraiser mode
@@ -670,6 +691,222 @@ window.addEventListener("keydown", async (e) => {
     log(`Hotkey Triggered: Appraise Only (${formatHotkey(hotkeyAppraise)})`);
     await triggerAppraiseOnly();
   }
+});
+
+// ==========================================
+// V2.2 GGG WEB API BULK SYNC ENGINE
+// ==========================================
+
+// Helper mapping frameType to PoE Rarity labels
+const PoE_RARITY_MAP = {
+  0: "Normal",
+  1: "Magic",
+  2: "Rare",
+  3: "Unique",
+  9: "Relic"
+};
+
+// Maps GGG API item payload to our standard pipe-separated format
+function parsePoEItem(item) {
+  const rarity = PoE_RARITY_MAP[item.frameType] || "Rare";
+  
+  // Rares have empty name on API, fallback to typeLine
+  let name = item.name ? item.name.replace(/<<.*?>>/g, "") : "";
+  if (!name) {
+    name = item.typeLine ? item.typeLine.replace(/<<.*?>>/g, "") : "Identified Item";
+  }
+  
+  const base = item.typeLine ? item.typeLine.replace(/<<.*?>>/g, "") : "Gear";
+  
+  // Find Level Requirement
+  let levelReq = 0;
+  if (item.requirements) {
+    const lvlNode = item.requirements.find(r => r.name === "Level");
+    if (lvlNode && lvlNode.values && lvlNode.values[0] && lvlNode.values[0][0]) {
+      levelReq = parseInt(lvlNode.values[0][0], 10) || 0;
+    }
+  }
+  
+  const ilvl = item.ilvl || 0;
+  
+  // Combine implicit and explicit mods
+  let affixes = [];
+  if (item.implicitMods) affixes.push(...item.implicitMods);
+  if (item.explicitMods) affixes.push(...item.explicitMods);
+  // Sanitize mods text (remove PoE internal syntax bracket codes)
+  const explicit_str = affixes.map(m => m.replace(/<<.*?>>/g, "")).join(";");
+  
+  // Default valuations (Free, 100% tokenless heuristic)
+  let price = "Gear Pool";
+  if (rarity === "Unique") {
+    price = "Unique Gear";
+    if (name.toLowerCase().includes("mageblood")) price = "248 Divine Orbs";
+    if (name.toLowerCase().includes("headhunter")) price = "142 Divine Orbs";
+    if (name.toLowerCase().includes("dreamfeather")) price = "4.5 Divine Orbs";
+    if (name.toLowerCase().includes("taming")) price = "15 Divine Orbs";
+  } else if (rarity === "Rare") {
+    // If it's a rare with high resistances or life, mark it nice
+    let isGood = false;
+    if (explicit_str.includes("Resistance") || explicit_str.includes("Life") || explicit_str.includes("Mana")) {
+      isGood = true;
+    }
+    price = isGood ? "35 Chaos Orbs" : "5 Chaos Orbs";
+  }
+  
+  let flavor = "";
+  if (item.flavourText) {
+    flavor = item.flavourText.map(f => f.replace(/<<.*?>>/g, "")).join(" ");
+  }
+  
+  const logs = "GGG Web API Bulk Sync";
+  const url = item.icon || "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png";
+  
+  return [
+    rarity,
+    name,
+    base,
+    levelReq,
+    ilvl,
+    explicit_str,
+    price,
+    flavor,
+    logs,
+    url
+  ].join("|");
+}
+
+// Bulk sync execution handler
+async function bulkSyncStashTab() {
+  const dreamloKey = dreamloInput.value.trim();
+  const league = bulkLeagueInput.value.trim();
+  const tabIndex = parseInt(bulkTabIndexInput.value.trim(), 10) || 0;
+  const stashType = bulkStashTypeSelect.value;
+  const accountName = bulkAccountNameInput.value.trim();
+  
+  if (!dreamloKey) {
+    log("Error: Dreamlo Private Key required.", "error");
+    return;
+  }
+  if (!league) {
+    log("Error: League Name required.", "error");
+    return;
+  }
+  if (stashType === "personal" && !accountName) {
+    log("Error: Account Name is required for Personal Stash Sync.", "error");
+    return;
+  }
+  
+  // Persist input values to local storage
+  chrome.storage.local.set({
+    bulkLeague: league,
+    bulkTabIndex: tabIndex,
+    bulkStashType: stashType,
+    bulkAccountName: accountName
+  });
+  
+  logBox.innerHTML = `Status: Initiating bulk stash fetch from GGG API...`;
+  
+  try {
+    // 1. Build GGG API Stash URL
+    let gggUrl = `https://www.pathofexile.com/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}`;
+    if (stashType === "guild") {
+      gggUrl += "&guild=true";
+    } else {
+      gggUrl += `&accountName=${encodeURIComponent(accountName)}`;
+    }
+    
+    log(`Connecting to GGG Stash (Tab #${tabIndex})...`);
+    const res = await fetch(gggUrl);
+    
+    if (res.status === 403 || res.redirected) {
+      throw new Error("Access Denied (403). Please make sure you are logged into pathofexile.com in this browser first!");
+    }
+    if (!res.ok) {
+      throw new Error(`GGG API returned status ${res.status}`);
+    }
+    
+    const stashData = await res.json();
+    if (!stashData || !stashData.items) {
+      throw new Error("Invalid tab index or no items found in this stash tab.");
+    }
+    
+    const items = stashData.items;
+    log(`GGG Fetch complete! Loaded ${items.length} items.`, "success");
+    
+    // 2. Fetch current database entries to purge old items
+    log("Querying online database for stale entries...");
+    const dlGetUrl = `https://dreamlo.com/lb/${dreamloKey}/json`;
+    const dlRes = await fetch(dlGetUrl);
+    let dlData = null;
+    if (dlRes.ok) {
+      dlData = await dlRes.json();
+    }
+    
+    // Naming prefixes sanitized
+    const safeAccount = accountName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const deletePrefix = stashType === "guild"
+      ? `ITEM_GUILD_T${tabIndex}_`
+      : `ITEM_PERS_${safeAccount}_T${tabIndex}_`;
+      
+    let deleteCount = 0;
+    if (dlData && dlData.dreamlo && dlData.dreamlo.leaderboard && dlData.dreamlo.leaderboard.entry) {
+      let entries = dlData.dreamlo.leaderboard.entry;
+      if (!Array.isArray(entries)) entries = [entries];
+      
+      const staleEntries = entries.filter(e => e.name.startsWith(deletePrefix));
+      if (staleEntries.length > 0) {
+        log(`Purging ${staleEntries.length} old visual items for this tab...`);
+        for (const entry of staleEntries) {
+          try {
+            const delUrl = `https://dreamlo.com/lb/${dreamloKey}/delete/${entry.name}`;
+            await fetch(delUrl);
+            deleteCount++;
+            await new Promise(r => setTimeout(r, 80)); // Sequential delay
+          } catch (e) {
+            console.warn("Purge failed for entry:", entry.name, e);
+          }
+        }
+      }
+    }
+    if (deleteCount > 0) {
+      log(`Database cleared: Purged ${deleteCount} stale items.`, "success");
+    }
+    
+    // 3. Sequential uploads
+    log(`Syncing ${items.length} new items to Creg's Depot Drop...`);
+    let successCount = 0;
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const payload = parsePoEItem(item);
+      const entryName = `${deletePrefix}${i}`;
+      
+      try {
+        const pushUrl = `https://dreamlo.com/lb/${dreamloKey}/add/${entryName}/0/0/${encodeURIComponent(payload)}`;
+        const pushRes = await fetch(pushUrl);
+        if (pushRes.ok) {
+          successCount++;
+        }
+        await new Promise(r => setTimeout(r, 120)); // Rate limit protection
+      } catch (pushErr) {
+        console.warn("Item upload failed:", item.typeLine, pushErr);
+      }
+    }
+    
+    log(`✅ Bulk Sync Complete! Successfully uploaded ${successCount}/${items.length} items online!`, "success");
+    
+  } catch (err) {
+    log(`Bulk Sync failed: ${err.message}`, "error");
+  }
+}
+
+// Bind Syncer trigger button
+btnBulkSync.addEventListener("click", bulkSyncStashTab);
+
+// Toggle Account Name field depending on Stash Type select
+bulkStashTypeSelect.addEventListener("change", () => {
+  const isPersonal = bulkStashTypeSelect.value === "personal";
+  groupBulkAccountName.style.display = isPersonal ? "flex" : "none";
 });
 
 // Map item names and types to standard high-quality GGG CDN icon graphics
