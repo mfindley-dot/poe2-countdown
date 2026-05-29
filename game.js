@@ -672,6 +672,9 @@ let enemies = [];
 let groundLoot = [];
 let particleEffects = [];
 let activeApeBoss = null;
+let delayedSlams = [];
+let distortionCanvas = null;
+let distortionCtx = null;
 
 let wave = 1;
 let lastWaveSpawnTime = 0;
@@ -821,6 +824,14 @@ class Enemy {
       this.beamChargeTimer = 0;
       this.beamTargetAngle = 0;
     } 
+    else if (type === "zombie") {
+      this.radius = 60;
+      this.hp = 8 + (wave * 2.0);
+      this.maxHp = this.hp;
+      this.speed = 1.0 + Math.random() * 0.3;
+      this.color = "#15803d"; // green zombie
+      this.damage = 5;
+    }
     else if (type === "ape") {
       // The pillar of doom Boss!
       this.radius = 80; // Scaled to 80 to match 270px visual size
@@ -838,6 +849,13 @@ class Enemy {
       this.lastRollTime = 0;
       this.rollVx = 0;
       this.rollVy = 0;
+      this.rollMax = 45;
+      this.isLeaping = false;
+      this.leapArcY = 0;
+      this.isSuperLeaping = false;
+      this.superLeapTimer = 0;
+      this.superLeapTargetX = null;
+      this.superLeapTargetY = null;
       
       // Enrage state
       this.enraged = false;
@@ -1121,6 +1139,7 @@ class Enemy {
             if (this.comboStep === 0) {
               this.isRolling = true;
               this.rollTimer = 45;
+              this.rollMax = 45;
               this.lastRollTime = now;
               const rollSpeed = this.speed * 3.0;
               this.rollVx = (dx / dist) * rollSpeed;
@@ -1154,6 +1173,7 @@ class Enemy {
             if (this.comboStep === 0) {
               this.isRolling = true;
               this.rollTimer = 35;
+              this.rollMax = 35;
               this.lastRollTime = now;
               const rollSpeed = this.speed * 3.2;
               this.rollVx = (dx / dist) * rollSpeed;
@@ -1170,6 +1190,7 @@ class Enemy {
               if (this.comboTimer <= 0) {
                 this.isRolling = true;
                 this.rollTimer = 35;
+                this.rollMax = 35;
                 this.lastRollTime = now;
                 const rollSpeed = this.speed * 3.2;
                 this.rollVx = (dx / dist) * rollSpeed;
@@ -1187,6 +1208,7 @@ class Enemy {
               if (this.comboTimer <= 0) {
                 this.isRolling = true;
                 this.rollTimer = 35;
+                this.rollMax = 35;
                 this.lastRollTime = now;
                 const rollSpeed = this.speed * 3.2;
                 this.rollVx = (dx / dist) * rollSpeed;
@@ -1205,10 +1227,108 @@ class Enemy {
             }
           }
         }
+        else if (this.currentCombo === "crossslam") {
+          if (!this.slamCharging) {
+            if (this.comboStep === 0) {
+              this.slamCharging = true;
+              this.slamChargeTimer = 0;
+              this.slamTargetX = player.x;
+              this.slamTargetY = player.y;
+              this.comboStep = 1;
+              particleEffects.push({
+                x: this.x, y: this.y - 30,
+                text: "⚠️ COMBO: CROSS SLAM!",
+                color: "#fbbf24", age: 0, maxAge: 50
+              });
+            } else {
+              this.comboState = "idle";
+              this.currentCombo = null;
+              this.lastComboTime = now;
+            }
+          }
+        }
+        else if (this.currentCombo === "xslam") {
+          if (!this.slamCharging) {
+            if (this.comboStep === 0) {
+              this.slamCharging = true;
+              this.slamChargeTimer = 0;
+              this.slamTargetX = player.x;
+              this.slamTargetY = player.y;
+              this.comboStep = 1;
+              particleEffects.push({
+                x: this.x, y: this.y - 30,
+                text: "⚠️ COMBO: X SLAM!",
+                color: "#f59e0b", age: 0, maxAge: 50
+              });
+            } else {
+              this.comboState = "idle";
+              this.currentCombo = null;
+              this.lastComboTime = now;
+            }
+          }
+        }
+        else if (this.currentCombo === "sidejump") {
+          if (!this.isLeaping) {
+            if (this.comboStep === 0) {
+              this.isLeaping = true;
+              this.leapTimer = 50;
+              this.leapMaxTime = 50;
+              this.leapStartX = this.x;
+              this.leapStartY = this.y;
+              
+              const targetX = this.x < canvas.width / 2 ? canvas.width - 220 : 220;
+              const targetY = Math.max(420, Math.min(canvas.height - 100, player.y));
+              this.leapEndX = targetX;
+              this.leapEndY = targetY;
+              this.comboStep = 1;
+              
+              particleEffects.push({
+                x: this.x, y: this.y - 30,
+                text: "🦘 COMBO: METEOR SIDE LEAP!",
+                color: "#3b82f6", age: 0, maxAge: 50
+              });
+              
+              if (!gameMuted) {
+                try {
+                  playSynthRoarSound();
+                } catch (e) {}
+              }
+            } else {
+              this.comboState = "idle";
+              this.currentCombo = null;
+              this.lastComboTime = now;
+            }
+          }
+        }
+        else if (this.currentCombo === "superleap") {
+          if (!this.isSuperLeaping) {
+            if (this.comboStep === 0) {
+              this.isSuperLeaping = true;
+              this.superLeapTimer = 180;
+              this.superLeapTargetX = player.x;
+              this.superLeapTargetY = player.y;
+              this.comboStep = 1;
+              
+              particleEffects.push({
+                x: this.x, y: this.y - 30,
+                text: "☄️ ULTIMATE COMBO: METEOR SUPER MOVE!",
+                color: "#ef4444", age: 0, maxAge: 70
+              });
+            } else {
+              this.comboState = "idle";
+              this.currentCombo = null;
+              this.lastComboTime = now;
+            }
+          }
+        }
       }
       else {
-        if (now - this.lastComboTime > 8000 && !this.isRolling && !this.slamCharging) {
-          const comboOptions = ["doubleslam", "rollslam", "tripleroll"];
+        const comboCooldown = this.enraged ? 4500 : 7500;
+        if (now - this.lastComboTime > comboCooldown && !this.isRolling && !this.slamCharging && !this.isLeaping && !this.isSuperLeaping) {
+          let comboOptions = ["doubleslam", "rollslam", "tripleroll", "crossslam", "xslam", "sidejump"];
+          if (this.enraged || Math.random() < 0.4) {
+            comboOptions.push("superleap");
+          }
           this.currentCombo = comboOptions[Math.floor(Math.random() * comboOptions.length)];
           this.comboState = "active";
           this.comboStep = 0;
@@ -1216,21 +1336,181 @@ class Enemy {
         }
       }
       
-      // 2. State Machine: Roll Charge vs Slam Charge vs Normal Walk
+      // 2. State Machine: Super Leap vs Side Leap vs Roll Charge vs Slam Charge vs Normal Walk
+      if (this.isSuperLeaping) {
+        this.superLeapTimer--;
+        
+        if (this.superLeapTimer > 0) {
+          this.vx = 0;
+          this.vy = 0;
+        }
+        
+        if (this.superLeapTimer > 150) {
+          this.y -= 25;
+          this.x += (player.x - this.x) * 0.02;
+        }
+        else if (this.superLeapTimer <= 150 && this.superLeapTimer > 45) {
+          this.y = -600;
+          if (!this.superLeapTargetX) {
+            this.superLeapTargetX = player.x;
+            this.superLeapTargetY = player.y;
+          }
+          this.superLeapTargetX += (player.x - this.superLeapTargetX) * 0.06;
+          this.superLeapTargetY += (player.y - this.superLeapTargetY) * 0.06;
+          
+          if (this.superLeapTimer % 10 === 0) {
+            particleEffects.push({
+              isProjectileTrail: true,
+              x: this.superLeapTargetX + (Math.random() * 20 - 10),
+              y: this.superLeapTargetY + (Math.random() * 10 - 5),
+              vx: 0,
+              vy: 0,
+              radius: 4,
+              color: "rgba(251, 191, 36, 0.4)",
+              age: 0,
+              maxAge: 15
+            });
+          }
+        }
+        else if (this.superLeapTimer <= 45 && this.superLeapTimer > 0) {
+          this.y = -600;
+          if (this.superLeapTimer % 8 === 0) {
+            particleEffects.push({
+              x: this.superLeapTargetX,
+              y: this.superLeapTargetY - 10,
+              text: "🚨 LOCK-ON! 🚨",
+              color: "#ef4444",
+              age: 0,
+              maxAge: 20
+            });
+          }
+        }
+        else if (this.superLeapTimer <= 0) {
+          this.x = this.superLeapTargetX;
+          this.y += 40;
+          
+          if (this.y >= this.superLeapTargetY) {
+            this.y = this.superLeapTargetY;
+            this.isSuperLeaping = false;
+            this.superLeapTargetX = null;
+            
+            triggerCameraShake(45, 25);
+            damageFlashIntensity = 0.75;
+            executeApeSlam(this.x, this.y);
+            
+            const offsets = [
+              { dx: -180, dy: 0 },
+              { dx: 180, dy: 0 },
+              { dx: 0, dy: -180 },
+              { dx: 0, dy: 180 },
+              { dx: -130, dy: -130 },
+              { dx: 130, dy: -130 },
+              { dx: 130, dy: 130 },
+              { dx: -130, dy: 130 }
+            ];
+            offsets.forEach(off => {
+              delayedSlams.push({
+                delay: 15,
+                x: this.x + off.dx,
+                y: this.y + off.dy
+              });
+            });
+            
+            for (let i = 0; i < 20; i++) {
+              const angle = (i / 20) * Math.PI * 2;
+              const spd = 6 + Math.random() * 10;
+              particleEffects.push({
+                x: this.x,
+                y: this.y + 60,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd * 0.45,
+                radius: 3 + Math.random() * 6,
+                color: "#ef4444",
+                age: 0,
+                maxAge: 30
+              });
+            }
+            
+            if (!gameMuted) {
+              try {
+                playSynthRoarSound();
+              } catch (e) {}
+            }
+            
+            particleEffects.push({
+              x: this.x,
+              y: this.y - 120,
+              text: "☄️ METEOR IMPACT! ☄️",
+              color: "#dc2626",
+              age: 0,
+              maxAge: 90
+            });
+          }
+        }
+        return;
+      }
+
+      if (this.isLeaping) {
+        this.leapTimer--;
+        
+        const pct = (this.leapMaxTime - this.leapTimer) / this.leapMaxTime;
+        this.x = this.leapStartX + (this.leapEndX - this.leapStartX) * pct;
+        
+        const arcY = Math.sin(pct * Math.PI) * 200;
+        this.y = this.leapStartY + (this.leapEndY - this.leapStartY) * pct;
+        this.leapArcY = arcY;
+        
+        if (this.leapTimer % 3 === 0) {
+          particleEffects.push({
+            isProjectileTrail: true,
+            x: this.x,
+            y: this.y + 40,
+            vx: 0,
+            vy: 0,
+            radius: Math.random() * 3 + 2,
+            color: "rgba(220, 38, 38, 0.4)",
+            age: 0,
+            maxAge: 15
+          });
+        }
+        
+        if (this.leapTimer <= 0) {
+          this.isLeaping = false;
+          this.leapArcY = 0;
+          
+          triggerCameraShake(35, 18);
+          damageFlashIntensity = 0.3;
+          executeApeSlam(this.x, this.y);
+          
+          for (let i = 0; i < 10; i++) {
+            const angle = (i / 10) * Math.PI * 2;
+            const spd = 3 + Math.random() * 5;
+            particleEffects.push({
+              x: this.x,
+              y: this.y + 50,
+              vx: Math.cos(angle) * spd,
+              vy: Math.sin(angle) * spd * 0.5,
+              radius: 2 + Math.random() * 4,
+              color: "#78716c",
+              age: 0,
+              maxAge: 20
+            });
+          }
+        }
+        return;
+      }
+
       if (this.isRolling) {
         this.rollTimer--;
         
-        // Locked rolling charge movement (ignores player dynamic vector updates)
         this.x += this.rollVx;
         this.y += this.rollVy;
         
-        // Boundaries clamp to stay within grid clearing
         const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
         const minY = forestLoaded ? 360 + this.radius : this.radius;
         this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
         this.y = Math.max(minY, Math.min(canvas.height - this.radius, this.y));
         
-        // Spawn dirt/dust trail particles
         if (this.rollTimer % 3 === 0) {
           particleEffects.push({
             x: this.x + (Math.random() * 20 - 10),
@@ -1242,17 +1522,14 @@ class Enemy {
           });
         }
         
-        // Hit check player during roll
         const rDx = player.x - this.x;
         const rDy = player.y - this.y;
         const rDist = Math.sqrt(rDx * rDx + rDy * rDy);
         
         if (rDist < this.radius + player.radius) {
           if (player.hp > 0 && currentGameState === GameState.PLAY && !player.isRolling && !player.frozen) {
-            // Player hit by direct rolling charge!
             player.hp = Math.max(0, player.hp - 30);
             
-            // Heavy knockback from roll impact!
             player.x += (rDx / rDist) * 22;
             player.y += (rDy / rDist) * 22;
             
@@ -1265,8 +1542,8 @@ class Enemy {
               maxAge: 40
             });
             
-            triggerPlayerHitEffect(); // Damage red flash and camera rumble!
-            if (!gameMuted) playRipAudioFallback(); // crash sound
+            triggerPlayerHitEffect();
+            if (!gameMuted) playRipAudioFallback();
             
             if (player.hp <= 0) {
               handlePlayerDeath();
@@ -1284,17 +1561,58 @@ class Enemy {
         this.vx = 0;
         this.vy = 0;
         
-        if (this.slamChargeTimer > 40) { // 40 frames charge
+        if (this.slamChargeTimer > 40) {
           this.slamCharging = false;
           this.slamChargeTimer = 0;
           this.lastSlamTime = now;
           
-          // Slam shockwave!
           executeApeSlam(this.slamTargetX, this.slamTargetY);
+          
+          if (this.currentCombo === "crossslam") {
+            const offsets = [
+              { dx: 0, dy: -180 },
+              { dx: 180, dy: 0 },
+              { dx: 0, dy: 180 },
+              { dx: -180, dy: 0 }
+            ];
+            offsets.forEach(off => {
+              delayedSlams.push({
+                delay: 12,
+                x: this.slamTargetX + off.dx,
+                y: this.slamTargetY + off.dy
+              });
+            });
+            
+            particleEffects.push({
+              x: this.slamTargetX, y: this.slamTargetY - 20,
+              text: "⚡ OUTWARD RIPPLES! ⚡",
+              color: "#fbbf24", age: 0, maxAge: 35
+            });
+          }
+          else if (this.currentCombo === "xslam") {
+            const offsets = [
+              { dx: -130, dy: -130 },
+              { dx: 130, dy: -130 },
+              { dx: 130, dy: 130 },
+              { dx: -130, dy: 130 }
+            ];
+            offsets.forEach(off => {
+              delayedSlams.push({
+                delay: 12,
+                x: this.slamTargetX + off.dx,
+                y: this.slamTargetY + off.dy
+              });
+            });
+            
+            particleEffects.push({
+              x: this.slamTargetX, y: this.slamTargetY - 20,
+              text: "⚡ DIAGONAL PULSE! ⚡",
+              color: "#f59e0b", age: 0, maxAge: 35
+            });
+          }
         }
       } 
       else {
-        // Normal walking movement towards player
         this.x += this.vx;
         this.y += this.vy;
         
@@ -1303,18 +1621,16 @@ class Enemy {
         const minY = forestLoaded ? 360 + this.radius : this.radius;
         this.y = Math.max(minY, Math.min(canvas.height - this.radius, this.y));
         
-        // Decide to roll or slam
-        // Roll: Mid-range distance (130px to 280px) and roll cooldown (6.0s) has elapsed
-        if (now - this.lastRollTime > 6000 && dist > 130 && dist < 280) {
+        if (now - this.lastRollTime > (this.enraged ? 4000 : 6000) && dist > 130 && dist < 280) {
           this.isRolling = true;
-          this.rollTimer = 45; // 0.75 seconds charge
+          this.rollTimer = 45;
+          this.rollMax = 45;
           this.lastRollTime = now;
           
-          const rollSpeed = this.speed * 3.0; // Moves at 3x speed during roll!
+          const rollSpeed = this.speed * 3.0;
           this.rollVx = (dx / dist) * rollSpeed;
           this.rollVy = (dy / dist) * rollSpeed;
           
-          // Start-rolling burst particles
           for (let i = 0; i < 5; i++) {
             particleEffects.push({
               x: this.x + (Math.random() * 24 - 12),
@@ -1332,8 +1648,7 @@ class Enemy {
             } catch (e) {}
           }
         }
-        // Slam: Melee range (dist < 120px) and slam cooldown (4.5s) has elapsed
-        else if (now - this.lastSlamTime > 4500 && dist < 120) {
+        else if (now - this.lastSlamTime > (this.enraged ? 3000 : 4500) && dist < 120) {
           this.slamCharging = true;
           this.slamChargeTimer = 0;
           this.slamTargetX = player.x;
@@ -1427,6 +1742,29 @@ class Enemy {
 
   draw() {
     ctx.save();
+    
+    // Draw super leap targeting decal under players/bosses
+    if (this.type === "ape" && this.isSuperLeaping && this.superLeapTimer > 0) {
+      ctx.save();
+      const tx = this.superLeapTargetX || player.x;
+      const ty = this.superLeapTargetY || player.y;
+      
+      const isLocked = this.superLeapTimer <= 45;
+      const pulse = Math.sin(Date.now() / (isLocked ? 60 : 150)) * 0.25 + 0.75;
+      
+      ctx.beginPath();
+      ctx.ellipse(tx, ty + 60, 100 * pulse, 30 * pulse, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = isLocked ? `rgba(239, 68, 68, ${pulse})` : `rgba(251, 191, 36, 0.7)`;
+      ctx.lineWidth = isLocked ? 4 : 2;
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.ellipse(tx, ty + 60, 40, 12, 0, 0, Math.PI * 2);
+      ctx.fillStyle = isLocked ? `rgba(239, 68, 68, ${0.35 * pulse})` : "rgba(251, 191, 36, 0.2)";
+      ctx.fill();
+      
+      ctx.restore();
+    }
     
     let drewSprite = false;
     let img = null;
@@ -1528,24 +1866,24 @@ class Enemy {
         
         if (this.isDead) {
           activeRow = 4; // Row 5: Death (index 4)
+        } else if (this.isEnrageCasting) {
+          activeRow = 3; // Row 4: Enrage Roar (index 3)
         } else if (this.slamCharging) {
           activeRow = 2; // Row 3: Pill Slam (index 2)
         } else if (this.isRolling) {
           activeRow = 1; // Row 2: Roll (index 1)
-        } else if (this.enraged) {
-          activeRow = 3; // Row 4: Enrage (index 3)
         }
         
         let activeCol = this.animFrame;
         if (this.isDead) {
-          // Death collapse frame progression (starts at 60, double-speed 16 frames collapse, then linger)
           activeCol = Math.max(0, Math.min(7, Math.floor((60 - this.deathTimer) / 2)));
+        } else if (this.isEnrageCasting) {
+          const enrageElapsed = 90 - this.enrageTimer;
+          activeCol = Math.min(7, Math.floor((enrageElapsed % 45) / 45 * 8));
         } else if (this.slamCharging) {
-          // Slam charge progress animation synced to 40-frame charge
           activeCol = Math.min(7, Math.floor((this.slamChargeTimer / 40) * 8));
         } else if (this.isRolling) {
-          // Map rolling animation directly to rollTimer progress
-          const rollMax = (this.currentCombo === "tripleroll") ? 35 : 45;
+          const rollMax = this.rollMax || 45;
           const rollElapsed = Math.max(0, rollMax - this.rollTimer);
           activeCol = Math.min(7, Math.floor((rollElapsed / rollMax) * 8));
         }
@@ -1576,7 +1914,10 @@ class Enemy {
         const drawW = 270;
         const drawH = drawW * (frameH / frameW);
         const drawX = this.x - drawW / 2;
-        const drawY = this.y - drawH / 2;
+        let drawY = this.y - drawH / 2;
+        if (this.isLeaping && this.leapArcY) {
+          drawY -= this.leapArcY;
+        }
         
         if (this.lastHitTime && Date.now() - this.lastHitTime < 150) {
           drawApeFlashRed(apeImg, srcX, srcY, frameW, frameH, drawX, drawY, drawW, drawH);
@@ -2005,7 +2346,7 @@ function executeApeSlam(tx, ty) {
     isSlamRing: true,
     x: tx,
     y: ty,
-    radius: 120, // Boss-sized epic expanding shockwave
+    radius: 320, // Expanded to 320px to guarantee contact and perfect dodge-roll damage scaling!
     age: 0,
     maxAge: 45,
     hasHitPlayer: false
@@ -3393,6 +3734,40 @@ function executePlayerAutoShooting() {
 }
 
 // Spawner rules
+// Procedural progression: Zombies waves 1-3, Spiders middle 1/3, Ghosts last 1/3 of boss cycle
+function getEnemyTypesForWave(w) {
+  const bossWaves = [8, 18, 30, 44, 60, 78, 98];
+  let prevBoss = 0;
+  let nextBoss = 8;
+  
+  for (let i = 0; i < bossWaves.length; i++) {
+    if (w < bossWaves[i]) {
+      nextBoss = bossWaves[i];
+      if (i > 0) {
+        prevBoss = bossWaves[i - 1];
+      }
+      break;
+    }
+  }
+  
+  if (w >= bossWaves[bossWaves.length - 1]) {
+    prevBoss = bossWaves[bossWaves.length - 1];
+    nextBoss = prevBoss + 20;
+  }
+  
+  const L = nextBoss - prevBoss;
+  const pos = w - prevBoss;
+  const fraction = pos / L;
+  
+  if (fraction <= 0.33) {
+    return ["zombie"];
+  } else if (fraction <= 0.67) {
+    return ["zombie", "spider"];
+  } else {
+    return ["zombie", "spider", "ghost"];
+  }
+}
+
 function handleEnemySpawning() {
   const now = Date.now();
   
@@ -3401,15 +3776,17 @@ function handleEnemySpawning() {
     return;
   }
   
-  // Spawn every 20 seconds (gives plenty of time to maneuver the hordes!)
-  if (now - lastWaveSpawnTime > 20000) {
+  // Spawn every 14 seconds (denser and faster wave frequency)
+  if (now - lastWaveSpawnTime > 14000) {
     lastWaveSpawnTime = now;
     
-    // Wave calculations: smooth exponential curves (fewer mobs early, ramps up later!)
-    const count = baseEnemyCount + Math.floor(wave * 0.8 + Math.pow(wave, 1.3) * 0.4);
+    // Wave calculations: smooth exponential curves, boosted for high density
+    const count = baseEnemyCount + Math.floor(wave * 1.5 + Math.pow(wave, 1.35) * 0.65);
     
     // Choose spawn positions offscreen
     const forestLoaded = forestBgFrames.length > 0 && forestBgFrames[0].complete && forestBgFrames[0].naturalWidth > 0;
+    
+    const allowedTypes = getEnemyTypesForWave(wave);
     
     for (let i = 0; i < count; i++) {
       let sx, sy;
@@ -3432,20 +3809,13 @@ function handleEnemySpawning() {
         sy = forestLoaded ? 360 + 65 + Math.random() * (canvas.height - 360 - 130) : Math.random() * canvas.height; 
       }
       
-      // Mobs pool selection (Spider is default, Ghost is an uncommon ranged chill projectile spawn)
-      let type = "spider";
-      
-      const roll = Math.random() * 100;
-      if (wave >= 2 && roll < 12) {
-        type = "ghost";
-      }
-      
+      const type = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
       enemies.push(new Enemy(sx, sy, type));
     }
     
-    // Spawn Boss Chieftain Ape! (spaced out to happen every 5 waves, pausing wave progression)
-    if (wave % 5 === 0 && !activeApeBoss) {
-      // Spawn at top center
+    // Spawn Boss Chieftain Ape! (spaced out dynamically at waves 8, 18, 30, 44, 60, 78, 98)
+    const bossWaves = [8, 18, 30, 44, 60, 78, 98];
+    if (bossWaves.includes(wave) && !activeApeBoss) {
       activeApeBoss = new Enemy(canvas.width / 2, -350, "ape");
       enemies.push(activeApeBoss);
       
@@ -3510,6 +3880,15 @@ function handleEnemySpawning() {
 
 // Collisions and hits calculations
 function processGamePhysics() {
+  // Tick delayed slams queue
+  for (let i = delayedSlams.length - 1; i >= 0; i--) {
+    delayedSlams[i].delay--;
+    if (delayedSlams[i].delay <= 0) {
+      executeApeSlam(delayedSlams[i].x, delayedSlams[i].y);
+      delayedSlams.splice(i, 1);
+    }
+  }
+
   // Update background procedural forest effects (fog and blinking eyes)
   updateProceduralForestEffects();
 
@@ -4492,6 +4871,18 @@ function drawPlayerCharacter() {
 }
 
 function drawParticles() {
+  // Populate the offscreen distortion canvas with current gameplay graphics
+  if (!distortionCanvas) {
+    distortionCanvas = document.createElement("canvas");
+    distortionCtx = distortionCanvas.getContext("2d");
+  }
+  if (distortionCanvas.width !== canvas.width || distortionCanvas.height !== canvas.height) {
+    distortionCanvas.width = canvas.width;
+    distortionCanvas.height = canvas.height;
+  }
+  distortionCtx.clearRect(0, 0, canvas.width, canvas.height);
+  distortionCtx.drawImage(canvas, 0, 0);
+
   ctx.save();
   
   particleEffects.forEach(p => {
@@ -4505,14 +4896,37 @@ function drawParticles() {
       ctx.stroke();
     } 
     else if (p.isSlamRing) {
-      // Draw expanding shockwave circles
+      // Draw expanding shockwave circles with premium glass lensing refraction
       const pct = p.age / p.maxAge;
+      const r = p.radius * pct;
+      const ringWidth = 24 * (1 - pct); // gets narrower as it expands
+      
+      if (r > ringWidth && distortionCanvas && distortionCtx) {
+        ctx.save();
+        // Create a circular hollow ring clip path
+        ctx.beginPath();
+        // Outer circle (clockwise)
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2, false);
+        // Inner circle (counter-clockwise)
+        ctx.arc(p.x, p.y, r - ringWidth, 0, Math.PI * 2, true);
+        ctx.clip();
+        
+        // Zoom and blit captured gameplay screen
+        const scale = 1.08; // premium glass refraction zoom factor
+        ctx.translate(p.x, p.y);
+        ctx.scale(scale, scale);
+        ctx.translate(-p.x, -p.y);
+        ctx.drawImage(distortionCanvas, 0, 0);
+        ctx.restore();
+      }
+      
+      // Draw the glowing shockwave energy edge on top of refraction
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius * pct, 0, Math.PI * 2);
-      ctx.strokeStyle = p.color || `rgba(239, 68, 68, ${1 - pct})`;
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.strokeStyle = p.color || `rgba(239, 68, 68, ${0.85 * (1 - pct)})`;
       ctx.lineWidth = 4 * (1 - pct);
       
-      // Add glowing energy bloom to shockwaves
+      // Add glowing energy bloom
       ctx.shadowColor = "#ef4444";
       ctx.shadowBlur = 15 * (1 - pct);
       ctx.stroke();
