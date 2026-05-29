@@ -17,12 +17,15 @@ except ImportError:
     sys.exit(1)
 
 # Global configuration
-HOTKEY_ID = 1
+HOTKEY_ID_APPRAISE = 1
+HOTKEY_ID_SYNC = 2
+
 MOD_ALT = 0x0001
 MOD_SHIFT = 0x0004
 MOD_CONTROL = 0x0002
-# We will bind Alt + O (Alt + 0x4F) as the global appraisal overlay hotkey!
-HOTKEY_KEY = 0x4F  # Virtual key code for 'O'
+
+HOTKEY_KEY_APPRAISE = 0x4F  # Alt+O (Virtual key code for 'O')
+HOTKEY_KEY_SYNC = 0x55      # Alt+U (Virtual key code for 'U')
 
 class GLGOverlayApp:
     def __init__(self):
@@ -34,13 +37,11 @@ class GLGOverlayApp:
         self.client = genai.Client(api_key=self.api_key)
 
     def load_api_key(self):
-        # Try loading from local config.json
         try:
             config_path = os.path.join(os.path.dirname(__file__), "config.json")
             if os.path.exists(config_path):
                 with open(config_path, 'r') as f:
                     cfg = json.load(f)
-                    # Support both default keys
                     key = cfg.get("default_api_key") or cfg.get("default_gemini_key")
                     if key:
                         return key
@@ -138,7 +139,6 @@ class GLGOverlayApp:
 
         is_unid = item_data.get("is_unidentified", False)
         if is_unid:
-            # Unidentified warning badge
             lbl_unid = tk.Label(
                 affix_frame, text="🔒 UNIDENTIFIED UNIQUE (GGG BASE RANGES)",
                 fg="#ef4444", bg="#0c0a09", font=("Inter", 8, "bold")
@@ -173,7 +173,7 @@ class GLGOverlayApp:
         footer_frame.pack(fill="x", side="bottom", padx=10, pady=10)
 
         lbl_val_header = tk.Label(
-            footer_frame, text="LIVE APRAISAL VALUE", fg="#a2a1a0",
+            footer_frame, text="LIVE APPRAISAL VALUE", fg="#a2a1a0",
             bg="#12100e", font=("Inter", 7, "bold")
         )
         lbl_val_header.pack(pady=(4, 0))
@@ -211,9 +211,28 @@ class GLGOverlayApp:
         y = self.root.winfo_y() + deltay
         self.root.geometry(f"+{x}+{y}")
 
+    def simulate_ctrl_c(self):
+        user32 = ctypes.windll.user32
+        VK_CONTROL = 0x11
+        VK_C = 0x43
+        KEYEVENTF_KEYUP = 0x0002
+        
+        # Press Ctrl
+        user32.keybd_event(VK_CONTROL, 0, 0, 0)
+        # Press C
+        user32.keybd_event(VK_C, 0, 0, 0)
+        time.sleep(0.06)
+        # Release C
+        user32.keybd_event(VK_C, 0, KEYEVENTF_KEYUP, 0)
+        # Release Ctrl
+        user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+        time.sleep(0.12) # Let Windows complete the copy to clipboard
+
     def appraise_clipboard(self):
+        print("Alt+O Pressed! Simulating Ctrl+C and running appraisal...")
+        self.simulate_ctrl_c()
+        
         try:
-            # Clipboard reading via native Tkinter frame
             temp_tk = tk.Tk()
             temp_tk.withdraw()
             clipboard_text = temp_tk.clipboard_get()
@@ -275,27 +294,187 @@ class GLGOverlayApp:
         except Exception as err:
             print("Gemini API appraisal failed:", err)
 
+    def capture_and_sync_stash(self):
+        print("Alt+U Pressed! Capturing screen for Currency Stash Tab OCR...")
+        try:
+            from PIL import ImageGrab
+            # Capture primary screen
+            img = ImageGrab.grab()
+        except Exception as e:
+            print("Failed to capture screen:", e)
+            return
+
+        print("Scanning Currency Stash Tab via Gemini Vision OCR...")
+
+        prompt = """
+        Analyze this Path of Exile 2 Currency Stash Tab screenshot and match numbers/quantities carefully. 
+        Extract the exact quantities of all visible Path of Exile 2 currency items using this spatial visual guide:
+        
+        1. FAR-LEFT GRID (5 rows by 3 columns of slots):
+           - Row 1: augmentation (Col 1, Base) | greater_augmentation (Col 2, II) | perfect_augmentation (Col 3, III)
+           - Row 2: transmute (Col 1, Base) | greater_transmute (Col 2, II) | perfect_transmute (Col 3, III)
+           - Row 3: regal (Col 1, Base) | greater_regal (Col 2, II) | perfect_regal (Col 3, III)
+           - Row 4: exalted (Col 1, Base) | greater_exalted (Col 2, II) | perfect_exalted (Col 3, III)
+           - Row 5: chaos (Col 1, Base) | greater_chaos (Col 2, II) | perfect_chaos (Col 3, III)
+        2. CENTRAL UTILITY GRID (3 rows by 3 columns of slots directly to the right of the 5x3 grid):
+           - Row 1 (Top row): Column 1 (Left) is alchemy | Column 2 (Middle) is vaal | Column 3 (Right) is annulment
+           - Row 2 (Middle row): Column 1 (Left) is chance | Column 2 (Middle) is fracturing | Column 3 (Right) is divine
+           - Row 3 (Bottom row): Column 1 (Left) is hinekoras_lock | Column 2 (Middle) is mirror | Column 3 (Right) is artificer
+        3. TOP-RIGHT HORIZONTAL CLUSTER (Jewellers' Currency):
+           - lesser_jeweller (Left, plain loop) | greater_jeweller (Middle) | perfect_jeweller (Right, with gem)
+        4. SCROLL OF WISDOM:
+           - scroll (Red-tied blue scroll icon on the right side)
+
+        Return a standard JSON matching this schema:
+        {
+          "scroll": 0, "transmute": 0, "greater_transmute": 0, "perfect_transmute": 0,
+          "augmentation": 0, "greater_augmentation": 0, "perfect_augmentation": 0,
+          "alchemy": 0, "regal": 0, "greater_regal": 0, "perfect_regal": 0,
+          "chaos": 0, "greater_chaos": 0, "perfect_chaos": 0, "vaal": 0,
+          "annulment": 0, "exalted": 0, "greater_exalted": 0, "perfect_exalted": 0,
+          "divine": 0, "mirror": 0, "chance": 0, "fracturing": 0, "artificer": 0, "hinekoras_lock": 0
+        }
+        For any completely empty slot, return 0. Extra attention to double/triple digit counts!
+        """
+
+        try:
+            response = self.client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=[img, prompt],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
+            )
+            data = json.loads(response.text)
+            print("Stash tab OCR scan completed!")
+            
+            # Map values down to the 11 core currencies (exactly like stash_scanner.py!)
+            core_data = {
+                "scroll": data.get("scroll", 0),
+                "transmute": data.get("transmute", 0) + data.get("greater_transmute", 0) + data.get("perfect_transmute", 0),
+                "augmentation": data.get("augmentation", 0) + data.get("greater_augmentation", 0) + data.get("perfect_augmentation", 0),
+                "alchemy": data.get("alchemy", 0),
+                "regal": data.get("regal", 0) + data.get("greater_regal", 0) + data.get("perfect_regal", 0),
+                "chaos": data.get("chaos", 0) + data.get("greater_chaos", 0) + data.get("perfect_chaos", 0),
+                "vaal": data.get("vaal", 0),
+                "annulment": data.get("annulment", 0),
+                "exalted": data.get("exalted", 0) + data.get("greater_exalted", 0) + data.get("perfect_exalted", 0),
+                "divine": data.get("divine", 0),
+                "mirror": data.get("mirror", 0)
+            }
+            
+            # Calculate total net worth in Chaos
+            rates = {
+                "mirror": 40000.0, "divine": 150.0, "exalted": 15.0, "chaos": 1.0,
+                "regal": 0.8, "vaal": 2.0, "alchemy": 0.5, "annulment": 5.0,
+                "transmute": 0.2, "augmentation": 0.15, "scroll": 0.05
+            }
+            total_chaos = sum([qty * rates.get(k, 0.0) for k, qty in core_data.items()])
+            
+            # Squeeze into a pipe-separated string
+            core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"]
+            pipe_str = "|".join([str(core_data.get(k, 0)) for k in core_keys])
+            total_score = int(total_chaos * 10)
+            
+            # Fetch dreamlo key (default fallback)
+            dreamlo_key = "uK1WlH9CPE-XjFskW0R4Agz7r510_lMEC6t3fXGZwt_A"
+            config_path = os.path.join(os.path.dirname(__file__), "config.json")
+            if os.path.exists(config_path):
+                try:
+                    with open(config_path, 'r') as f:
+                        cfg = json.load(f)
+                        dreamlo_key = cfg.get("default_dreamlo_key") or dreamlo_key
+                except:
+                    pass
+            
+            # Construct push request using urllib
+            import urllib.request
+            import urllib.parse
+            
+            push_url = f"https://dreamlo.com/lb/{dreamlo_key}/add/__GUILD_VAULT__/{total_score}/0/{urllib.parse.quote(pipe_str)}"
+            req = urllib.request.Request(push_url, headers={'User-Agent': 'Mozilla/5.0'})
+            
+            with urllib.request.urlopen(req, timeout=12) as response_http:
+                html = response_http.read().decode('utf-8')
+                print("Vault successfully synced online!")
+                
+                # Pop up a gorgeous sync success overlay!
+                sync_result = {
+                    "name": "Sync Successful!",
+                    "base": "Online Guild Stash",
+                    "rarity": "Unique",
+                    "level": len(core_keys),
+                    "ilvl": 100,
+                    "is_unidentified": False,
+                    "affixes": [
+                        f"Mirror of Kalandra: {core_data['mirror']}x",
+                        f"Divine Orb: {core_data['divine']}x",
+                        f"Exalted Orb: {core_data['exalted']}x",
+                        f"Chaos Orb: {core_data['chaos']}x",
+                        f"Orb of Alchemy: {core_data['alchemy']}x"
+                    ],
+                    "flavor": "The coffers are full, the ledger is balanced.",
+                    "price": f"{total_chaos:.1f} Chaos Orbs",
+                    "culling_logs": f"Approx {(total_chaos/150.0):.2f} Divine Orbs synced!"
+                }
+                self.run_overlay_window(sync_result)
+                
+        except Exception as err:
+            print("Stash scan or sync failed:", err)
+            # Show a failure card!
+            fail_data = {
+                "name": "Sync Failed!",
+                "base": "OCR Capture Connection",
+                "rarity": "Normal",
+                "level": 0,
+                "ilvl": 0,
+                "is_unidentified": False,
+                "affixes": [
+                    "Failed to capture and extract items.",
+                    "Verify Borderless Windowed mode is enabled,",
+                    "ensure the Stash Tab is open, and check your",
+                    "Gemini API key connection status."
+                ],
+                "flavor": "",
+                "price": "ERROR",
+                "culling_logs": str(err)[:45]
+            }
+            self.run_overlay_window(fail_data)
+
 def listen_for_hotkey(app):
     user32 = ctypes.windll.user32
-    # Register Alt+O
-    if not user32.RegisterHotKey(None, HOTKEY_ID, MOD_ALT, HOTKEY_KEY):
+    
+    # Register Alt+O for Appraisal
+    if not user32.RegisterHotKey(None, HOTKEY_ID_APPRAISE, MOD_ALT, HOTKEY_KEY_APPRAISE):
         print("Warning: Failed to register global hotkey Alt+O. It might be in use by another app.")
         return
 
-    print("✅ Global In-Game Overlay Active! Press Alt+O anywhere to appraise your clipboard item.")
+    # Register Alt+U for Stash Sync
+    if not user32.RegisterHotKey(None, HOTKEY_ID_SYNC, MOD_ALT, HOTKEY_KEY_SYNC):
+        print("Warning: Failed to register global hotkey Alt+U. It might be in use by another app.")
+        user32.UnregisterHotKey(None, HOTKEY_ID_APPRAISE)
+        return
+
+    print("==================================================")
+    print("✅ Standalone In-Game Overlay active!")
+    print("--------------------------------------------------")
+    print("➡️ Press Alt+O (hovered item) to appraise instantly!")
+    print("➡️ Press Alt+U (stash tab open) to sync online!")
+    print("==================================================")
     
     try:
         msg = ctypes.wintypes.MSG()
         while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) != 0:
             if msg.message == 0x0312:  # WM_HOTKEY
-                if msg.wParam == HOTKEY_ID:
-                    print("Hotkey triggered! Running clipboard appraisal...")
-                    # Run appraisal in a separate thread so it doesn't freeze the hotkey hook!
+                if msg.wParam == HOTKEY_ID_APPRAISE:
                     threading.Thread(target=app.appraise_clipboard, daemon=True).start()
+                elif msg.wParam == HOTKEY_ID_SYNC:
+                    threading.Thread(target=app.capture_and_sync_stash, daemon=True).start()
             user32.TranslateMessage(ctypes.byref(msg))
             user32.DispatchMessageW(ctypes.byref(msg))
     finally:
-        user32.UnregisterHotKey(None, HOTKEY_ID)
+        user32.UnregisterHotKey(None, HOTKEY_ID_APPRAISE)
+        user32.UnregisterHotKey(None, HOTKEY_ID_SYNC)
 
 if __name__ == "__main__":
     print("==================================================")
