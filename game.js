@@ -115,6 +115,18 @@ currencyListKeys.forEach(key => {
   CurrencyImages[key] = img;
 });
 
+// Preload Chase Unique Items to render high-resolution icons in stock ticker marquee
+const chaseItemsList = {
+  mageblood: "assets/images/items/mageblood_icon.png",
+  headhunter: "assets/images/items/headhunter_icon.png"
+};
+
+Object.keys(chaseItemsList).forEach(key => {
+  const img = new Image();
+  img.src = chaseItemsList[key];
+  CurrencyImages[key] = img;
+});
+
 // Preload Stash Frame visual texture background
 const stashFrameImg = new Image();
 stashFrameImg.src = "assets/images/currency/stash-tab_frame.png";
