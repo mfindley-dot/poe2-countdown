@@ -833,6 +833,68 @@ async function bulkSyncStashTab() {
     const items = stashData.items;
     log(`GGG Fetch complete! Loaded ${items.length} items.`, "success");
     
+    // V2.2.1 Auto-Detect Currency Tab vs. Gear Tab routing
+    const activeTab = stashData.tabs ? stashData.tabs.find(t => t.i === tabIndex) : null;
+    const tabName = activeTab ? activeTab.n.toLowerCase() : "";
+    const coreCurrencyNames = [
+      "scroll of wisdom", "orb of transmutation", "orb of augmentation", "orb of alchemy", 
+      "regal orb", "chaos orb", "vaal orb", "orb of annulment", 
+      "exalted orb", "divine orb", "mirror of kalandra"
+    ];
+    
+    const isCurrencyTab = tabName.includes("currency") || 
+      (items.length > 0 && items.every(item => coreCurrencyNames.includes(item.typeLine.toLowerCase())));
+      
+    if (isCurrencyTab) {
+      log("Currency Tab detected! Auto-calculating stack sizes...");
+      
+      let currencyCounts = {
+        scroll: 0, transmute: 0, augmentation: 0, alchemy: 0, regal: 0,
+        chaos: 0, vaal: 0, annulment: 0, exalted: 0, divine: 0, mirror: 0
+      };
+      
+      items.forEach(item => {
+        const nameLower = item.typeLine.toLowerCase();
+        const qty = item.stackSize || 1;
+        
+        if (nameLower === "scroll of wisdom") currencyCounts.scroll += qty;
+        else if (nameLower === "orb of transmutation") currencyCounts.transmute += qty;
+        else if (nameLower === "orb of augmentation") currencyCounts.augmentation += qty;
+        else if (nameLower === "orb of alchemy") currencyCounts.alchemy += qty;
+        else if (nameLower === "regal orb") currencyCounts.regal += qty;
+        else if (nameLower === "chaos orb") currencyCounts.chaos += qty;
+        else if (nameLower === "vaal orb") currencyCounts.vaal += qty;
+        else if (nameLower === "orb of annulment") currencyCounts.annulment += qty;
+        else if (nameLower === "exalted orb") currencyCounts.exalted += qty;
+        else if (nameLower === "divine orb") currencyCounts.divine += qty;
+        else if (nameLower === "mirror of kalandra") currencyCounts.mirror += qty;
+      });
+      
+      const rates = {
+        mirror: 40000.0, divine: 150.0, exalted: 15.0, annulment: 5.0, vaal: 2.0,
+        chaos: 1.0, regal: 0.8, alchemy: 0.5, transmute: 0.2, augmentation: 0.15, scroll: 0.05
+      };
+      let total_chaos = 0.0;
+      Object.keys(currencyCounts).forEach(k => {
+        total_chaos += currencyCounts[k] * rates[k];
+      });
+      
+      const core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
+      const pipe_str = core_keys.map(k => currencyCounts[k]).join("|") + "|1.0";
+      const total_score = Math.floor(total_chaos * 10);
+      
+      log("Syncing Currency counts directly to __GUILD_VAULT__ entry...");
+      const pushUrl = `https://dreamlo.com/lb/${dreamloKey}/add/__GUILD_VAULT__/${total_score}/0/${encodeURIComponent(pipe_str)}`;
+      
+      const pushRes = await fetch(pushUrl);
+      if (!pushRes.ok) {
+        throw new Error(`Database push failed with status: ${pushRes.status}`);
+      }
+      
+      log(`✅ Guild Currency Tab synced! Net Worth: ${total_chaos.toFixed(0)}c (~${(total_chaos/150).toFixed(1)} EX)`, "success");
+      return;
+    }
+    
     // 2. Fetch current database entries to purge old items
     log("Querying online database for stale entries...");
     const dlGetUrl = `https://dreamlo.com/lb/${dreamloKey}/json`;
