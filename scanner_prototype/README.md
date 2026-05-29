@@ -84,3 +84,31 @@ Check `debug/scan_input_debug.png` after running a cropped scan to visually adju
 
 ## 🔒 Security Notice
 *   **Never share your API Key**: The script is configured to read the key from the environment variable (`GEMINI_API_KEY`) so you never have to hardcode or commit keys to git repositories.
+
+---
+
+## 🔮 GLG PoE2 Standalone Windows Overlay (`glg_stash_overlay.py`)
+
+We have created an incredibly premium, lightweight, standalone **in-game transparent overlay** (`glg_stash_overlay.py`) that operates exactly like Overwolf's desktop overlays (like Awakened PoE Trade) but with **zero installation overhead and zero background memory bloat**!
+
+### 🌟 Features:
+1. **Global Keyboard Hook**: Runs in the background of your Windows OS, listening globally for **`Alt + O`** using native Windows API RegisterHotKey triggers.
+2. **One-Press Borderless Appraisal**:
+   - Hover your cursor over any item in your game stash or inventory and press **`Ctrl + C`** (standard Path of Exile item copy).
+   - Press **`Alt + O`** directly from inside the game (no Alt-Tabbing required!).
+3. **Immersive Gothic Transparent Card**: The script fetches your clipboard, appraises it via the Gemini API, and instantly spawns a beautiful, borderless, transparent, "always-on-top" floating card right on top of your Path of Exile 2 game client!
+4. **Authentic PoE Aesthetics**: Color-codes headers by rarity (Unique orange, Rare yellow, Magic blue), lists implicit/explicit modifiers, renders locked warning badges for unidentified items, and displays live Divine/Chaos appraisals with culling audit logs!
+5. **Auto-Dismiss Timer**: The overlay automatically closes after 10 seconds (or you can click **`✕`** or drag it anywhere on screen by clicking and holding) to keep your combat space clean!
+
+### 🚀 How to Run the Overlay:
+1. Ensure you have installed the modern Google GenAI library:
+   ```bash
+   pip install google-genai pillow
+   ```
+2. Run the script:
+   ```bash
+   python scanner_prototype/glg_stash_overlay.py
+   ```
+3. **Watch the output**: You will see confirmation `✅ Global In-Game Overlay Active! Press Alt+O anywhere to appraise your clipboard item.`
+4. **Play and Trade**: Keep this script running in the background while you play Path of Exile 2 in Borderless Windowed mode!
+
