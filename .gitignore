@@ -4,5 +4,5 @@ scanner_prototype.zip
 scanner_prototype/__pycache__/
 scanner_prototype/debug/
 chrome_extension/config.json
-chrome_extension.zip
+# chrome_extension.zip was removed to allow GitHub Pages hosting for downloaders
 
