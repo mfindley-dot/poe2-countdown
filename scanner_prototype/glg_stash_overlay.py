@@ -27,30 +27,41 @@ MOD_CONTROL = 0x0002
 HOTKEY_KEY_APPRAISE = 0x4F  # Alt+O (Virtual key code for 'O')
 HOTKEY_KEY_SYNC = 0x55      # Alt+U (Virtual key code for 'U')
 
-class GLGOverlayApp:
-    def __init__(self):
-        self.root = None
-        self.api_key = self.load_api_key()
-        if not self.api_key:
-            print("Error: Gemini API Key not found in config.json or environment variables.")
-            sys.exit(1)
-        self.client = genai.Client(api_key=self.api_key)
-
-    def load_api_key(self):
+# Helper to read clipboard using Windows API directly (100% thread-safe, 0% Tkinter crash risk)
+def get_clipboard_text():
+    user32 = ctypes.windll.user32
+    kernel32 = ctypes.windll.kernel32
+    
+    if not user32.OpenClipboard(None):
+        return ""
+    try:
+        CF_UNICODETEXT = 13
+        h_clip_mem = user32.GetClipboardData(CF_UNICODETEXT)
+        if not h_clip_mem:
+            return ""
+        
+        kernel32.GlobalLock.argtypes = [ctypes.wintypes.HANDLE]
+        kernel32.GlobalLock.restype = ctypes.c_void_p
+        kernel32.GlobalUnlock.argtypes = [ctypes.wintypes.HANDLE]
+        
+        p_box = kernel32.GlobalLock(h_clip_mem)
+        if not p_box:
+            return ""
         try:
-            config_path = os.path.join(os.path.dirname(__file__), "config.json")
-            if os.path.exists(config_path):
-                with open(config_path, 'r') as f:
-                    cfg = json.load(f)
-                    key = cfg.get("default_api_key") or cfg.get("default_gemini_key")
-                    if key:
-                        return key
-        except Exception:
-            pass
-        return os.environ.get("GEMINI_API_KEY")
+            return ctypes.wstring_at(p_box)
+        finally:
+            kernel32.GlobalUnlock(h_clip_mem)
+    finally:
+        user32.CloseClipboard()
 
-    def run_overlay_window(self, item_data):
-        # Create borderless topmost window
+class GLGOverlayUI:
+    def __init__(self, item_data):
+        self.item_data = item_data
+        self.root = None
+        self.x = 0
+        self.y = 0
+
+    def run(self):
         self.root = tk.Tk()
         self.root.title("GLG PoE2 Overlay Appraiser")
         self.root.attributes("-topmost", True)
@@ -71,7 +82,7 @@ class GLGOverlayApp:
         self.root.geometry(f"{width}x{height}+{x}+{y}")
 
         # Determine rarity colors
-        rarity = item_data.get("rarity", "Rare").lower()
+        rarity = self.item_data.get("rarity", "Rare").lower()
         title_color = "#cbd5e1" # normal
         if rarity == "unique":
             title_color = "#af6025" # unique orange
@@ -95,7 +106,7 @@ class GLGOverlayApp:
 
         # Header Title (Item Name)
         lbl_title = tk.Label(
-            main_frame, text=item_data.get("name", "Unknown Item").upper(),
+            main_frame, text=self.item_data.get("name", "Unknown Item").upper(),
             fg=title_color, bg="#0c0a09", font=("Cinzel", 14, "bold"),
             wraplength=340, justify="center"
         )
@@ -103,7 +114,7 @@ class GLGOverlayApp:
 
         # Base Type
         lbl_base = tk.Label(
-            main_frame, text=item_data.get("base", "Gear").upper(),
+            main_frame, text=self.item_data.get("base", "Gear").upper(),
             fg=title_color, bg="#0c0a09", font=("Cinzel", 10),
             wraplength=340, justify="center"
         )
@@ -111,7 +122,7 @@ class GLGOverlayApp:
 
         # Rarity Badge
         lbl_badge = tk.Label(
-            main_frame, text=item_data.get("rarity", "Rare").upper(),
+            main_frame, text=self.item_data.get("rarity", "Rare").upper(),
             fg=title_color, bg="#1a1512", font=("Inter", 7, "bold"),
             bd=1, relief="solid", padx=8, pady=2
         )
@@ -122,7 +133,7 @@ class GLGOverlayApp:
         divider1.pack(fill="x", padx=20, pady=10)
 
         # Requirements and Level Block
-        req_text = f"Requires Level {item_data.get('level', 1)}   |   Item Level: {item_data.get('ilvl', 1)}"
+        req_text = f"Requires Level {self.item_data.get('level', 1)}   |   Item Level: {self.item_data.get('ilvl', 1)}"
         lbl_req = tk.Label(
             main_frame, text=req_text, fg="#a2a1a0", bg="#0c0a09",
             font=("Inter", 8, "bold")
@@ -137,7 +148,7 @@ class GLGOverlayApp:
         affix_frame = tk.Frame(main_frame, bg="#0c0a09")
         affix_frame.pack(fill="both", expand=True, padx=20)
 
-        is_unid = item_data.get("is_unidentified", False)
+        is_unid = self.item_data.get("is_unidentified", False)
         if is_unid:
             lbl_unid = tk.Label(
                 affix_frame, text="🔒 UNIDENTIFIED UNIQUE (GGG BASE RANGES)",
@@ -146,7 +157,7 @@ class GLGOverlayApp:
             lbl_unid.pack(pady=(0, 6))
 
         # List mods
-        for affix in item_data.get("affixes", []):
+        for affix in self.item_data.get("affixes", []):
             color = "#8892b0" # identified mod color
             font_style = ("Inter", 9)
             if is_unid:
@@ -160,7 +171,7 @@ class GLGOverlayApp:
             lbl_aff.pack(pady=3)
 
         # Flavor text
-        flavor = item_data.get("flavor", "")
+        flavor = self.item_data.get("flavor", "")
         if flavor:
             lbl_flavor = tk.Label(
                 main_frame, text=f'"{flavor}"', fg="#d85757", bg="#0c0a09",
@@ -179,13 +190,13 @@ class GLGOverlayApp:
         lbl_val_header.pack(pady=(4, 0))
 
         lbl_price = tk.Label(
-            footer_frame, text=item_data.get("price", "0 Chaos Orbs").upper(),
+            footer_frame, text=self.item_data.get("price", "0 Chaos Orbs").upper(),
             fg="#ffd700", bg="#12100e", font=("Cinzel", 12, "bold")
         )
         lbl_price.pack(pady=(2, 2))
 
         lbl_logs = tk.Label(
-            footer_frame, text=item_data.get("culling_logs", "").upper(),
+            footer_frame, text=self.item_data.get("culling_logs", "").upper(),
             fg="#a855f7", bg="#12100e", font=("Inter", 7),
             wraplength=320
         )
@@ -211,6 +222,37 @@ class GLGOverlayApp:
         y = self.root.winfo_y() + deltay
         self.root.geometry(f"+{x}+{y}")
 
+def run_gui_process(item_data):
+    ui = GLGOverlayUI(item_data)
+    ui.run()
+
+def launch_overlay_process(item_data):
+    import multiprocessing
+    p = multiprocessing.Process(target=run_gui_process, args=(item_data,))
+    p.daemon = True
+    p.start()
+
+class GLGOverlayApp:
+    def __init__(self):
+        self.api_key = self.load_api_key()
+        if not self.api_key:
+            print("Error: Gemini API Key not found in config.json or environment variables.")
+            sys.exit(1)
+        self.client = genai.Client(api_key=self.api_key)
+
+    def load_api_key(self):
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), "config.json")
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    cfg = json.load(f)
+                    key = cfg.get("default_api_key") or cfg.get("default_gemini_key")
+                    if key:
+                        return key
+        except Exception:
+            pass
+        return os.environ.get("GEMINI_API_KEY")
+
     def simulate_ctrl_c(self):
         user32 = ctypes.windll.user32
         VK_CONTROL = 0x11
@@ -232,16 +274,12 @@ class GLGOverlayApp:
         print("Alt+O Pressed! Simulating Ctrl+C and running appraisal...")
         self.simulate_ctrl_c()
         
-        try:
-            temp_tk = tk.Tk()
-            temp_tk.withdraw()
-            clipboard_text = temp_tk.clipboard_get()
-            temp_tk.destroy()
-        except Exception:
+        clipboard_text = get_clipboard_text()
+        if not clipboard_text:
             print("Failed to read clipboard or clipboard empty.")
             return
 
-        if not clipboard_text or not ("Rarity:" in clipboard_text or "Item Class:" in clipboard_text):
+        if not ("Rarity:" in clipboard_text or "Item Class:" in clipboard_text):
             print("No valid Path of Exile item copy detected in clipboard.")
             return
 
@@ -289,8 +327,8 @@ class GLGOverlayApp:
             item_data = json.loads(response.text)
             print("Appraisal parsed successfully!")
             
-            # Start overlay UI in the main thread (tkinter must run in main thread)
-            self.run_overlay_window(item_data)
+            # Start overlay UI in separate safe process!
+            launch_overlay_process(item_data)
         except Exception as err:
             print("Gemini API appraisal failed:", err)
 
@@ -308,7 +346,10 @@ class GLGOverlayApp:
 
         prompt = """
         Analyze this Path of Exile 2 Currency Stash Tab screenshot and match numbers/quantities carefully. 
-        Extract the exact quantities of all visible Path of Exile 2 currency items using this spatial visual guide:
+        
+        CRITICAL CHECK: If this image is NOT a screenshot of the actual Path of Exile 2 game client (for example, if it is a web browser page showing a countdown website, your Windows desktop background, or another application window), you MUST return a standard JSON with all currency quantities set to 0, and set the "price" key to "STASH NOT DETECTED" and the "culling_logs" key to "Verify in-game Stash Tab is active on primary screen."
+        
+        If it IS a valid Path of Exile 2 Currency Stash Tab, extract the exact quantities of all visible Path of Exile 2 currency items using this spatial visual guide:
         
         1. FAR-LEFT GRID (5 rows by 3 columns of slots):
            - Row 1: augmentation (Col 1, Base) | greater_augmentation (Col 2, II) | perfect_augmentation (Col 3, III)
@@ -347,6 +388,30 @@ class GLGOverlayApp:
             )
             data = json.loads(response.text)
             print("Stash tab OCR scan completed!")
+            
+            # Check visual validation safeguard
+            if data.get("price") == "STASH NOT DETECTED" or data.get("culling_logs") == "Verify in-game Stash Tab is active on primary screen.":
+                fail_data = {
+                    "name": "Stash Not Detected!",
+                    "base": "Vision OCR Sync",
+                    "rarity": "Normal",
+                    "level": 0,
+                    "ilvl": 0,
+                    "is_unidentified": False,
+                    "affixes": [
+                        "The scanner captured a window or screen",
+                        "that does not look like Path of Exile 2.",
+                        "",
+                        "Please bring the PoE 2 game client into full focus",
+                        "on your primary screen (Borderless Windowed) and",
+                        "make sure your Currency Stash Tab is open!"
+                    ],
+                    "flavor": "Verify in-game Stash Tab is active on primary screen.",
+                    "price": "NOT DETECTED",
+                    "culling_logs": "Visual audit halted"
+                }
+                launch_overlay_process(fail_data)
+                return
             
             # Map values down to the 11 core currencies (exactly like stash_scanner.py!)
             core_data = {
@@ -417,7 +482,7 @@ class GLGOverlayApp:
                     "price": f"{total_chaos:.1f} Chaos Orbs",
                     "culling_logs": f"Approx {(total_chaos/150.0):.2f} Divine Orbs synced!"
                 }
-                self.run_overlay_window(sync_result)
+                launch_overlay_process(sync_result)
                 
         except Exception as err:
             print("Stash scan or sync failed:", err)
@@ -439,7 +504,7 @@ class GLGOverlayApp:
                 "price": "ERROR",
                 "culling_logs": str(err)[:45]
             }
-            self.run_overlay_window(fail_data)
+            launch_overlay_process(fail_data)
 
 def listen_for_hotkey(app):
     user32 = ctypes.windll.user32
@@ -477,6 +542,9 @@ def listen_for_hotkey(app):
         user32.UnregisterHotKey(None, HOTKEY_ID_SYNC)
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()
+    
     print("==================================================")
     print("🔮 GLG PoE2 STANDALONE WINDOWS OVERLAY INITIATED")
     print("==================================================")
