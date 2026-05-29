@@ -440,7 +440,7 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
     const total_score = Math.floor(total_chaos * 10);
     log("Syncing live scan results to your online guild website...");
     
-    const pushUrl = `https://dreamlo.com/lb/${dreamloKey}/add/__GUILD_VAULT__/${total_score}/0/${encodeURIComponent(pipe_str)}`;
+    const pushUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/add/__GUILD_VAULT__/${total_score}/0/${encodeURIComponent(pipe_str)}`;
     
     const pushRes = await fetch(pushUrl);
     if (!pushRes.ok) {
@@ -575,7 +575,7 @@ async function syncAppraisedItemDirectly(dreamloKey) {
       getIconUrl(appraisedItem.name, appraisedItem.base_type)
     ].join("|");
     
-    const pushUrl = `https://dreamlo.com/lb/${dreamloKey}/add/${entryName}/0/0/${encodeURIComponent(item_payload)}`;
+    const pushUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/add/${entryName}/0/0/${encodeURIComponent(item_payload)}`;
     
     const pushRes = await fetch(pushUrl);
     if (!pushRes.ok) {
@@ -932,7 +932,7 @@ async function bulkSyncStashTab() {
       const total_score = Math.floor(total_chaos * 10);
       
       log("Syncing Currency counts directly to __GUILD_VAULT__ entry...");
-      const pushUrl = `https://dreamlo.com/lb/${dreamloKey}/add/__GUILD_VAULT__/${total_score}/0/${encodeURIComponent(pipe_str)}`;
+      const pushUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/add/__GUILD_VAULT__/${total_score}/0/${encodeURIComponent(pipe_str)}`;
       
       const pushRes = await fetch(pushUrl);
       if (!pushRes.ok) {
@@ -945,7 +945,7 @@ async function bulkSyncStashTab() {
     
     // 2. Fetch current database entries to purge old items
     log("Querying online database for stale entries...");
-    const dlGetUrl = `https://dreamlo.com/lb/${dreamloPublicKey}/json`;
+    const dlGetUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloPublicKey}/json`;
     const dlRes = await fetch(dlGetUrl);
     let dlData = null;
     if (dlRes.ok) {
@@ -976,7 +976,7 @@ async function bulkSyncStashTab() {
         log(`Purging ${staleEntries.length} old visual items for this tab...`);
         for (const entry of staleEntries) {
           try {
-            const delUrl = `https://dreamlo.com/lb/${dreamloKey}/delete/${entry.name}`;
+            const delUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/delete/${entry.name}`;
             await fetch(delUrl);
             deleteCount++;
             await new Promise(r => setTimeout(r, 80)); // Sequential delay
@@ -1000,7 +1000,7 @@ async function bulkSyncStashTab() {
       const entryName = `${deletePrefix}${i}`;
       
       try {
-        const pushUrl = `https://dreamlo.com/lb/${dreamloKey}/add/${entryName}/0/0/${encodeURIComponent(payload)}`;
+        const pushUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/add/${entryName}/0/0/${encodeURIComponent(payload)}`;
         const pushRes = await fetch(pushUrl);
         if (pushRes.ok) {
           successCount++;
