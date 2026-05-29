@@ -2985,26 +2985,34 @@ function updateStashTabUI() {
     stashLabelText = `LIFETIME LOOTING: ${totalNetWorth.toFixed(1)}c`;
   } 
   else {
-    // Guild Vault - derived from globalOverallGuildChaos
-    const c = globalOverallGuildChaos;
-    activeCounts = {
-      mirror: Math.floor(c / 40000),
-      divine: Math.floor(c / 150),
-      exalted: Math.floor(c / 15),
-      annulment: Math.floor(c / 5),
-      vaal: Math.floor(c / 2),
-      chaos: Math.floor(c / 1),
-      regal: Math.floor(c / 0.8),
-      alchemy: Math.floor(c / 0.5),
-      transmute: Math.floor(c / 0.2),
-      augmentation: Math.floor(c / 0.15),
-      scroll: Math.floor(c / 0.1)
-    };
-    
-    currencyKeys.forEach(key => {
-      totalNetWorth += activeCounts[key] * CURRENCY_CONFIG[key].worth;
-    });
-    stashLabelText = `GUILD VAULT: ${totalNetWorth.toFixed(0)}c`;
+    // Guild Vault - derived from globalOverallGuildChaos OR real scanned counts
+    if (window.guildRealCurrencyCounts) {
+      activeCounts = { ...window.guildRealCurrencyCounts };
+      currencyKeys.forEach(key => {
+        totalNetWorth += (activeCounts[key] || 0) * CURRENCY_CONFIG[key].worth;
+      });
+      stashLabelText = `GUILD VAULT: ${totalNetWorth.toFixed(0)}c (LIVE)`;
+    } else {
+      const c = globalOverallGuildChaos;
+      activeCounts = {
+        mirror: Math.floor(c / 40000),
+        divine: Math.floor(c / 150),
+        exalted: Math.floor(c / 15),
+        annulment: Math.floor(c / 5),
+        vaal: Math.floor(c / 2),
+        chaos: Math.floor(c / 1),
+        regal: Math.floor(c / 0.8),
+        alchemy: Math.floor(c / 0.5),
+        transmute: Math.floor(c / 0.2),
+        augmentation: Math.floor(c / 0.15),
+        scroll: Math.floor(c / 0.1)
+      };
+      
+      currencyKeys.forEach(key => {
+        totalNetWorth += activeCounts[key] * CURRENCY_CONFIG[key].worth;
+      });
+      stashLabelText = `GUILD VAULT: ${totalNetWorth.toFixed(0)}c`;
+    }
   }
   
   document.getElementById("stashNetWorth").textContent = stashLabelText;
@@ -3226,10 +3234,33 @@ async function loadDreamloLeaderboard() {
 function calculateCollectiveGuildTax() {
   let overallGuildScore = 0;
   let totalDeductionsScore = 0;
+  window.guildRealCurrencyCounts = null;
   
   leaderboardEntriesRaw.forEach(entry => {
     const score = parseInt(entry.score, 10);
     const rawName = entry.name;
+    
+    // Check if this is our special online scanned guild vault entry!
+    if (rawName === "__GUILD_VAULT__") {
+      try {
+        if (entry.text) {
+          const decoded = decodeURIComponent(entry.text);
+          const parts = decoded.split("|");
+          if (parts.length === 11) {
+            const keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
+            window.guildRealCurrencyCounts = {};
+            keys.forEach((key, idx) => {
+              window.guildRealCurrencyCounts[key] = parseInt(parts[idx], 10) || 0;
+            });
+            console.log("Successfully parsed real scanned guild currency counts from Dreamlo:", window.guildRealCurrencyCounts);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse real scanned currency counts from Dreamlo:", e);
+      }
+      return; // Skip adding to player leaderboards
+    }
+    
     const name = rawName.includes("-") ? rawName.split("-")[0] : rawName;
     
     // Separate valid player runs from CREG deduction entries
@@ -6268,6 +6299,9 @@ function initGameEngine() {
   // Initialize simulated server stock economy and pop-out financial charts
   initMarketTrendsControls();
   
+  // Start QVC Movers & Shakers showroom loop!
+  initQVCShowroom();
+  
   // Start drawing canvas engine loop
   requestAnimationFrame(updateGame);
 }
@@ -6763,6 +6797,126 @@ function initGameEngine() {
     if (modalTrends) {
       modalTrends.classList.add("hidden");
     }
+  }
+
+  // 📺 GLG SHOPPING NETWORK (QVC SHOWROOM WIDGET)
+  const QVC_ITEMS = [
+    {
+      name: "Dreamfeather",
+      sub: "Eternal Sword",
+      icon: "🗡️",
+      price: "4.5 Divine Orbs",
+      desc: "Perfect evasion rating scaling damage rolls! Phase map bosses in Early Access.",
+      reviews: [
+        { text: "Tapped a yellow mob once, woke up in a different act. 10/10 evasion.", author: "Evasion_Enjoyer" },
+        { text: "Best sword in the guild, currently clearing low-tier maps at sound speed.", author: "GLG_Slasher" }
+      ]
+    },
+    {
+      name: "Headhunter",
+      sub: "Leather Belt",
+      icon: "💀",
+      price: "142.0 Divine Orbs",
+      desc: "Copies rare monster mods. Temporarily turns your character into a 40-foot giant.",
+      reviews: [
+        { text: "Felt like a god for 20 seconds, then got deleted by a ground slam. Worth every penny.", author: "Wreaclast_Runner" },
+        { text: "Highly recommend. Turns the Witch into an absolute tanking monster.", author: "GLG_Leader" }
+      ]
+    },
+    {
+      name: "Mageblood",
+      sub: "Heavy Belt",
+      icon: "🩸",
+      price: "248.0 Divine Orbs",
+      desc: "Utility flasks are constantly active. Speed cap exceeded by 300%.",
+      reviews: [
+        { text: "I haven't clicked a flask button in three days. My index finger has finally healed.", author: "Flask_Spammer" },
+        { text: "Total dopamine overload. You literally float across the map.", author: "Ranger_Speed" }
+      ]
+    },
+    {
+      name: "Runic Topaz Ring",
+      sub: "Mirror-Tier Crafted",
+      icon: "💍",
+      price: "35 Chaos Orbs",
+      desc: "+35% Lightning Res, +65 Max Life, +42 Mana. Sizzling rolls ready!",
+      reviews: [
+        { text: "Wait, I spent 100c on trade for a worse ring when we had this sitting in the stash?!", author: "Mike_GLG" },
+        { text: "Snagged it for my lightning build. Absolutely solved my intelligence needs.", author: "Topaz_Fan" }
+      ]
+    },
+    {
+      name: "Autographed Photo of Chris Wilson",
+      sub: "Sacred Relic",
+      icon: "🖼️",
+      price: "690 Divine Orbs",
+      desc: "Provides +1000% increased loot filter dopamine and guarantees luck.",
+      reviews: [
+        { text: "Placed it next to my PC. Dropped a Divine Orb on the very next map. Sane, indeed!", author: "Sane_Exile" },
+        { text: "Absolute holy grail of GLG. Do NOT sell this to Creg.", author: "Guild_Officer" }
+      ]
+    }
+  ];
+
+  let currentQvcIndex = 0;
+
+  function initQVCShowroom() {
+    const showroom = document.getElementById("qvcShowroom");
+    if (!showroom) return;
+    
+    function rotateQVCItem() {
+      try {
+        // Fade out
+        showroom.style.opacity = 0;
+        
+        setTimeout(() => {
+          const item = QVC_ITEMS[currentQvcIndex];
+          const randomReview = item.reviews[Math.floor(Math.random() * item.reviews.length)];
+          
+          showroom.innerHTML = `
+            <div style="font-size: 2.2rem; background: rgba(197, 168, 128, 0.05); padding: 8px; border: 1px solid rgba(197, 168, 128, 0.25); border-radius: 4px; display: flex; align-items: center; justify-content: center; min-width: 50px; height: 50px; box-shadow: inset 0 0 5px rgba(0,0,0,0.8);">${item.icon}</div>
+            <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; font-family: 'Outfit', sans-serif;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span class="text-gold" style="font-size: 0.85rem; font-weight: bold; text-shadow: 0 0 4px rgba(255, 215, 0, 0.2);">${item.name}</span>
+                <span style="font-size: 0.75rem; color: #a855f7; font-weight: bold; background: rgba(168, 85, 247, 0.1); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(168, 85, 247, 0.2);">${item.price}</span>
+              </div>
+              <div style="font-size: 0.6rem; color: #a2a1a0; font-style: italic; margin-bottom: 2px;">${item.sub} - ${item.desc}</div>
+              <div style="border-top: 1px solid rgba(197, 168, 128, 0.15); padding-top: 3px; font-size: 0.65rem; color: #cbd5e1; line-height: 1.15;">
+                <span style="color: #ffd700; font-weight: bold;">💬 Review:</span> "${randomReview.text}" 
+                <span style="color: #a855f7; font-size: 0.55rem; font-weight: bold; margin-left: 2px;">-${randomReview.author}</span>
+              </div>
+            </div>
+          `;
+          
+          // Fade in
+          showroom.style.opacity = 1;
+          
+          // Increment
+          currentQvcIndex = (currentQvcIndex + 1) % QVC_ITEMS.length;
+        }, 500);
+        
+      } catch (err) {
+        console.error("QVC Showroom rendering failed, running fallback:", err);
+        try {
+          showroom.innerHTML = `
+            <div style="font-size: 2rem;">💍</div>
+            <div style="font-family: 'Outfit', sans-serif;">
+              <div style="color: #ffd700; font-size: 0.85rem; font-weight: bold;">Gold Ring</div>
+              <div style="font-size: 0.65rem; color: #cbd5e1;">"Checking the vaults for loot..."</div>
+            </div>
+          `;
+          showroom.style.opacity = 1;
+        } catch (innerErr) {
+          console.error("Fatal QVC fallback failure:", innerErr);
+        }
+      }
+    }
+    
+    // Initial run
+    rotateQVCItem();
+    
+    // Rotate every 10 seconds
+    setInterval(rotateQVCItem, 10000);
   }
 
 // Bulletproof execution trigger to prevent DOMContentLoaded race conditions on fast/local page loads

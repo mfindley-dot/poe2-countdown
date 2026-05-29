@@ -69,6 +69,8 @@ def parse_args():
     parser.add_argument("--capture", action="store_true", help="Natively capture the primary display screenshot")
     parser.add_argument("--crop", type=str, help="Optional crop box coordinates as 'left,top,right,bottom' (e.g. '100,200,900,800')")
     parser.add_argument("--api-key", type=str, help="Your Gemini API Key (falls back to GEMINI_API_KEY environment variable)")
+    parser.add_argument("--push-to-guild", action="store_true", help="Automatically push scanned counts to the guild's online website database (Dreamlo)")
+    parser.add_argument("--dreamlo-key", type=str, help="Your Dreamlo Private Key (falls back to DREAMLO_PRIVATE_KEY environment variable)")
     return parser.parse_args()
 
 def main():
@@ -221,6 +223,53 @@ def main():
             for key, qty in data.items():
                 total_chaos += qty * rates.get(key, 0.0)
             print(f"Total Stash Net Worth: {total_chaos:.1f} Chaos Orbs (Approx {(total_chaos/150.0):.2f} Divine Orbs)")
+            
+            # 6. Push to online Guild Vault if requested
+            dreamlo_key = args.dreamlo_key or os.environ.get("DREAMLO_PRIVATE_KEY")
+            if args.push_to_guild or dreamlo_key:
+                if not dreamlo_key:
+                    # Fallback to GLG pre-allocated guild private key if the user is GLG
+                    dreamlo_key = "uK1WlH9CPE-XjFskW0R4Agz7r510_lMEC6t3fXGZwt_A"
+                
+                import urllib.parse
+                import requests
+                
+                # Map the 26+ extended currency tiers down to the core 11 currencies
+                core_data = {
+                    "scroll": data.get("scroll", 0),
+                    "transmute": data.get("transmute", 0) + data.get("greater_transmute", 0) + data.get("perfect_transmute", 0),
+                    "augmentation": data.get("augmentation", 0) + data.get("greater_augmentation", 0) + data.get("perfect_augmentation", 0),
+                    "alchemy": data.get("alchemy", 0),
+                    "regal": data.get("regal", 0) + data.get("greater_regal", 0) + data.get("perfect_regal", 0),
+                    "chaos": data.get("chaos", 0) + data.get("greater_chaos", 0) + data.get("perfect_chaos", 0),
+                    "vaal": data.get("vaal", 0),
+                    "annulment": data.get("annulment", 0),
+                    "exalted": data.get("exalted", 0) + data.get("greater_exalted", 0) + data.get("perfect_exalted", 0),
+                    "divine": data.get("divine", 0),
+                    "mirror": data.get("mirror", 0)
+                }
+                
+                # Squeeze data into a highly compact, pipe-separated positional string matching game.js order:
+                # order: scroll|transmute|augmentation|alchemy|regal|chaos|vaal|annulment|exalted|divine|mirror
+                core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"]
+                pipe_str = "|".join([str(core_data.get(k, 0)) for k in core_keys])
+                
+                # Calculate total net worth for Dreamlo score mapping (score = net_worth * 10)
+                total_score = int(total_chaos * 10)
+                
+                # Construct dreamlo URL
+                push_url = f"https://dreamlo.com/lb/{dreamlo_key}/add/__GUILD_VAULT__/{total_score}/0/{urllib.parse.quote(pipe_str)}"
+                
+                print("Syncing live scan results to your online guild website database...")
+                try:
+                    push_res = requests.get(push_url, timeout=5)
+                    if push_res.status_code == 200:
+                        print("✅ Online Guild Vault successfully updated globally!")
+                    else:
+                        print(f"⚠️ Failed to update online vault. Dreamlo status code: {push_res.status_code}")
+                except Exception as push_err:
+                    print(f"⚠️ Failed to connect to online database: {push_err}")
+                    
         except Exception as e:
             print(f"Warning: Failed to parse net worth summary. Error: {e}")
             
