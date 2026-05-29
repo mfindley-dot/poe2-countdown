@@ -806,7 +806,7 @@ class Enemy {
     // Stats base on types
     if (type === "spider") {
       this.radius = 55;
-      this.hp = 5 + (wave * 1.5);
+      this.hp = 14 + (wave * 1.5); // base HP shifted higher to wave 6 scaling
       this.maxHp = this.hp;
       this.speed = 1.3 + Math.random() * 0.4;
       this.color = "#4b5563"; // slate grey
@@ -814,7 +814,7 @@ class Enemy {
     } 
     else if (type === "ghost") {
       this.radius = 65;
-      this.hp = 14 + (wave * 2.5);
+      this.hp = 29 + (wave * 2.5); // base HP shifted higher to wave 6 scaling
       this.maxHp = this.hp;
       this.speed = 0.9;
       this.color = "#a5f3fc"; // glowing freeze cyan
@@ -826,7 +826,7 @@ class Enemy {
     } 
     else if (type === "zombie") {
       this.radius = 60;
-      this.hp = 8 + (wave * 2.0);
+      this.hp = 20 + (wave * 2.0); // base HP shifted higher to wave 6 scaling
       this.maxHp = this.hp;
       this.speed = 1.0 + Math.random() * 0.3;
       this.color = "#15803d"; // green zombie
@@ -929,6 +929,10 @@ class Enemy {
         this.bounceY = 0;
       }
     } 
+    else if (this.type === "zombie") {
+      this.x += this.vx;
+      this.y += this.vy;
+    }
     else if (this.type === "ghost") {
       const now = Date.now();
       
@@ -1232,12 +1236,12 @@ class Enemy {
             if (this.comboStep === 0) {
               this.slamCharging = true;
               this.slamChargeTimer = 0;
-              this.slamTargetX = player.x;
-              this.slamTargetY = player.y;
+              this.slamTargetX = this.x; // Static around gorilla's position!
+              this.slamTargetY = this.y; // Static around gorilla's position!
               this.comboStep = 1;
               particleEffects.push({
                 x: this.x, y: this.y - 30,
-                text: "⚠️ COMBO: CROSS SLAM!",
+                text: "⚠️ COMBO: STATIC CROSS SLAM!",
                 color: "#fbbf24", age: 0, maxAge: 50
               });
             } else {
@@ -1252,12 +1256,12 @@ class Enemy {
             if (this.comboStep === 0) {
               this.slamCharging = true;
               this.slamChargeTimer = 0;
-              this.slamTargetX = player.x;
-              this.slamTargetY = player.y;
+              this.slamTargetX = this.x; // Static around gorilla's position!
+              this.slamTargetY = this.y; // Static around gorilla's position!
               this.comboStep = 1;
               particleEffects.push({
                 x: this.x, y: this.y - 30,
-                text: "⚠️ COMBO: X SLAM!",
+                text: "⚠️ COMBO: STATIC X SLAM!",
                 color: "#f59e0b", age: 0, maxAge: 50
               });
             } else {
@@ -1569,44 +1573,80 @@ class Enemy {
           executeApeSlam(this.slamTargetX, this.slamTargetY);
           
           if (this.currentCombo === "crossslam") {
-            const offsets = [
+            // Outward radiating static sequence: 1st ring around gorilla at delay 12 (half-sized)
+            const offsets1 = [
               { dx: 0, dy: -180 },
               { dx: 180, dy: 0 },
               { dx: 0, dy: 180 },
               { dx: -180, dy: 0 }
             ];
-            offsets.forEach(off => {
+            offsets1.forEach(off => {
               delayedSlams.push({
                 delay: 12,
-                x: this.slamTargetX + off.dx,
-                y: this.slamTargetY + off.dy
+                x: this.x + off.dx,
+                y: this.y + off.dy,
+                radius: 160
+              });
+            });
+            
+            // 2nd ring further out at delay 24 (half-sized)
+            const offsets2 = [
+              { dx: 0, dy: -360 },
+              { dx: 360, dy: 0 },
+              { dx: 0, dy: 360 },
+              { dx: -360, dy: 0 }
+            ];
+            offsets2.forEach(off => {
+              delayedSlams.push({
+                delay: 24,
+                x: this.x + off.dx,
+                y: this.y + off.dy,
+                radius: 160
               });
             });
             
             particleEffects.push({
-              x: this.slamTargetX, y: this.slamTargetY - 20,
-              text: "⚡ OUTWARD RIPPLES! ⚡",
+              x: this.x, y: this.y - 20,
+              text: "⚡ OUTWARD CROSS RIPPLES! ⚡",
               color: "#fbbf24", age: 0, maxAge: 35
             });
           }
           else if (this.currentCombo === "xslam") {
-            const offsets = [
+            // Outward radiating static sequence: 1st diagonal ring around gorilla at delay 12 (half-sized)
+            const offsets1 = [
               { dx: -130, dy: -130 },
               { dx: 130, dy: -130 },
               { dx: 130, dy: 130 },
               { dx: -130, dy: 130 }
             ];
-            offsets.forEach(off => {
+            offsets1.forEach(off => {
               delayedSlams.push({
                 delay: 12,
-                x: this.slamTargetX + off.dx,
-                y: this.slamTargetY + off.dy
+                x: this.x + off.dx,
+                y: this.y + off.dy,
+                radius: 160
+              });
+            });
+            
+            // 2nd diagonal ring further out at delay 24 (half-sized)
+            const offsets2 = [
+              { dx: -260, dy: -260 },
+              { dx: 260, dy: -260 },
+              { dx: 260, dy: 260 },
+              { dx: -260, dy: 260 }
+            ];
+            offsets2.forEach(off => {
+              delayedSlams.push({
+                delay: 24,
+                x: this.x + off.dx,
+                y: this.y + off.dy,
+                radius: 160
               });
             });
             
             particleEffects.push({
-              x: this.slamTargetX, y: this.slamTargetY - 20,
-              text: "⚡ DIAGONAL PULSE! ⚡",
+              x: this.x, y: this.y - 20,
+              text: "⚡ OUTWARD X RIPPLES! ⚡",
               color: "#f59e0b", age: 0, maxAge: 35
             });
           }
@@ -2340,15 +2380,15 @@ function fireGhostProjectile(x, y, angle) {
 }
 
 // Ape Pillar of Doom Slam
-function executeApeSlam(tx, ty) {
+function executeApeSlam(tx, ty, radius = 320) {
   // Shockwave particle - expands dynamically and is dodge-rollable!
   particleEffects.push({
     isSlamRing: true,
     x: tx,
     y: ty,
-    radius: 320, // Expanded to 320px to guarantee contact and perfect dodge-roll damage scaling!
+    radius: radius,
     age: 0,
-    maxAge: 45,
+    maxAge: 75, // Considerably longer delay to telegraphed danger warning indicator
     hasHitPlayer: false
   });
   
@@ -3708,28 +3748,24 @@ function executePlayerAutoShooting() {
       }
     });
     
-    // Shoot towards closest, fallback to moving direction
-    let angle = 0;
+    // Shoot towards closest, do NOT fire if no enemies are active/alive!
     if (closestEnemy) {
-      angle = Math.atan2(closestEnemy.y - player.y, closestEnemy.x - player.x);
-    } else {
-      angle = Math.atan2(player.vy, player.vx);
-      if (player.vx === 0 && player.vy === 0) angle = -Math.PI/2; // shoots up if still
+      const angle = Math.atan2(closestEnemy.y - player.y, closestEnemy.x - player.x);
+      
+      player.lastShotTime = now;
+      const speed = 6.5;
+      
+      // Split Arrow Fan (3 arrows at angles: -12deg, 0deg, 12deg)
+      const angles = [angle - 0.2, angle, angle + 0.2];
+      
+      angles.forEach(ang => {
+        const vx = Math.cos(ang) * speed;
+        const vy = Math.sin(ang) * speed;
+        projectiles.push(new GameProjectile(player.x, player.y, vx, vy, "#38bdf8", player.damage, false));
+      });
+      
+      if (!gameMuted) playLootClickAudio();
     }
-    
-    player.lastShotTime = now;
-    const speed = 6.5;
-    
-    // Split Arrow Fan (3 arrows at angles: -12deg, 0deg, 12deg)
-    const angles = [angle - 0.2, angle, angle + 0.2];
-    
-    angles.forEach(ang => {
-      const vx = Math.cos(ang) * speed;
-      const vy = Math.sin(ang) * speed;
-      projectiles.push(new GameProjectile(player.x, player.y, vx, vy, "#38bdf8", player.damage, false));
-    });
-    
-    if (!gameMuted) playLootClickAudio();
   }
 }
 
@@ -4007,32 +4043,29 @@ function processGamePhysics() {
     }
     
     if (p.isSlamRing) {
-      // Dynamic dodge-rollable shockwave check
-      if (!p.hasHitPlayer && player.hp > 0 && currentGameState === GameState.PLAY) {
-        const currentRadius = p.radius * (p.age / p.maxAge);
+      // Telegraph warning indicator: only deal damage during the final flash-red danger phase (pct >= 0.75)
+      const pct = p.age / p.maxAge;
+      if (pct >= 0.75 && !p.hasHitPlayer && player.hp > 0 && currentGameState === GameState.PLAY) {
         const dx = player.x - p.x;
         const dy = player.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
-        // Has the expanding shockwave reached the player?
-        if (dist <= currentRadius + player.radius) {
+        // Is player inside the danger zone when it explodes?
+        if (dist <= p.radius + player.radius) {
           if (player.isRolling) {
-            // Player timed a dodge roll perfectly over the shockwave!
             p.hasHitPlayer = true;
-            
             particleEffects.push({
               x: player.x,
               y: player.y - 15,
               text: "DODGED!",
-              color: "#a7f3d0", // Light emerald green
+              color: "#a7f3d0",
               age: 0,
               maxAge: 35
             });
           } else {
-        // Player hit by shockwave!
-        p.hasHitPlayer = true;
-        player.hp = Math.max(0, player.hp - 45);
-        player.lastDamageTime = Date.now();
+            p.hasHitPlayer = true;
+            player.hp = Math.max(0, player.hp - 45);
+            player.lastDamageTime = Date.now();
             
             particleEffects.push({
               x: player.x,
@@ -4043,8 +4076,8 @@ function processGamePhysics() {
               maxAge: 45
             });
             
-            triggerPlayerHitEffect(); // Damage red flash and camera rumble!
-            if (!gameMuted) playRipAudioFallback(); // Boom impact sound
+            triggerPlayerHitEffect();
+            if (!gameMuted) playRipAudioFallback();
             
             if (player.hp <= 0) {
               handlePlayerDeath();
@@ -4920,14 +4953,35 @@ function drawParticles() {
         ctx.restore();
       }
       
-      // Draw the glowing shockwave energy edge on top of refraction
+      // Calculate smooth telegraphed HSL danger warning states (Yellow -> Orange -> Red flashing)
+      let strokeColor;
+      let shadowColor = "#eab308";
+      
+      if (pct < 0.4) {
+        // Warning stage: soft yellow
+        strokeColor = `rgba(253, 224, 71, ${0.85 * (1 - pct)})`;
+      } else if (pct < 0.75) {
+        // Transition stage: yellow smoothly interpolates to orange
+        const ratio = (pct - 0.4) / 0.35;
+        const rVal = Math.floor(253 + (249 - 253) * ratio);
+        const gVal = Math.floor(224 + (115 - 224) * ratio);
+        const bVal = Math.floor(71 + (22 - 71) * ratio);
+        strokeColor = `rgba(${rVal}, ${gVal}, ${bVal}, ${0.85 * (1 - pct)})`;
+        shadowColor = `rgb(${rVal}, ${gVal}, ${bVal})`;
+      } else {
+        // Critical danger stage: rapid red and white flashing
+        const flash = Math.floor(Date.now() / 45) % 2 === 0;
+        strokeColor = flash ? `rgba(239, 68, 68, ${0.95 * (1 - pct)})` : `rgba(254, 226, 226, ${0.85 * (1 - pct)})`;
+        shadowColor = "#ef4444";
+      }
+      
       ctx.beginPath();
       ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      ctx.strokeStyle = p.color || `rgba(239, 68, 68, ${0.85 * (1 - pct)})`;
-      ctx.lineWidth = 4 * (1 - pct);
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = (pct >= 0.75 ? 6 : 4) * (1 - pct);
       
       // Add glowing energy bloom
-      ctx.shadowColor = "#ef4444";
+      ctx.shadowColor = shadowColor;
       ctx.shadowBlur = 15 * (1 - pct);
       ctx.stroke();
       ctx.shadowBlur = 0; // reset
