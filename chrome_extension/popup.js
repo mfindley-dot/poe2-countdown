@@ -1,8 +1,12 @@
-// GLG PoE2 Stash Scanner Extension Logic
+// GLG PoE2 Stash Scanner Extension Logic (V2.0)
 
 // Default pre-allocated shared keys loaded dynamically from git-ignored config.json
 let defaultGeminiKey = "";
 let defaultDreamloKey = "";
+
+// Global appraised item storage
+let appraisedItem = null;
+let activeMode = "stash"; // "stash" or "appraiser"
 
 // Elements
 const geminiInput = document.getElementById("geminiKey");
@@ -11,6 +15,21 @@ const btnSync = document.getElementById("btnSync");
 const logBox = document.getElementById("logBox");
 const previewCanvas = document.getElementById("previewCanvas");
 const tempVideo = document.getElementById("tempVideo");
+
+// Elements V2.0
+const btnModeStash = document.getElementById("btnModeStash");
+const btnModeAppraiser = document.getElementById("btnModeAppraiser");
+const sectionStash = document.getElementById("sectionStash");
+const sectionAppraiser = document.getElementById("sectionAppraiser");
+const clipboardPaste = document.getElementById("clipboardPaste");
+const btnAppraise = document.getElementById("btnAppraise");
+const appraisalCard = document.getElementById("appraisalCard");
+const appTitle = document.getElementById("appTitle");
+const appBase = document.getElementById("appBase");
+const appMods = document.getElementById("appMods");
+const appPrice = document.getElementById("appPrice");
+const appCullingLogs = document.getElementById("appCullingLogs");
+const btnSyncItem = document.getElementById("btnSyncItem");
 
 // Spatial visual prompt coordinate guides matching true PoE2 stash tab layout
 const SYSTEM_INSTRUCTION = `You are an expert Path of Exile 2 Currency Stash Tab indexer. 
@@ -81,6 +100,38 @@ const RESPONSE_SCHEMA = {
   required: ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror", "lesser_jeweller", "greater_jeweller", "perfect_jeweller"]
 };
 
+// Item Appraiser Prompt coordination V2.0
+const APPRAISER_SYSTEM_INSTRUCTION = `You are an expert Path of Exile 2 Item Appraiser and Trade Evaluator.
+Analyze the raw copied PoE2 item text, extract its stats, and calculate its estimated market value in Chaos Orbs or Divine Orbs based on standard early access trade values.
+
+VALUATION RULES:
+- Chase Uniques (e.g., Mageblood, Headhunter) are worth massive Divines (e.g. Mageblood 248 Divine Orbs, Headhunter 142 Divine Orbs).
+- Unique weapons/rings (e.g. Dreamfeather, The Taming) are worth 4 to 35 Divine Orbs.
+- Good Rare jewelry/rings with high resistances (e.g., +30% to any element), high maximum life (+50 or more), and high mana are worth 30 to 80 Chaos Orbs.
+- Standard common gear with low stats or high level requirements with minimal values is worth 1 to 5 Chaos Orbs.
+- Cull all bot posts (fake listings listed far below actual value). Explain what you culled in the bot_culling_logs field.
+- Formulate a brief, fun flavor text or funny review from a hypothetical guild member about this item.`;
+
+// Schema definition for Tooltip Appraisal
+const APPRAISER_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    name: { type: "STRING" },
+    base_type: { type: "STRING" },
+    rarity: { type: "STRING" },
+    item_level: { type: "INTEGER" },
+    level_req: { type: "INTEGER" },
+    explicit_mods: {
+      type: "ARRAY",
+      items: { type: "STRING" }
+    },
+    estimated_price_string: { type: "STRING" },
+    bot_culling_logs: { type: "STRING" },
+    flavor_text: { type: "STRING" }
+  },
+  required: ["name", "base_type", "rarity", "item_level", "level_req", "explicit_mods", "estimated_price_string", "bot_culling_logs"]
+};
+
 // Initialize settings
 document.addEventListener("DOMContentLoaded", async () => {
   // Try to load default keys from git-ignored config.json
@@ -99,6 +150,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     geminiInput.value = data.geminiKey || defaultGeminiKey;
     dreamloInput.value = data.dreamloKey || defaultDreamloKey;
   });
+
+  // Attempt auto-clipboard read on startup if in Appraiser mode
+  setupClipboardAutoDetect();
 });
 
 // Logs status updates
@@ -111,7 +165,52 @@ function log(msg, type = "") {
   logBox.scrollTop = logBox.scrollHeight;
 }
 
-// Click Trigger
+// Mode Switcher Controls
+btnModeStash.addEventListener("click", () => {
+  activeMode = "stash";
+  btnModeStash.classList.add("active");
+  btnModeAppraiser.classList.remove("active");
+  sectionStash.style.display = "block";
+  sectionAppraiser.style.display = "none";
+  appraisalCard.style.display = "none";
+  logBox.innerHTML = "Status: Switched to Stash Tab Sync mode.";
+});
+
+btnModeAppraiser.addEventListener("click", () => {
+  activeMode = "appraiser";
+  btnModeAppraiser.classList.add("active");
+  btnModeStash.classList.remove("active");
+  sectionStash.style.display = "none";
+  sectionAppraiser.style.display = "block";
+  logBox.innerHTML = "Status: Switched to Clipboard Item Appraiser mode.";
+  
+  // Trigger auto detect when switching tab
+  readClipboardText();
+});
+
+// Try to auto-grab clipboard on launch/switch
+function setupClipboardAutoDetect() {
+  chrome.permissions.contains({ permissions: ['clipboardRead'] }, (hasPerm) => {
+    if (hasPerm && activeMode === "appraiser") {
+      readClipboardText();
+    }
+  });
+}
+
+async function readClipboardText() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && (text.includes("Rarity:") || text.includes("Item Class:"))) {
+      clipboardPaste.value = text;
+      logBox.innerHTML = "Status: PoE item text auto-detected in clipboard!";
+      log("Click 'APPRAISE CLIPBOARD ITEM' to evaluate its stats.", "success");
+    }
+  } catch (err) {
+    console.log("Auto clipboard read blocked or empty:", err);
+  }
+}
+
+// Stash Sync Click Trigger
 btnSync.addEventListener("click", async () => {
   const geminiKey = geminiInput.value.trim();
   const dreamloKey = dreamloInput.value.trim();
@@ -125,18 +224,13 @@ btnSync.addEventListener("click", async () => {
     return;
   }
   
-  // Persist keys for next run
   chrome.storage.local.set({ geminiKey, dreamloKey });
-  
   logBox.innerHTML = "Status: Initializing display grab...";
   
   try {
-    // 1. Capture display streaming frames
     log("Opening screen selector...");
     const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: {
-        displaySurface: "window" // default preference
-      },
+      video: { displaySurface: "window" },
       audio: false
     });
     
@@ -144,7 +238,6 @@ btnSync.addEventListener("click", async () => {
     tempVideo.srcObject = stream;
     tempVideo.play();
     
-    // Wait for video stream properties to load
     tempVideo.onloadedmetadata = () => {
       setTimeout(() => {
         captureAndUpload(stream, geminiKey, dreamloKey);
@@ -166,21 +259,15 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
     previewCanvas.width = videoWidth;
     previewCanvas.height = videoHeight;
     
-    // Draw current stream frame to hidden buffer canvas
     ctx.drawImage(tempVideo, 0, 0, videoWidth, videoHeight);
     
-    // Instantly shutdown stream captures to release screen sharing resources!
     stream.getTracks().forEach(track => track.stop());
     log("Captured screen frame successfully.");
     
-    // Extract base64 payload
     const dataUrl = previewCanvas.toDataURL("image/png");
     const base64Data = dataUrl.split(",")[1];
     
-    // Render preview to popup
     previewCanvas.style.display = "block";
-    
-    // 2. Call Gemini API Vision model
     log("Running Gemini Multimodal Vision analysis...");
     
     const apiUrL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
@@ -208,9 +295,7 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
     
     const res = await fetch(apiUrL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
     
@@ -221,12 +306,10 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
     
     const resJson = await res.json();
     const responseText = resJson.candidates[0].content.parts[0].text;
-    
     log("Gemini parsed stash metrics successfully.");
     
     const data = JSON.parse(responseText);
     
-    // Map the 26+ extended currency tiers down to the core 11 currencies
     const core_data = {
       scroll: data.scroll || 0,
       transmute: (data.transmute || 0) + (data.greater_transmute || 0) + (data.perfect_transmute || 0),
@@ -241,7 +324,6 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
       mirror: data.mirror || 0
     };
     
-    // Calculate total net worth for score index mapping
     const rates = {
       mirror: 40000.0, divine: 150.0, exalted: 15.0, annulment: 5.0, vaal: 2.0,
       chaos: 1.0, regal: 0.8, alchemy: 0.5, transmute: 0.2, augmentation: 0.15, scroll: 0.05
@@ -251,14 +333,10 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
       total_chaos += core_data[k] * rates[k];
     });
     
-    // Squeeze counts into positional pipe string:
-    // scroll|transmute|augmentation|alchemy|regal|chaos|vaal|annulment|exalted|divine|mirror|version
     const core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
     const pipe_str = core_keys.map(k => core_data[k]).join("|") + "|1.0";
     
     const total_score = Math.floor(total_chaos * 10);
-    
-    // 3. Sync live positional string to Dreamlo database
     log("Syncing live scan results to your online guild website...");
     
     const pushUrl = `https://dreamlo.com/lb/${dreamloKey}/add/__GUILD_VAULT__/${total_score}/0/${encodeURIComponent(pipe_str)}`;
@@ -274,3 +352,158 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
     log(`API Sync failed: ${err.message}`, "error");
   }
 }
+
+// ==========================================
+// V2.0 ITEM APPRAISER / TOOLTIP SCAN LOGIC
+// ==========================================
+
+btnAppraise.addEventListener("click", async () => {
+  const geminiKey = geminiInput.value.trim();
+  const dreamloKey = dreamloInput.value.trim();
+  const itemText = clipboardPaste.value.trim();
+  
+  if (!geminiKey) {
+    log("Error: Gemini API Key required.", "error");
+    return;
+  }
+  if (!dreamloKey) {
+    log("Error: Dreamlo Private Key required.", "error");
+    return;
+  }
+  if (!itemText) {
+    log("Error: Please paste item stats text first.", "error");
+    return;
+  }
+  
+  chrome.storage.local.set({ geminiKey, dreamloKey });
+  logBox.innerHTML = "Status: Appraising item text stats via Gemini AI...";
+  appraisalCard.style.display = "none";
+  
+  try {
+    const apiUrL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+    
+    const payload = {
+      contents: [{
+        parts: [{ text: `Appraise the following Path of Exile 2 item text copied from in-game:\n\n${itemText}` }]
+      }],
+      generationConfig: {
+        systemInstruction: {
+          parts: [{ text: APPRAISER_SYSTEM_INSTRUCTION }]
+        },
+        responseMimeType: "application/json",
+        responseSchema: APPRAISER_SCHEMA
+      }
+    };
+    
+    const res = await fetch(apiUrL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!res.ok) {
+      const errTxt = await res.text();
+      throw new Error(`Gemini API returned status ${res.status}: ${errTxt}`);
+    }
+    
+    const resJson = await res.json();
+    const responseText = resJson.candidates[0].content.parts[0].text;
+    
+    appraisedItem = JSON.parse(responseText);
+    log("Gemini successfully appraised item values!", "success");
+    
+    // Display appraised Poe Tooltip Card in Popup
+    appTitle.textContent = appraisedItem.name;
+    appBase.textContent = appraisedItem.base_type;
+    
+    // Rarity Color Code
+    let color = "#af6025"; // Unique orange
+    if (appraisedItem.rarity.toLowerCase() === 'rare') {
+      color = "#f7d05e"; // Rare yellow
+    } else if (appraisedItem.rarity.toLowerCase() === 'magic') {
+      color = "#548cf7"; // Magic blue
+    } else if (appraisedItem.rarity.toLowerCase() === 'normal') {
+      color = "#cbd5e1"; // Normal white
+    }
+    appTitle.style.color = color;
+    
+    // Explicit Stats list
+    appMods.innerHTML = "";
+    appraisedItem.explicit_mods.forEach(mod => {
+      const div = document.createElement("div");
+      div.textContent = mod;
+      appMods.appendChild(div);
+    });
+    
+    appPrice.textContent = appraisedItem.estimated_price_string;
+    appCullingLogs.textContent = appraisedItem.bot_culling_logs;
+    
+    appraisalCard.style.display = "block";
+    
+  } catch (err) {
+    log(`Appraisal failed: ${err.message}`, "error");
+  }
+});
+
+// Sync appraised item to online leaderboard Creg's Depot tab!
+btnSyncItem.addEventListener("click", async () => {
+  const dreamloKey = dreamloInput.value.trim();
+  if (!appraisedItem) return;
+  
+  logBox.innerHTML = "Status: Syncing appraised gear to visual stash online...";
+  
+  try {
+    const entryName = `ITEM_${Date.now()}`;
+    const explicit_str = appraisedItem.explicit_mods.join(";");
+    
+    // Position pipe separated payload
+    const item_payload = [
+      appraisedItem.rarity,
+      appraisedItem.name,
+      appraisedItem.base_type,
+      appraisedItem.level_req || 0,
+      appraisedItem.item_level || 0,
+      explicit_str,
+      appraisedItem.estimated_price_string,
+      appraisedItem.flavor_text || "",
+      appraisedItem.bot_culling_logs,
+      getIconUrl(appraisedItem.name, appraisedItem.base_type)
+    ].join("|");
+    
+    const pushUrl = `https://dreamlo.com/lb/${dreamloKey}/add/${entryName}/0/0/${encodeURIComponent(item_payload)}`;
+    
+    const pushRes = await fetch(pushUrl);
+    if (!pushRes.ok) {
+      throw new Error(`Database push failed: ${pushRes.status}`);
+    }
+    
+    log(`✅ Live item successfully added to Depot Drop! ${appraisedItem.name} listed at ${appraisedItem.estimated_price_string}.`, "success");
+    appraisalCard.style.display = "none";
+    clipboardPaste.value = "";
+    appraisedItem = null;
+    
+  } catch (err) {
+    log(`Website sync failed: ${err.message}`, "error");
+  }
+});
+
+// Map item names and types to standard high-quality GGG CDN icon graphics
+function getIconUrl(name, baseType) {
+  const n = name.toLowerCase();
+  const b = baseType.toLowerCase();
+  
+  if (n.includes("mageblood")) return "https://web.poecdn.com/image/Art/2DItems/Belts/Mageblood.png";
+  if (n.includes("headhunter")) return "https://web.poecdn.com/image/Art/2DItems/Belts/Headhunter.png";
+  if (n.includes("dreamfeather")) return "https://web.poecdn.com/image/Art/2DItems/Weapons/OneHandSwords/Dreamfeather.png";
+  if (n.includes("taming")) return "https://web.poecdn.com/image/Art/2DItems/Rings/TheTaming.png";
+  if (n.includes("bereks respite")) return "https://web.poecdn.com/image/Art/2DItems/Rings/BereksRespite.png";
+  
+  // Base type ring fallback
+  if (b.includes("ring")) return "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png";
+  if (b.includes("belt")) return "https://web.poecdn.com/image/Art/2DItems/Belts/HeavyBelt.png";
+  if (b.includes("sword") || b.includes("blade")) return "https://web.poecdn.com/image/Art/2DItems/Weapons/OneHandSwords/Dreamfeather.png";
+  
+  // Generic fallback
+  return "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png";
+}
+
