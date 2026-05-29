@@ -381,10 +381,10 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
           }
         ]
       }],
+      systemInstruction: {
+        parts: [{ text: SYSTEM_INSTRUCTION }]
+      },
       generationConfig: {
-        systemInstruction: {
-          parts: [{ text: SYSTEM_INSTRUCTION }]
-        },
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA
       }
@@ -483,10 +483,10 @@ async function appraiseItemText(itemText, autoSync = false) {
       contents: [{
         parts: [{ text: `Appraise the following Path of Exile 2 item text copied from in-game:\n\n${itemText}` }]
       }],
+      systemInstruction: {
+        parts: [{ text: APPRAISER_SYSTEM_INSTRUCTION }]
+      },
       generationConfig: {
-        systemInstruction: {
-          parts: [{ text: APPRAISER_SYSTEM_INSTRUCTION }]
-        },
         responseMimeType: "application/json",
         responseSchema: APPRAISER_SCHEMA
       }
@@ -1229,10 +1229,10 @@ async function captureAndOcrCharacter(stream, geminiKey) {
           }
         ]
       }],
+      systemInstruction: {
+        parts: [{ text: CHAR_AUDIT_SYSTEM_INSTRUCTION }]
+      },
       generationConfig: {
-        systemInstruction: {
-          parts: [{ text: CHAR_AUDIT_SYSTEM_INSTRUCTION }]
-        },
         responseMimeType: "application/json",
         responseSchema: CHAR_AUDIT_SCHEMA
       }
