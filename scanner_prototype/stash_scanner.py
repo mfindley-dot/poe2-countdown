@@ -13,19 +13,55 @@ except ImportError:
     print("Please install it by running: pip install google-genai pydantic pillow")
     sys.exit(1)
 
-# Define the exact 11 currency types matching the game database schema
+# Define the exact Path of Exile 2 currency types including Greater, Perfect, and Jeweller tiers
 class Poe2CurrencyStash(BaseModel):
+    # Left-hand 5x3 Grid (Row 1)
+    augmentation: int = Field(default=0, description="Quantity of Orb of Augmentation (Row 1, Col 1)")
+    greater_augmentation: int = Field(default=0, description="Quantity of Greater Orb of Augmentation (Row 1, Col 2)")
+    perfect_augmentation: int = Field(default=0, description="Quantity of Perfect Orb of Augmentation (Row 1, Col 3)")
+    
+    # Left-hand 5x3 Grid (Row 2)
+    transmute: int = Field(default=0, description="Quantity of Orb of Transmutation (Row 2, Col 1)")
+    greater_transmute: int = Field(default=0, description="Quantity of Greater Orb of Transmutation (Row 2, Col 2)")
+    perfect_transmute: int = Field(default=0, description="Quantity of Perfect Orb of Transmutation (Row 2, Col 3)")
+    
+    # Left-hand 5x3 Grid (Row 3)
+    regal: int = Field(default=0, description="Quantity of Regal Orb (Row 3, Col 1)")
+    greater_regal: int = Field(default=0, description="Quantity of Greater Regal Orb (Row 3, Col 2)")
+    perfect_regal: int = Field(default=0, description="Quantity of Perfect Regal Orb (Row 3, Col 3)")
+    
+    # Left-hand 5x3 Grid (Row 4)
+    exalted: int = Field(default=0, description="Quantity of Exalted Orb (Row 4, Col 1)")
+    greater_exalted: int = Field(default=0, description="Quantity of Greater Exalted Orb (Row 4, Col 2)")
+    perfect_exalted: int = Field(default=0, description="Quantity of Perfect Exalted Orb (Row 4, Col 3)")
+    
+    # Left-hand 5x3 Grid (Row 5)
+    chaos: int = Field(default=0, description="Quantity of Chaos Orb (Row 5, Col 1)")
+    greater_chaos: int = Field(default=0, description="Quantity of Greater Chaos Orb (Row 5, Col 2)")
+    perfect_chaos: int = Field(default=0, description="Quantity of Perfect Chaos Orb (Row 5, Col 3)")
+    
+    # Central 3x3 Utility Grid (Row 1)
+    vaal: int = Field(default=0, description="Quantity of Vaal Orb (Central Row 1, Col 1)")
+    alchemy: int = Field(default=0, description="Quantity of Orb of Alchemy (Central Row 1, Col 2)")
+    divine: int = Field(default=0, description="Quantity of Divine Orb (Central Row 1, Col 3)")
+    
+    # Central 3x3 Utility Grid (Row 2)
+    chance: int = Field(default=0, description="Quantity of Orb of Chance (Central Row 2, Col 1)")
+    annulment: int = Field(default=0, description="Quantity of Orb of Annulment (Central Row 2, Col 2)")
+    artificer: int = Field(default=0, description="Quantity of Artificer's Orb (Central Row 2, Col 3)")
+    
+    # Central 3x3 Utility Grid (Row 3)
+    fracturing: int = Field(default=0, description="Quantity of Fracturing Orb (Central Row 3, Col 1)")
+    hinekoras_lock: int = Field(default=0, description="Quantity of Hinekora's Lock (Central Row 3, Col 2)")
+    mirror: int = Field(default=0, description="Quantity of Mirror of Kalandra (Central Row 3, Col 3)")
+    
+    # Top-Right horizontal cluster (Jewellers' Tiers)
+    lesser_jeweller: int = Field(default=0, description="Quantity of Lesser Jeweller's Orb (Left loop)")
+    greater_jeweller: int = Field(default=0, description="Quantity of Greater Jeweller's Orb (Middle loop)")
+    perfect_jeweller: int = Field(default=0, description="Quantity of Perfect Jeweller's Orb (Right loop)")
+    
+    # Misc currencies
     scroll: int = Field(default=0, description="Quantity of Scroll of Wisdom")
-    transmute: int = Field(default=0, description="Quantity of Orb of Transmutation")
-    augmentation: int = Field(default=0, description="Quantity of Orb of Augmentation")
-    alchemy: int = Field(default=0, description="Quantity of Orb of Alchemy")
-    regal: int = Field(default=0, description="Quantity of Regal Orb")
-    chaos: int = Field(default=0, description="Quantity of Chaos Orb")
-    vaal: int = Field(default=0, description="Quantity of Vaal Orb")
-    annulment: int = Field(default=0, description="Quantity of Orb of Annulment")
-    exalted: int = Field(default=0, description="Quantity of Exalted Orb")
-    divine: int = Field(default=0, description="Quantity of Divine Orb")
-    mirror: int = Field(default=0, description="Quantity of Mirror of Kalandra")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Path of Exile 2 Gemini Vision Currency Stash Scanner")
@@ -89,22 +125,35 @@ def main():
             config=types.GenerateContentConfig(
                 system_instruction=(
                     "You are an expert Path of Exile 2 Currency Stash Tab indexer. "
-                    "Match the quantities in the image to the correct currency keys based on this exact PoE2 Currency Tab visual guide:\n\n"
-                    "1. Far-Left Column (Vertical stack of 4 large slots):\n"
-                    "   - scroll: Top slot (Column 1, Row 1) - Blue face scroll icon (often high quantity, e.g. 3040)\n"
-                    "   - transmute: Second slot down (Column 1, Row 2) - Blue circular face orb (e.g. 203)\n"
-                    "   - augmentation: Third slot down (Column 1, Row 3) - Bronze/copper face orb\n"
-                    "   - alchemy: Bottom slot (Column 1, Row 4) - Gold face orb\n\n"
-                    "2. Middle-Left Cluster (Top row has two adjacent slots, bottom row has one):\n"
-                    "   - exalted: Top-Right of this cluster - Red face skull/orb (e.g. 380)\n"
-                    "   - vaal: Top-Left of this cluster - White face mask (e.g. 19)\n"
-                    "   - annulment: Bottom-Middle of this cluster - White stone face mask (e.g. 4)\n\n"
-                    "3. Right-Side Cluster (Grid of various slots):\n"
-                    "   - divine: Gold/bronze circular coin with a serene holy face (e.g. 164)\n"
-                    "   - mirror: Highly reflective silver/metallic runic mirror (e.g. 23)\n"
-                    "   - chaos: Metallic double-sided face orb (e.g. 97)\n"
-                    "   - regal: Shiny gold circular ring/emblem (e.g. 149)\n\n"
-                    "For any currency that is not visible, missing, or has 0 quantity, you MUST return 0. Do NOT omit any keys from the response."
+                    "Analyze the Currency Stash Tab screenshot and match numbers/quantities carefully. Use this spatial visual guide:\n\n"
+                    "1. FAR-LEFT GRID (5 rows by 3 columns of slots):\n"
+                    "   - Row 1: augmentation (Col 1, Base) | greater_augmentation (Col 2, II) | perfect_augmentation (Col 3, III) [Bronze/copper circular multi-faced orbs]\n"
+                    "   - Row 2: transmute (Col 1, Base) | greater_transmute (Col 2, II) | perfect_transmute (Col 3, III) [Dark blue circular multi-faced orbs]\n"
+                    "   - Row 3: regal (Col 1, Base) | greater_regal (Col 2, II) | perfect_regal (Col 3, III) [Half-blue, half-gold face orbs]\n"
+                    "   - Row 4: exalted (Col 1, Base) | greater_exalted (Col 2, II) | perfect_exalted (Col 3, III) [Shiny gold cracked face orbs]\n"
+                    "   - Row 5: chaos (Col 1, Base) | greater_chaos (Col 2, II) | perfect_chaos (Col 3, III) [Golden face orbs composed of multiple stacked mini-faces]\n\n"
+                    "2. CENTRAL UTILITY GRID (3 rows by 3 columns of slots directly to the right of the 5x3 grid):\n"
+                    "   - Row 1 (Top row):\n"
+                    "     * Column 1 (Left): alchemy - Orb of Alchemy [Reddish-gold smooth face orb, count 195]\n"
+                    "     * Column 2 (Middle): vaal - Vaal Orb [Red multi-faced skull shape, count 386]\n"
+                    "     * Column 3 (Right): annulment - Orb of Annulment [Blue/white half-split mask, count 18]\n"
+                    "   - Row 2 (Middle row):\n"
+                    "     * Column 1 (Left): chance - Orb of Chance [Cracked white/gold face orb, count 38]\n"
+                    "     * Column 2 (Middle): fracturing - Fracturing Orb [Shattered glowing yellow crystal, count 3]\n"
+                    "     * Column 3 (Right): divine - Divine Orb [Gold coin with serene serene face, count 169]\n"
+                    "   - Row 3 (Bottom row):\n"
+                    "     * Column 1 (Left): hinekoras_lock - Hinekora's Lock [Dark braided purple lock/ribbon, count 0]\n"
+                    "     * Column 2 (Middle): mirror - Mirror of Kalandra [Silver metallic runic mirror, count 0]\n"
+                    "     * Column 3 (Right): artificer - Artificer's Orb [Dark green/grey bag shape, count 81]\n\n"
+                    "3. TOP-RIGHT HORIZONTAL CLUSTER (Jewellers' Currency):\n"
+                    "   - lesser_jeweller (Left, plain copper/bronze loop, count 349. Ensure you read all three digits '349' fully!)\n"
+                    "   - greater_jeweller (Middle, bronze loop with inner notches, count 12)\n"
+                    "   - perfect_jeweller (Right, gold loop holding a central blue/purple gem, count 1)\n\n"
+                    "4. SCROLL OF WISDOM:\n"
+                    "   - scroll: Red-ribbon tied blue scroll icon, located on the right side under general/popular/secondary stacks (count 91).\n\n"
+                    "RULES:\n"
+                    " - For any slot that is completely empty or has no quantity, return 0.\n"
+                    " - Output numbers exactly as read. Pay extra attention to double-digit and triple-digit numbers. Do not miss the leading digit near slot borders (e.g. read '349' instead of '49')."
                 ),
                 response_mime_type="application/json",
                 response_schema=Poe2CurrencyStash,
@@ -119,19 +168,54 @@ def main():
         # Parse JSON and print net worth summary
         try:
             data = json.loads(response.text)
-            # Define estimated chaos exchange rates matching game.js configuration
+            # Define estimated chaos exchange rates for net worth mapping
             rates = {
+                # High Tier
                 "mirror": 40000.0,
+                "hinekoras_lock": 15000.0,
                 "divine": 150.0,
+                
+                # Exalted Tiers
+                "perfect_exalted": 45.0,
+                "greater_exalted": 25.0,
                 "exalted": 15.0,
-                "annulment": 5.0,
-                "vaal": 2.0,
+                
+                # Chaos Tiers
+                "perfect_chaos": 5.0,
+                "greater_chaos": 2.2,
                 "chaos": 1.0,
+                
+                # Jeweller Tiers
+                "perfect_jeweller": 5.0,
+                "greater_jeweller": 1.0,
+                "lesser_jeweller": 0.1,
+                
+                # Utility Tiers
+                "fracturing": 50.0,
+                "artificer": 8.0,
+                "annulment": 5.0,
+                
+                # Regal Tiers
+                "perfect_regal": 4.0,
+                "greater_regal": 2.0,
                 "regal": 0.8,
+                
+                # Low Tier Currencies
+                "vaal": 2.0,
                 "alchemy": 0.5,
+                
+                # Transmutation Tiers
+                "perfect_transmute": 1.2,
+                "greater_transmute": 0.5,
                 "transmute": 0.2,
+                
+                # Augmentation Tiers
+                "perfect_augmentation": 0.8,
+                "greater_augmentation": 0.3,
                 "augmentation": 0.15,
-                "scroll": 0.1
+                
+                "chance": 0.2,
+                "scroll": 0.05
             }
             total_chaos = 0.0
             for key, qty in data.items():
