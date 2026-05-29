@@ -3,6 +3,7 @@
 // Default pre-allocated shared keys loaded dynamically from git-ignored config.json
 let defaultGeminiKey = "";
 let defaultDreamloKey = "";
+let defaultDreamloPublicKey = "";
 
 // Global appraised item storage
 let appraisedItem = null;
@@ -11,6 +12,7 @@ let activeMode = "stash"; // "stash" or "appraiser"
 // Elements
 const geminiInput = document.getElementById("geminiKey");
 const dreamloInput = document.getElementById("dreamloKey");
+const dreamloPublicKeyInput = document.getElementById("dreamloPublicKey");
 const btnSync = document.getElementById("btnSync");
 const logBox = document.getElementById("logBox");
 const previewCanvas = document.getElementById("previewCanvas");
@@ -203,18 +205,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       const config = await configRes.json();
       defaultGeminiKey = config.default_gemini_key || "";
       defaultDreamloKey = config.default_dreamlo_key || "";
+      defaultDreamloPublicKey = config.default_dreamlo_public_key || "";
     }
   } catch (err) {
     console.warn("Failed to load local config.json:", err);
   }
 
   chrome.storage.local.get([
-    "geminiKey", "dreamloKey", "hotkeyIdentify", "hotkeyAppraise", 
+    "geminiKey", "dreamloKey", "dreamloPublicKey", "hotkeyIdentify", "hotkeyAppraise", 
     "bulkLeague", "bulkTabIndex", "bulkStashType", "bulkAccountName",
     "manualFireRes", "manualColdRes", "manualLightRes", "manualStr", "manualDex", "manualInt"
   ], (data) => {
     geminiInput.value = data.geminiKey || defaultGeminiKey;
     dreamloInput.value = data.dreamloKey || defaultDreamloKey;
+    dreamloPublicKeyInput.value = data.dreamloPublicKey || defaultDreamloPublicKey;
     
     if (data.hotkeyIdentify) {
       hotkeyIdentify = data.hotkeyIdentify;
@@ -815,6 +819,7 @@ function parsePoEItem(item) {
 // Bulk sync execution handler
 async function bulkSyncStashTab() {
   const dreamloKey = dreamloInput.value.trim();
+  const dreamloPublicKey = dreamloPublicKeyInput.value.trim();
   const league = bulkLeagueInput.value.trim();
   const tabIndex = parseInt(bulkTabIndexInput.value.trim(), 10) || 0;
   const stashType = bulkStashTypeSelect.value;
@@ -822,6 +827,10 @@ async function bulkSyncStashTab() {
   
   if (!dreamloKey) {
     log("Error: Dreamlo Private Key required.", "error");
+    return;
+  }
+  if (!dreamloPublicKey) {
+    log("Error: Dreamlo Public Key required.", "error");
     return;
   }
   if (!league) {
@@ -835,6 +844,8 @@ async function bulkSyncStashTab() {
   
   // Persist input values to local storage
   chrome.storage.local.set({
+    dreamloKey: dreamloKey,
+    dreamloPublicKey: dreamloPublicKey,
     bulkLeague: league,
     bulkTabIndex: tabIndex,
     bulkStashType: stashType,
@@ -934,7 +945,7 @@ async function bulkSyncStashTab() {
     
     // 2. Fetch current database entries to purge old items
     log("Querying online database for stale entries...");
-    const dlGetUrl = `https://dreamlo.com/lb/${dreamloKey}/json`;
+    const dlGetUrl = `https://dreamlo.com/lb/${dreamloPublicKey}/json`;
     const dlRes = await fetch(dlGetUrl);
     let dlData = null;
     if (dlRes.ok) {
