@@ -88,10 +88,23 @@ def main():
             contents=[img, "Extract the exact quantities of all visible Path of Exile 2 currency items in this Currency Stash Tab image."],
             config=types.GenerateContentConfig(
                 system_instruction=(
-                    "You are a master Path of Exile 2 Stash Tab Indexer. "
-                    "Locate the standard slots in this Currency Stash Tab, inspect the items, and read the quantity numbers written on them. "
-                    "If a currency type is empty, not visible, has 0, or is not in the stash, you MUST return 0 for its quantity. "
-                    "Do NOT omit any keys from your response."
+                    "You are an expert Path of Exile 2 Currency Stash Tab indexer. "
+                    "Match the quantities in the image to the correct currency keys based on this exact PoE2 Currency Tab visual guide:\n\n"
+                    "1. Far-Left Column (Vertical stack of 4 large slots):\n"
+                    "   - scroll: Top slot (Column 1, Row 1) - Blue face scroll icon (often high quantity, e.g. 3040)\n"
+                    "   - transmute: Second slot down (Column 1, Row 2) - Blue circular face orb (e.g. 203)\n"
+                    "   - augmentation: Third slot down (Column 1, Row 3) - Bronze/copper face orb\n"
+                    "   - alchemy: Bottom slot (Column 1, Row 4) - Gold face orb\n\n"
+                    "2. Middle-Left Cluster (Top row has two adjacent slots, bottom row has one):\n"
+                    "   - exalted: Top-Right of this cluster - Red face skull/orb (e.g. 380)\n"
+                    "   - vaal: Top-Left of this cluster - White face mask (e.g. 19)\n"
+                    "   - annulment: Bottom-Middle of this cluster - White stone face mask (e.g. 4)\n\n"
+                    "3. Right-Side Cluster (Grid of various slots):\n"
+                    "   - divine: Gold/bronze circular coin with a serene holy face (e.g. 164)\n"
+                    "   - mirror: Highly reflective silver/metallic runic mirror (e.g. 23)\n"
+                    "   - chaos: Metallic double-sided face orb (e.g. 97)\n"
+                    "   - regal: Shiny gold circular ring/emblem (e.g. 149)\n\n"
+                    "For any currency that is not visible, missing, or has 0 quantity, you MUST return 0. Do NOT omit any keys from the response."
                 ),
                 response_mime_type="application/json",
                 response_schema=Poe2CurrencyStash,
