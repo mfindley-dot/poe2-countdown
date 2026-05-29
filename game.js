@@ -665,6 +665,21 @@ class GameProjectile {
     if (this.isSpark && this.sparkAge > 180) {
       this.active = false;
     }
+    
+    // Spawn gorgeous glowing projectile trail particles! (glowing cyan/blue tails matching the Pitch Frame)
+    if (this.active && Math.random() < 0.45) {
+      particleEffects.push({
+        isProjectileTrail: true,
+        x: this.x - this.vx * 0.3,
+        y: this.y - this.vy * 0.3,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        radius: Math.random() * 2.8 + 1.2,
+        color: this.color,
+        age: 0,
+        maxAge: 12 + Math.floor(Math.random() * 12)
+      });
+    }
   }
 
   draw() {
@@ -1420,11 +1435,17 @@ class Enemy {
         const srcX = activeCol * frameW;
         const srcY = activeRow * frameH;
         
-        // Underfoot perspective shadow for the giant boss (scaled down by 25% to match 270px size)
+        // Underfoot perspective radial glow shadow for the giant boss
+        ctx.save();
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + 60, 72, 21, 0, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.ellipse(this.x, this.y + 60, 75, 22, 0, 0, Math.PI * 2);
+        const shadowGrad = ctx.createRadialGradient(this.x, this.y + 60, 0, this.x, this.y + 60, 75);
+        shadowGrad.addColorStop(0, "rgba(0, 0, 0, 0.65)");
+        shadowGrad.addColorStop(0.6, "rgba(0, 0, 0, 0.35)");
+        shadowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = shadowGrad;
         ctx.fill();
+        ctx.restore();
         
         // Render boss sprite frame (scaled down by 25% to 270px)
         const drawW = 270;
@@ -1436,6 +1457,15 @@ class Enemy {
           this.x - drawW / 2, this.y - drawH / 2,
           drawW, drawH
         );
+        
+        // Draw red flash overlay if recently hit (satisfying boss impact!)
+        if (this.lastHitTime && Date.now() - this.lastHitTime < 150) {
+          ctx.save();
+          ctx.globalCompositeOperation = "source-atop";
+          ctx.fillStyle = "rgba(239, 68, 68, 0.55)"; // glowing red overlay
+          ctx.fillRect(this.x - drawW / 2, this.y - drawH / 2, drawW, drawH);
+          ctx.restore();
+        }
         
         drewSprite = true;
       }
@@ -3418,6 +3448,12 @@ function processGamePhysics() {
     p.age++;
     if (p.isBeam) return;
     
+    if (p.isProjectileTrail) {
+      if (p.vx) p.x += p.vx;
+      if (p.vy) p.y += p.vy;
+      return;
+    }
+    
     if (p.isSlamRing) {
       // Dynamic dodge-rollable shockwave check
       if (!p.hasHitPlayer && player.hp > 0 && currentGameState === GameState.PLAY) {
@@ -3483,6 +3519,7 @@ function processGamePhysics() {
       if (dist < p.radius + e.radius) {
         // Hit!
         e.hp -= p.damage;
+        e.lastHitTime = Date.now();
         
         // Creg drops loot on hit!
         if (e.type === "banker") {
@@ -3893,8 +3930,8 @@ function drawGamePlayScreen() {
       const fy = (f.y / 900) * 360; // Constrained strictly within [0, 360]!
       
       const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, f.radius);
-      grad.addColorStop(0, `rgba(45, 60, 52, ${f.opacity})`);
-      grad.addColorStop(0.5, `rgba(30, 42, 36, ${f.opacity * 0.4})`);
+      grad.addColorStop(0, `rgba(30, 64, 175, ${f.opacity})`); // Gorgeous electric blue fog
+      grad.addColorStop(0.5, `rgba(30, 58, 138, ${f.opacity * 0.45})`); // Deep night-sky indigo
       grad.addColorStop(1, "rgba(0, 0, 0, 0)");
       
       ctx.fillStyle = grad;
@@ -3926,8 +3963,27 @@ function drawGamePlayScreen() {
         }
       }
       
-      // Grid lines for bottom (from 360 y-split boundary)
-      ctx.strokeStyle = "rgba(22, 17, 13, 0.18)";
+      // Soft shadow transition at the top of the playfield (shading it to deep dark blue/black as it meets the forest)
+      const shadowGrad = ctx.createLinearGradient(0, 360, 0, 480);
+      shadowGrad.addColorStop(0, "rgba(5, 7, 10, 0.98)"); // solid dark forest shadow
+      shadowGrad.addColorStop(0.3, "rgba(5, 7, 10, 0.82)");
+      shadowGrad.addColorStop(1, "rgba(5, 7, 10, 0)");     // fades out onto the grass
+      ctx.fillStyle = shadowGrad;
+      ctx.fillRect(0, 360, canvas.width, 120);
+      
+      // Volumetric Slate-Blue Drifting Mist overlay (Moody Gothic Atmosphere matching the Pitch Frame)
+      const mistGrad = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, canvas.width / 4,
+        canvas.width / 2, canvas.height / 2, canvas.width
+      );
+      mistGrad.addColorStop(0, "rgba(30, 58, 138, 0)");       // clear center
+      mistGrad.addColorStop(0.7, "rgba(30, 58, 138, 0.12)");   // soft indigo mist
+      mistGrad.addColorStop(1, "rgba(15, 23, 42, 0.48)");     // deep night-sky vignette border
+      ctx.fillStyle = mistGrad;
+      ctx.fillRect(0, 360, canvas.width, canvas.height - 360);
+      
+      // Grid lines for bottom - toned down to 0.03 opacity to be organic and seamless!
+      ctx.strokeStyle = "rgba(22, 17, 13, 0.03)";
       ctx.lineWidth = 0.5;
       for (let x = 0; x < canvas.width; x += tileSize) {
         ctx.beginPath();
@@ -4218,10 +4274,26 @@ function drawParticles() {
       const pct = p.age / p.maxAge;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius * pct, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(239, 68, 68, ${1 - pct})`;
-      ctx.lineWidth = 3 * (1 - pct);
+      ctx.strokeStyle = p.color || `rgba(239, 68, 68, ${1 - pct})`;
+      ctx.lineWidth = 4 * (1 - pct);
+      
+      // Add glowing energy bloom to shockwaves
+      ctx.shadowColor = "#ef4444";
+      ctx.shadowBlur = 15 * (1 - pct);
       ctx.stroke();
+      ctx.shadowBlur = 0; // reset
     } 
+    else if (p.isProjectileTrail) {
+      // Draw small glowing particle trails
+      const pct = p.age / p.maxAge;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius * (1 - pct), 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 5 * (1 - pct);
+      ctx.fill();
+      ctx.shadowBlur = 0; // reset
+    }
     else if (p.isTrail) {
       const opacity = 1 - (p.age / p.maxAge);
       ctx.beginPath();
