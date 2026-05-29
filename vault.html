@@ -951,12 +951,12 @@
       document.getElementById('poeTooltipOverlay').style.display = 'none';
     }
 
-    // 📺 GLG SHOPPING NETWORK (QVC SHOWROOM WIDGET)
+    // 📺 GLG SHOPPING NETWORK (QVC SHOWROOM WIDGET) WITH PREMIUM GGG CDN IMAGES
     const QVC_ITEMS = [
       {
         name: "Dreamfeather",
         sub: "Eternal Sword",
-        icon: "🗡️",
+        url: "https://web.poecdn.com/image/Art/2DItems/Weapons/OneHandSwords/Dreamfeather.png",
         price: "4.5 Divine Orbs",
         desc: "Perfect evasion rating scaling damage rolls! Phase map bosses in Early Access.",
         reviews: [
@@ -967,7 +967,7 @@
       {
         name: "Headhunter",
         sub: "Leather Belt",
-        icon: "💀",
+        url: "https://web.poecdn.com/image/Art/2DItems/Belts/Headhunter.png",
         price: "142.0 Divine Orbs",
         desc: "Copies rare monster mods. Temporarily turns your character into a 40-foot giant.",
         reviews: [
@@ -978,7 +978,7 @@
       {
         name: "Mageblood",
         sub: "Heavy Belt",
-        icon: "🩸",
+        url: "https://web.poecdn.com/image/Art/2DItems/Belts/Mageblood.png",
         price: "248.0 Divine Orbs",
         desc: "Utility flasks are constantly active. Speed cap exceeded by 300%.",
         reviews: [
@@ -989,7 +989,7 @@
       {
         name: "Runic Topaz Ring",
         sub: "Mirror-Tier Crafted",
-        icon: "💍",
+        url: "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png",
         price: "35 Chaos Orbs",
         desc: "+35% Lightning Res, +65 Max Life, +42 Mana. Sizzling rolls ready!",
         reviews: [
@@ -1000,7 +1000,7 @@
       {
         name: "Autographed Photo of Chris Wilson",
         sub: "Sacred Relic",
-        icon: "🖼️",
+        url: "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyDuplicate.png",
         price: "690 Divine Orbs",
         desc: "Provides +1000% increased loot filter dopamine and guarantees luck.",
         reviews: [
@@ -1025,7 +1025,9 @@
             const randomReview = item.reviews[Math.floor(Math.random() * item.reviews.length)];
             
             showroom.innerHTML = `
-              <div style="font-size: 2.2rem; background: rgba(197, 168, 128, 0.05); padding: 8px; border: 1px solid rgba(197, 168, 128, 0.25); border-radius: 4px; display: flex; align-items: center; justify-content: center; min-width: 50px; height: 50px; box-shadow: inset 0 0 5px rgba(0,0,0,0.8);">${item.icon}</div>
+              <div style="background: rgba(197, 168, 128, 0.03); padding: 5px; border: 1px solid rgba(197, 168, 128, 0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; min-width: 50px; box-shadow: inset 0 0 8px rgba(0,0,0,0.8); box-sizing: border-box;">
+                <img src="${item.url}" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
+              </div>
               <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; font-family: 'Outfit', sans-serif;">
                 <div style="display: flex; justify-content: space-between; align-items: baseline;">
                   <span class="text-gold" style="font-size: 0.85rem; font-weight: bold; text-shadow: 0 0 4px rgba(255, 215, 0, 0.2);">${item.name}</span>
