@@ -6250,6 +6250,21 @@ function initGameEngine() {
     });
   }
 
+  // 9. Quick-toggle view button for Guild Vault
+  const btnSidebarGuild = document.getElementById("btnSidebarToggleGuildVault");
+  if (btnSidebarGuild) {
+    btnSidebarGuild.addEventListener("click", () => {
+      activeStashView = "guild";
+      updateActiveStashTabHighlight();
+      updateStashTabUI();
+      // Smooth scroll to the stash grid visualizer so they see it instantly!
+      const target = document.getElementById("stashGrid");
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+  }
+
   // 9. Dual-mode Leaderboard Tabs Bindings
   const tabTopRuns = document.getElementById("btnTabTopRuns");
   const tabTotalGrind = document.getElementById("btnTabTotalGrind");

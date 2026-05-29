@@ -362,37 +362,28 @@
             </div>
           </button>
 
-          <!-- Left Panel: Loot Filter Soundboard -->
-          <div class="bottom-panel soundboard-panel">
-            <h2 class="panel-title text-gold">LOOT FILTER SOUNDBOARD</h2>
-            <div class="soundboard-grid">
-              <button class="sound-btn border-gold" id="soundBtnMirror" data-sound="mirror">
-                <span class="btn-shine"></span>
-                <span class="btn-text">🪞 Mirror of Kalandra</span>
-              </button>
-              <button class="sound-btn border-gold" id="soundBtnDivine" data-sound="divine">
-                <span class="btn-shine"></span>
-                <span class="btn-text">🪙 Divine Orb</span>
-              </button>
-              <button class="sound-btn border-gold" id="soundBtnExalted" data-sound="exalted">
-                <span class="btn-shine"></span>
-                <span class="btn-text">👑 Exalted Orb</span>
-              </button>
-              <button class="sound-btn border-gold" id="soundBtnChaos" data-sound="chaos">
-                <span class="btn-shine"></span>
-                <span class="btn-text">🌀 Chaos Orb</span>
-              </button>
-              <button class="sound-btn border-gold" id="soundBtnMemeRip" data-sound="rip">
-                <span class="btn-shine"></span>
-                <span class="btn-text">💀 Hype Guild RIP</span>
-              </button>
-              <button class="sound-btn border-gold" id="soundBtnSane" data-sound="sane">
-                <span class="btn-shine"></span>
-                <span class="btn-text">🗣️ "Still Sane, Exile?"</span>
-              </button>
+          <!-- Quick Guild Vault View Button -->
+          <button id="btnSidebarToggleGuildVault" class="gothic-btn" style="margin-top: 8px; width: 100%; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); box-shadow: 0 4px 6px rgba(0,0,0,0.5); border-radius: 4px; padding: 10px; cursor: pointer; transition: all 0.2s ease;">
+            <div style="text-align: center;">
+              <h3 class="panel-title text-gold" style="margin: 0; font-family: var(--font-header); font-size: 1.15rem; letter-spacing: 2px; font-weight: bold; text-shadow: 0 0 4px rgba(197, 168, 128, 0.4);">🔮 VIEW THE GUILD VAULT</h3>
+              <span style="font-size: 0.72rem; color: #cbd5e1; margin-top: 4px; display: block;">Instant view of our live scanned currency holdings!</span>
             </div>
-            <div class="dopamine-counter text-gold-faded">
-              Dopamine Injections Count: <span id="clickCountDisplay" class="text-gold">0</span> Orbs clicked
+          </button>
+
+          <!-- Left Panel: QVC Showroom (Soundboard commented out for launch) -->
+          <div class="bottom-panel soundboard-panel" style="margin-top: 10px; padding: 10px; background: rgba(8, 6, 5, 0.95); border: 1px solid #c5a880; box-shadow: 0 0 10px rgba(197, 168, 128, 0.1); border-radius: 4px; overflow: hidden; position: relative;">
+            <div class="qvc-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(197, 168, 128, 0.25); padding-bottom: 6px; margin-bottom: 8px; font-family: 'Outfit', sans-serif; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;">
+              <span style="color: #ffd700; display: flex; align-items: center; gap: 4px;">
+                📺 GLG SHOP NETWORK (VAULT LIVE)
+              </span>
+              <span class="qvc-live-badge" style="background: #ef4444; color: #fff; padding: 1px 4px; border-radius: 2px; font-size: 0.6rem; font-weight: bold; box-shadow: 0 0 5px rgba(239, 68, 68, 0.5); display: inline-block;">LIVE EST.</span>
+            </div>
+            <div class="qvc-content" id="qvcShowroom" style="display: flex; gap: 10px; align-items: center; min-height: 100px; transition: opacity 0.5s ease-in-out;">
+              <!-- Dynamically generated item content goes here -->
+            </div>
+            
+            <div class="dopamine-counter text-gold-faded" style="margin-top: 10px; border-top: 1px solid rgba(197, 168, 128, 0.15); padding-top: 6px; font-size: 0.7rem; text-align: center;">
+              Dopamine Injections Count: <span id="clickCountDisplay" class="text-gold" style="font-weight: bold;">0</span> Orbs clicked
             </div>
           </div>
           
@@ -442,19 +433,6 @@
             </div>
             <div class="stash-summary" id="stashSummary">
               <!-- Summary of counts -->
-            </div>
-            
-            <!-- GLG Movers & Shakers QVC Showroom Frame -->
-            <div class="qvc-showroom border-gold" style="margin-top: 10px; padding: 10px; background: rgba(8, 6, 5, 0.95); border: 1px solid #c5a880; box-shadow: 0 0 10px rgba(197, 168, 128, 0.1); border-radius: 4px; overflow: hidden; position: relative;">
-              <div class="qvc-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(197, 168, 128, 0.25); padding-bottom: 4px; margin-bottom: 6px; font-family: 'Outfit', sans-serif; font-size: 0.7rem; font-weight: bold; letter-spacing: 1px;">
-                <span style="color: #ffd700; display: flex; align-items: center; gap: 4px;">
-                  📺 GLG SHOPPING NETWORK (VAULT LIVE)
-                </span>
-                <span class="qvc-live-badge" style="background: #ef4444; color: #fff; padding: 1px 4px; border-radius: 2px; font-size: 0.6rem; font-weight: bold; box-shadow: 0 0 5px rgba(239, 68, 68, 0.5); display: inline-block;">LIVE SHOW</span>
-              </div>
-              <div class="qvc-content" id="qvcShowroom" style="display: flex; gap: 10px; align-items: center; min-height: 95px; transition: opacity 0.5s ease-in-out;">
-                <!-- Dynamically generated item content goes here -->
-              </div>
             </div>
           </div>
         </div>
