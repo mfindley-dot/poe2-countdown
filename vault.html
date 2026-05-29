@@ -196,14 +196,18 @@
     /* Depot Tab Gear Grid */
     .depot-stash-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
+      grid-template-columns: repeat(auto-fill, minmax(var(--cell-size, 85px), 1fr));
+      gap: 10px;
       background: rgba(10, 8, 6, 0.95);
       border: 2px solid rgba(197, 168, 128, 0.15);
-      padding: 20px;
+      padding: 15px;
       border-radius: 4px;
       min-height: 350px;
+      max-height: 600px;
+      overflow-y: auto;
       box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+      box-sizing: border-box;
+      width: 100%;
     }
     
     .gear-cell {
@@ -235,10 +239,10 @@
     
     .gear-name-label {
       position: absolute;
-      bottom: 8px;
+      bottom: 5px;
       left: 0;
       right: 0;
-      font-size: 0.65rem;
+      font-size: 0.58rem;
       text-align: center;
       color: #c5a880;
       font-family: 'Outfit', sans-serif;
@@ -247,6 +251,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       padding: 0 4px;
+      display: var(--show-labels, block);
     }
     
     /* PoE-style Tooltip Card Styling */
@@ -381,7 +386,10 @@
     <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px 20px 10px 20px; box-sizing: border-box;">
       <div>
         <p class="subtitle text-gold-faded" style="margin: 0; text-align: left;">GOOD LOOT GANG</p>
-        <h1 class="text-gold" style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; margin: 5px 0 0 0; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; text-shadow: 0 0 8px rgba(197, 168, 128, 0.3);">🛡️ PoE2 Guild Vault</h1>
+        <h1 class="text-gold" style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; margin: 5px 0 0 0; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; text-shadow: 0 0 8px rgba(197, 168, 128, 0.3); display: flex; align-items: center; gap: 8px;">
+          <img src="assets/images/icons/doryani_vault_scanner_logo.png" alt="Doryani Logo" style="height: 28px; width: auto; object-fit: contain; filter: drop-shadow(0 0 4px rgba(255,215,0,0.4));">
+          PoE2 Guild Vault
+        </h1>
       </div>
       <div>
         <a href="index.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
@@ -450,7 +458,10 @@
       <!-- Right Column: Stash Visualizer Frame with Symmetrical Gothic Tabs -->
       <div class="vault-stash-wrapper">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <span class="text-gold" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: bold; letter-spacing: 1px;">🔮 SCANNED GUILD VAULT</span>
+          <span class="text-gold" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
+            <img src="assets/images/icons/doryani_vault_scanner_logo.png" alt="Doryani Logo" style="height: 18px; width: auto; object-fit: contain; filter: drop-shadow(0 0 2px rgba(255,215,0,0.3));">
+            SCANNED GUILD VAULT
+          </span>
           <span class="net-worth-badge" id="vaultNetWorth" style="background: rgba(197, 168, 128, 0.15); border: 1px solid #c5a880; color: #ffd700; font-family: 'Outfit', sans-serif; padding: 3px 8px; font-size: 0.85rem; font-weight: bold; border-radius: 4px;">WORTH: 0c</span>
         </div>
         
@@ -493,13 +504,19 @@
               <div style="display: flex; align-items: center; gap: 4px;">
                 <label for="stashOwnerFilter" style="font-size: 0.68rem; color: #a2a1a0; font-weight: bold;">OWNER:</label>
                 <select id="stashOwnerFilter" onchange="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
-                  <option value="all">🔮 Guild (All)</option>
+                  <option value="all">🛡️ Guild (All)</option>
                 </select>
               </div>
 
               <button id="btnToggleAdvanced" onclick="toggleAdvancedFilters()" style="background: #1c1917; border: 1px solid rgba(197, 168, 128, 0.35); color: #ffd700; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: bold; transition: all 0.2s ease;">
                 ⚙️ ADVANCED FILTERS
               </button>
+
+              <!-- Stash Grid Item Size Slider (V2.4) -->
+              <div style="display: flex; align-items: center; gap: 6px; background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); padding: 4px 8px; border-radius: 4px;">
+                <label for="stashSizeSlider" style="font-size: 0.65rem; color: #a2a1a0; font-weight: bold; white-space: nowrap;">🔍 SIZE:</label>
+                <input type="range" id="stashSizeSlider" min="70" max="150" value="85" oninput="updateItemSize(this.value)" style="background: #1c1917; height: 4px; border-radius: 2px; outline: none; width: 70px; cursor: pointer;">
+              </div>
             </div>
           </div>
 
@@ -670,7 +687,7 @@
       }
     ];
 
-    // Pre-loaded high-value items showcasing Creg's Depot Drop with official HD GGG CDN assets
+    // Pre-loaded high-value items showcasing Creg's Depot Drop with local assets & unidentified state demos
     const MOCK_GEAR = [
       {
         name: "Mageblood",
@@ -687,7 +704,19 @@
         flavor: "The blood of others is the wine of kings.",
         price: "248.0 Divine Orbs",
         logs: "Culled 14 duplicate bot post entries below 150 divine orbs.",
-        url: "https://web.poecdn.com/image/Art/2DItems/Belts/Mageblood.png"
+        url: "assets/images/items/mageblood_icon.png"
+      },
+      {
+        name: "Heavy Belt",
+        base: "Heavy Belt",
+        rarity: "Unique",
+        level: 80,
+        ilvl: 85,
+        affixes: ["Unidentified"],
+        flavor: "The blood of others is the wine of kings.",
+        price: "155.0 Divine Orbs",
+        logs: "Unidentified unique heavy belt base appraisal value.",
+        url: "assets/images/items/mageblood_icon.png"
       },
       {
         name: "Headhunter",
@@ -704,7 +733,7 @@
         flavor: "A collection of bone, flesh, and dread.",
         price: "142.0 Divine Orbs",
         logs: "Culled 3 fake gag-posts listed for 1 alchemy orb.",
-        url: "https://web.poecdn.com/image/Art/2DItems/Belts/Headhunter.png"
+        url: "assets/images/items/headhunter_icon.png"
       },
       {
         name: "Dreamfeather",
@@ -738,6 +767,18 @@
         flavor: "",
         price: "35 Chaos Orbs",
         logs: "Pricing model baseline: 1 Divine = 150 Chaos.",
+        url: "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png"
+      },
+      {
+        name: "Topaz Ring",
+        base: "Topaz Ring",
+        rarity: "Rare",
+        level: 45,
+        ilvl: 70,
+        affixes: ["Unidentified"],
+        flavor: "",
+        price: "5 Chaos Orbs",
+        logs: "Simulated unidentified rare topaz ring base.",
         url: "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png"
       }
     ];
@@ -1277,13 +1318,35 @@
         iconImg.src = item.url;
         iconImg.className = "gear-icon";
         iconImg.alt = item.name;
+        iconImg.referrerPolicy = "no-referrer"; // Bypasses hotlink protection
         
         const label = document.createElement("span");
         label.className = "gear-name-label";
         label.textContent = item.name;
         
-        // Rarity color highlight borders
-        if (item.rarity.toLowerCase() === 'unique') {
+        const isUnidentifiedUnique = item.rarity.toLowerCase() === 'unique' && item.name.toLowerCase() === item.base.toLowerCase();
+        
+        // Rarity color highlight borders & unidentified stylings
+        if (isUnidentifiedUnique) {
+          // Desaturate and dark border for unidentified unique
+          cell.style.filter = "brightness(0.6) sepia(0.3)";
+          cell.style.borderColor = "rgba(175, 96, 37, 0.25)";
+          
+          // Append lock icon overlay
+          const lockBadge = document.createElement("span");
+          lockBadge.style.position = "absolute";
+          lockBadge.style.top = "4px";
+          lockBadge.style.right = "4px";
+          lockBadge.style.fontSize = "0.52rem";
+          lockBadge.style.background = "rgba(220, 38, 38, 0.25)";
+          lockBadge.style.color = "#ef4444";
+          lockBadge.style.border = "1px solid rgba(220, 38, 38, 0.4)";
+          lockBadge.style.padding = "1px 3px";
+          lockBadge.style.borderRadius = "2px";
+          lockBadge.style.fontWeight = "bold";
+          lockBadge.textContent = "🔒 UNID";
+          cell.appendChild(lockBadge);
+        } else if (item.rarity.toLowerCase() === 'unique') {
           cell.style.borderColor = "rgba(175, 96, 37, 0.4)";
         } else if (item.rarity.toLowerCase() === 'rare') {
           cell.style.borderColor = "rgba(247, 208, 94, 0.4)";
@@ -1300,7 +1363,7 @@
       const filterSelect = document.getElementById("stashOwnerFilter");
       if (!filterSelect) return;
       
-      filterSelect.innerHTML = `<option value="all">🔮 Guild (All)</option>`;
+      filterSelect.innerHTML = `<option value="all">🛡️ Guild (All)</option>`;
       
       const owners = new Set();
       scannedItems.forEach(item => {
@@ -1350,14 +1413,95 @@
       badgeEl.style.borderColor = color;
       badgeEl.style.background = `rgba(${color === '#af6025' ? '175, 96, 37' : '247,208,94'}, 0.15)`;
       
-      // Explicit Mods List
+      // Explicit Mods List (V2.4 Update: Identified vs Unidentified Ranges)
       const affixesEl = document.getElementById('tooltipAffixes');
       affixesEl.innerHTML = '';
-      item.affixes.forEach(aff => {
+      
+      const isUnidentifiedUnique = item.rarity.toLowerCase() === 'unique' && item.name.toLowerCase() === item.base.toLowerCase();
+      
+      if (isUnidentifiedUnique) {
+        // Render red "UNIDENTIFIED" header
+        const unIdDiv = document.createElement('div');
+        unIdDiv.style.color = '#ef4444';
+        unIdDiv.style.fontWeight = 'bold';
+        unIdDiv.style.textAlign = 'center';
+        unIdDiv.style.marginBottom = '8px';
+        unIdDiv.style.fontSize = '0.72rem';
+        unIdDiv.textContent = '🔒 UNIDENTIFIED UNIQUE';
+        affixesEl.appendChild(unIdDiv);
+        
+        // Populate possible ranges based on base type
+        let rangeMods = [];
+        const baseLower = item.base.toLowerCase();
+        
+        if (baseLower.includes("heavy belt") || baseLower.includes("mageblood")) {
+          rangeMods = [
+            "Implicit: +(25-35) to Strength",
+            "Leftmost (2-4) Magic Utility Flasks constantly active",
+            "+(15-25)% to Fire Resistance",
+            "+(15-25)% to Lightning Resistance"
+          ];
+        } else if (baseLower.includes("leather belt") || baseLower.includes("headhunter")) {
+          rangeMods = [
+            "Implicit: +(25-40) to maximum Life",
+            "+(20-30) to Strength",
+            "+(20-30) to Dexterity",
+            "When you Kill a Rare Monster, you gain its Modifiers for 20 seconds"
+          ];
+        } else if (baseLower.includes("eternal sword") || baseLower.includes("sword") || baseLower.includes("dreamfeather")) {
+          rangeMods = [
+            "Implicit: +40% to Global Critical Strike Multiplier",
+            "Adds (15-25) to (30-45) Physical Damage",
+            "+(180-220) to Accuracy Rating",
+            "1% increased Attack Damage per 450 Evasion Rating"
+          ];
+        } else if (baseLower.includes("ring")) {
+          rangeMods = [
+            "Implicit: +(8-10)% to all Elemental Resistances",
+            "+(30-45)% to Fire Resistance",
+            "+(30-45)% to Cold Resistance",
+            "+(30-45)% to Lightning Resistance",
+            "+(40-60) to maximum Life"
+          ];
+        } else {
+          rangeMods = [
+            "Implicit: Modifiers are hidden",
+            "Possible unique stats of this base item slot are currently hidden until identified."
+          ];
+        }
+        
+        rangeMods.forEach(mod => {
+          const div = document.createElement('div');
+          div.style.color = '#888279';
+          div.style.fontStyle = 'italic';
+          div.textContent = mod;
+          affixesEl.appendChild(div);
+        });
+      } else if (item.rarity.toLowerCase() === 'rare' && (item.affixes.length === 0 || item.affixes[0] === "" || item.affixes[0].toLowerCase().includes("unidentified"))) {
+        // Unidentified Rare item
+        const unIdDiv = document.createElement('div');
+        unIdDiv.style.color = '#ef4444';
+        unIdDiv.style.fontWeight = 'bold';
+        unIdDiv.style.textAlign = 'center';
+        unIdDiv.style.marginBottom = '6px';
+        unIdDiv.style.fontSize = '0.72rem';
+        unIdDiv.textContent = '🔒 UNIDENTIFIED RARE';
+        affixesEl.appendChild(unIdDiv);
+        
         const div = document.createElement('div');
-        div.textContent = aff;
+        div.style.color = '#888279';
+        div.style.textAlign = 'center';
+        div.style.fontStyle = 'italic';
+        div.textContent = 'All explicit modifiers are hidden.';
         affixesEl.appendChild(div);
-      });
+      } else {
+        // Identified item: Render actual explicit stats!
+        item.affixes.forEach(aff => {
+          const div = document.createElement('div');
+          div.textContent = aff;
+          affixesEl.appendChild(div);
+        });
+      }
       
       // Flavor text section
       const flavorSec = document.getElementById('tooltipFlavorSection');
@@ -1395,7 +1539,7 @@
       {
         name: "Headhunter",
         sub: "Leather Belt",
-        url: "https://web.poecdn.com/image/Art/2DItems/Belts/Headhunter.png",
+        url: "assets/images/items/headhunter_icon.png",
         price: "142.0 Divine Orbs",
         desc: "Copies rare monster mods. Temporarily turns your character into a 40-foot giant.",
         reviews: [
@@ -1406,7 +1550,7 @@
       {
         name: "Mageblood",
         sub: "Heavy Belt",
-        url: "https://web.poecdn.com/image/Art/2DItems/Belts/Mageblood.png",
+        url: "assets/images/items/mageblood_icon.png",
         price: "248.0 Divine Orbs",
         desc: "Utility flasks are constantly active. Speed cap exceeded by 300%.",
         reviews: [
@@ -1455,7 +1599,7 @@
               
               showroom.innerHTML = `
                 <div style="background: rgba(197, 168, 128, 0.03); padding: 5px; border: 1px solid rgba(197, 168, 128, 0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; min-width: 50px; box-shadow: inset 0 0 8px rgba(0,0,0,0.8); box-sizing: border-box;">
-                  <img src="${item.url}" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
+                  <img src="${item.url}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
                 </div>
                 <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; font-family: 'Outfit', sans-serif;">
                   <div style="display: flex; justify-content: space-between; align-items: baseline;">
@@ -1477,7 +1621,7 @@
               // Fail-safe fallback to the sacred relic
               showroom.innerHTML = `
                 <div style="background: rgba(197, 168, 128, 0.03); padding: 5px; border: 1px solid rgba(197, 168, 128, 0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; min-width: 50px; box-shadow: inset 0 0 8px rgba(0,0,0,0.8); box-sizing: border-box;">
-                  <img src="https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyDuplicate.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
+                  <img src="https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyDuplicate.png" referrerpolicy="no-referrer" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
                 </div>
                 <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; font-family: 'Outfit', sans-serif;">
                   <div style="display: flex; justify-content: space-between; align-items: baseline;">
@@ -1504,10 +1648,33 @@
       setInterval(rotateQVCItem, 10000);
     }
 
+    function updateItemSize(val) {
+      const grid = document.getElementById("depotGrid");
+      if (!grid) return;
+      
+      grid.style.setProperty("--cell-size", `${val}px`);
+      
+      if (val < 105) {
+        grid.style.setProperty("--show-labels", "none");
+      } else {
+        grid.style.setProperty("--show-labels", "block");
+      }
+      
+      localStorage.setItem("stashCellSize", val);
+    }
+
     // Initialize triggers
     document.addEventListener("DOMContentLoaded", () => {
       loadScannedStash();
       initQVCShowroom();
+      
+      // Load saved stash item size slider state (defaults to 85px)
+      const savedSize = localStorage.getItem("stashCellSize") || "85";
+      const slider = document.getElementById("stashSizeSlider");
+      if (slider) {
+        slider.value = savedSize;
+      }
+      updateItemSize(savedSize);
     });
   </script>
 </body>
