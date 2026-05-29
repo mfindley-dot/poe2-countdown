@@ -1155,12 +1155,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnStein) {
       if (blurStacks > 0) {
         btnStein.classList.add("drinking-active");
-        btnStein.querySelector(".stein-text-content").textContent = `ALE DRUNK: ${blurStacks}x STACKS!`;
-        btnStein.querySelector(".stein-subtext").innerHTML = `<span style="color: #ef4444 !important; font-weight: bold;">Blurring active! Refill in progress...</span>`;
+        btnStein.title = `Drink Guild Ale: ALE DRUNK - ${blurStacks}x STACKS! Blurring active! Refill in progress...`;
       } else {
         btnStein.classList.remove("drinking-active");
-        btnStein.querySelector(".stein-text-content").textContent = "DRINK GUILD ALE";
-        btnStein.querySelector(".stein-subtext").innerHTML = `(Click to add Blur Challenge! Stacks up to 3x)`;
+        btnStein.title = "Drink Guild Ale: Click to add Blur Challenge! Stacks up to 3x";
       }
     }
   }
