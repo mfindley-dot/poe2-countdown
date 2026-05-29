@@ -252,9 +252,9 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
     });
     
     // Squeeze counts into positional pipe string:
-    // scroll|transmute|augmentation|alchemy|regal|chaos|vaal|annulment|exalted|divine|mirror
+    // scroll|transmute|augmentation|alchemy|regal|chaos|vaal|annulment|exalted|divine|mirror|version
     const core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
-    const pipe_str = core_keys.map(k => core_data[k]).join("|");
+    const pipe_str = core_keys.map(k => core_data[k]).join("|") + "|1.0";
     
     const total_score = Math.floor(total_chaos * 10);
     
