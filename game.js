@@ -4896,6 +4896,13 @@ function resetGame() {
   initProceduralEyes();
   
   currentGameState = GameState.PLAY;
+  
+  // Automatically collapse simulated server stock ticker on gameplay start
+  try {
+    collapseStockTickerOnStart();
+  } catch (err) {
+    console.log("Collapse stock ticker error:", err);
+  }
 }
 
 function playDodgeRollAudioFeedback() {
@@ -5715,9 +5722,360 @@ function initGameEngine() {
   // Start keybind canvas looping animations
   animateKeybindPreviews();
   
+  // Initialize simulated server stock economy and pop-out financial charts
+  initMarketTrendsControls();
+  
   // Start drawing canvas engine loop
   requestAnimationFrame(updateGame);
 }
+
+  // Simulated Economy prices baseline and dynamic tracking trends
+  let leagueEconomy = {
+    mirror: { name: "Mirror of Kalandra", char: "🪞", base: 40000, trend: [39600, 39800, 39950, 40100, 39900, 40200, 40500], curPrice: 40500 },
+    divine: { name: "Divine Orb", char: "🪙", base: 160, trend: [152, 155, 158, 156, 160, 163, 162], curPrice: 162 },
+    chaos: { name: "Chaos Orb", char: "🌀", base: 1.0, trend: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], curPrice: 1.0 },
+    mageblood: { name: "Mageblood Heavy Belt", char: "🩸", base: 34000, trend: [32500, 33000, 33400, 33100, 33900, 34200, 34650], curPrice: 34650 },
+    headhunter: { name: "Headhunter Leather Belt", char: "💀", base: 9200, trend: [9500, 9300, 9150, 8900, 9200, 9100, 9410], curPrice: 9410 }
+  };
+
+  let activeTrendItemId = "mirror";
+  let mouseOnTrendsChartX = -1;
+
+  function updateLeagueEconomyPrices() {
+    Object.keys(leagueEconomy).forEach(key => {
+      if (key === "chaos") return; // Pegged to base
+      const item = leagueEconomy[key];
+      // Brownian motion with a slight positive bias representing league inflation
+      const change = (Math.random() - 0.485) * 0.016; 
+      item.curPrice = Math.max(0.1, item.curPrice * (1 + change));
+      
+      // Shift old trends and push new price
+      item.trend.push(Math.round(item.curPrice * 100) / 100);
+      if (item.trend.length > 7) {
+        item.trend.shift();
+      }
+    });
+    
+    // Sync Ticker DOM elements
+    syncStockTickerUI();
+    
+    // If trends modal is visible, re-draw the active chart!
+    const modal = document.getElementById("marketTrendsModal");
+    if (modal && !modal.classList.contains("hidden")) {
+      drawMarketTrendsChart(activeTrendItemId);
+    }
+  }
+
+  function formatPrice(val) {
+    if (val >= 1000) {
+      return Math.round(val).toLocaleString();
+    }
+    return val.toFixed(1);
+  }
+
+  function syncStockTickerUI() {
+    const track = document.getElementById("stockTickerTrack");
+    if (!track) return;
+    
+    let html = "";
+    const itemKeys = Object.keys(leagueEconomy);
+    
+    const generateList = () => {
+      itemKeys.forEach(key => {
+        const item = leagueEconomy[key];
+        const diff = item.curPrice - item.base;
+        const pct = (diff / item.base) * 100;
+        const isUp = diff >= 0;
+        const arrow = isUp ? "▲" : "▼";
+        const pctClass = isUp ? "ticker-pct-up" : "ticker-pct-down";
+        const priceStr = key === "chaos" ? "1.00 chaos" : `${formatPrice(item.curPrice)}c`;
+        
+        html += `
+          <span class="ticker-item" data-item="${key}">
+            <span>${item.char}</span>
+            <span>${item.name}:</span>
+            <span class="text-white font-bold">${priceStr}</span>
+            <span class="${pctClass}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>
+          </span>
+        `;
+      });
+    };
+    
+    generateList();
+    generateList(); // Duplicate list for seamless infinite loop width mapping
+    track.innerHTML = html;
+
+    // Attach click events on nodes dynamically
+    const items = track.querySelectorAll(".ticker-item");
+    items.forEach(node => {
+      node.addEventListener("click", () => {
+        const k = node.getAttribute("data-item");
+        openPriceTrendsFromTicker(k);
+      });
+    });
+  }
+
+  function openPriceTrendsFromTicker(itemId) {
+    if (leagueEconomy[itemId]) {
+      activeTrendItemId = itemId;
+      
+      const tabBtns = document.querySelectorAll(".trends-tab-btn");
+      tabBtns.forEach(btn => {
+        if (btn.getAttribute("data-item") === itemId) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+      
+      const modal = document.getElementById("marketTrendsModal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        drawMarketTrendsChart(itemId);
+      }
+    }
+  }
+
+  function drawMarketTrendsChart(itemId) {
+    const item = leagueEconomy[itemId];
+    if (!item) return;
+    
+    const canvas = document.getElementById("marketChart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    ctx.clearRect(0, 0, width, height);
+    
+    const trend = item.trend;
+    const minVal = Math.min(...trend);
+    const maxVal = Math.max(...trend);
+    const range = maxVal - minVal || 1.0;
+    
+    const isUp = item.curPrice >= item.base;
+    const color = isUp ? "#10b981" : "#ef4444";
+    
+    // Render Stats Row inside the Modal dynamically
+    const nameEl = document.getElementById("chartItemName");
+    const priceEl = document.getElementById("chartItemPrice");
+    const changeEl = document.getElementById("chartItemChange");
+    
+    if (nameEl) nameEl.textContent = item.name;
+    if (priceEl) priceEl.textContent = itemId === "chaos" ? "1.00 chaos" : `${formatPrice(item.curPrice)}c`;
+    
+    const diff = item.curPrice - item.base;
+    const pct = (diff / item.base) * 100;
+    if (changeEl) {
+      changeEl.textContent = `${diff >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}%`;
+      changeEl.className = `chart-item-change ${diff >= 0 ? "trend-up" : "trend-down"}`;
+    }
+    
+    // Draw horizontal dashed grids
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.05)";
+    ctx.lineWidth = 1.0;
+    ctx.setLineDash([4, 4]);
+    for (let i = 0; i < 4; i++) {
+      const yGrid = 20 + i * 40;
+      ctx.beginPath();
+      ctx.moveTo(25, yGrid);
+      ctx.lineTo(365, yGrid);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    
+    // Compute points coordinates
+    const points = [];
+    const startX = 35;
+    const spacingX = 52;
+    const startY = 150;
+    const graphH = 120;
+    
+    trend.forEach((val, idx) => {
+      const x = startX + idx * spacingX;
+      const ratio = range === 0 ? 0.5 : (val - minVal) / range;
+      const y = startY - ratio * graphH;
+      points.push({ x, y, val });
+    });
+    
+    // Draw area gradient under curve
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, startY + 15);
+    points.forEach(pt => ctx.lineTo(pt.x, pt.y));
+    ctx.lineTo(points[points.length - 1].x, startY + 15);
+    ctx.closePath();
+    
+    const areaGrad = ctx.createLinearGradient(0, 0, 0, height);
+    areaGrad.addColorStop(0, isUp ? "rgba(16, 185, 129, 0.18)" : "rgba(239, 68, 68, 0.18)");
+    areaGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = areaGrad;
+    ctx.fill();
+    
+    // Draw Glowing pricing trend vector line
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3.0;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+    ctx.restore();
+    
+    // Draw coordinate dots
+    points.forEach(pt => {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffd700";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.fill();
+      ctx.stroke();
+    });
+    
+    // Tooltip hover detection
+    if (mouseOnTrendsChartX >= 0) {
+      let closestNode = null;
+      let closestDist = Infinity;
+      points.forEach(pt => {
+        const d = Math.abs(pt.x - mouseOnTrendsChartX);
+        if (d < closestDist) {
+          closestDist = d;
+          closestNode = pt;
+        }
+      });
+      
+      if (closestNode && closestDist < 25) {
+        // Vertical indicator line
+        ctx.beginPath();
+        ctx.moveTo(closestNode.x, 20);
+        ctx.lineTo(closestNode.x, startY + 10);
+        ctx.strokeStyle = "rgba(255, 215, 0, 0.25)";
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+        
+        // Circular highlight ring
+        ctx.beginPath();
+        ctx.arc(closestNode.x, closestNode.y, 8, 0, Math.PI * 2);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        
+        // Tooltip card box
+        ctx.save();
+        const txt = itemId === "chaos" ? "1.00 chaos" : `${closestNode.val.toLocaleString()}c`;
+        ctx.font = "bold 9px Inter";
+        const txtW = ctx.measureText(txt).width;
+        
+        const tooltipX = Math.max(30, Math.min(width - 30 - txtW, closestNode.x));
+        const tooltipY = Math.max(25, closestNode.y - 18);
+        
+        ctx.fillStyle = "rgba(9, 7, 5, 0.94)";
+        ctx.strokeStyle = "#ffd700";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.roundRect(tooltipX - txtW / 2 - 6, tooltipY - 11, txtW + 12, 16, 4);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.fillText(txt, tooltipX, tooltipY);
+        ctx.restore();
+      }
+    }
+  }
+
+  function initMarketChartEvents() {
+    const canvas = document.getElementById("marketChart");
+    if (!canvas) return;
+    
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseOnTrendsChartX = ((e.clientX - rect.left) / rect.width) * canvas.width;
+      drawMarketTrendsChart(activeTrendItemId);
+    });
+    
+    canvas.addEventListener("mouseleave", () => {
+      mouseOnTrendsChartX = -1;
+      drawMarketTrendsChart(activeTrendItemId);
+    });
+  }
+
+  function initMarketTrendsControls() {
+    // Render initial UI marquee track
+    syncStockTickerUI();
+    
+    // Simulated live prices updating every 20 seconds
+    setInterval(updateLeagueEconomyPrices, 20000);
+    
+    // Toggle stock ticker marquee bar
+    const btnToggleStock = document.getElementById("btnToggleStockTicker");
+    const stockWrapper = document.getElementById("stockTickerWrapper");
+    if (btnToggleStock && stockWrapper) {
+      btnToggleStock.addEventListener("click", () => {
+        const isCollapsed = stockWrapper.classList.toggle("collapsed");
+        btnToggleStock.textContent = isCollapsed ? "▼" : "▲";
+        document.body.classList.toggle("ticker-hidden", isCollapsed);
+      });
+    }
+    
+    // Header trends toggle button click to launch Modal popup
+    const btnOpenTrends = document.getElementById("btnOpenMarketTrends");
+    const modalTrends = document.getElementById("marketTrendsModal");
+    if (btnOpenTrends && modalTrends) {
+      btnOpenTrends.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isHidden = modalTrends.classList.toggle("hidden");
+        if (!isHidden) {
+          drawMarketTrendsChart(activeTrendItemId);
+        }
+      });
+    }
+    
+    // Close trends popup trigger
+    const btnCloseTrends = document.getElementById("btnCloseMarketTrends");
+    if (btnCloseTrends && modalTrends) {
+      btnCloseTrends.addEventListener("click", () => {
+        modalTrends.classList.add("hidden");
+      });
+    }
+    
+    // Item Tabs click selectors
+    const tabBtns = document.querySelectorAll(".trends-tab-btn");
+    tabBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeTrendItemId = btn.getAttribute("data-item");
+        drawMarketTrendsChart(activeTrendItemId);
+      });
+    });
+    
+    // Initialize chart mousemove triggers
+    initMarketChartEvents();
+  }
+
+  function collapseStockTickerOnStart() {
+    const stockWrapper = document.getElementById("stockTickerWrapper");
+    const btnToggleStock = document.getElementById("btnToggleStockTicker");
+    if (stockWrapper) {
+      stockWrapper.classList.add("collapsed");
+      document.body.classList.add("ticker-hidden");
+    }
+    if (btnToggleStock) {
+      btnToggleStock.textContent = "▼";
+    }
+    // Dismiss trends modal during active gaming
+    const modalTrends = document.getElementById("marketTrendsModal");
+    if (modalTrends) {
+      modalTrends.classList.add("hidden");
+    }
+  }
 
 // Bulletproof execution trigger to prevent DOMContentLoaded race conditions on fast/local page loads
 if (document.readyState !== "loading") {

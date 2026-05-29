@@ -30,6 +30,16 @@
 </head>
 <body>
 
+  <!-- Server Economy Stock Ticker -->
+  <div class="stock-ticker-wrapper" id="stockTickerWrapper">
+    <div class="stock-ticker-container">
+      <div class="stock-ticker-track" id="stockTickerTrack">
+        <!-- Dynamically filled by simulator -->
+      </div>
+    </div>
+    <button class="stock-ticker-toggle-btn" id="btnToggleStockTicker" title="Toggle Ticker">▲</button>
+  </div>
+
   <!-- Full Screen Loop Video Background Wrapper -->
   <div class="background-overlay-wrapper" id="backgroundOverlayWrapper">
     <video id="bgVideoLoop" class="bg-video-loop" autoplay loop muted playsinline poster="assets/images/backgrounds/GLG_guild-hall_background-image.png">
@@ -389,6 +399,7 @@
           <div class="stash-tab-container border-gold">
             <div class="stash-header">
               <span class="text-gold">GUILD STASH TAB</span>
+              <button class="trends-toggle-btn text-gold" id="btnOpenMarketTrends" title="View Market Trends">📈 TRENDS</button>
               <span class="net-worth-badge" id="stashNetWorth">WORTH: 0c</span>
             </div>
             
@@ -516,6 +527,43 @@
     🎵
   </button>
 
+
+  <!-- Server Economy Price Trends Gothic Modal -->
+  <div class="market-trends-modal hidden" id="marketTrendsModal">
+    <div class="trends-modal-header">
+      <h3 class="trends-modal-title text-gold">📈 LEAGUE ECONOMY TRENDS</h3>
+      <button class="close-trends-btn" id="btnCloseMarketTrends">&times;</button>
+    </div>
+    <div class="trends-modal-body">
+      <div class="trends-item-tabs">
+        <button class="trends-tab-btn active" data-item="mirror">🪞 Mirror</button>
+        <button class="trends-tab-btn" data-item="divine">🪙 Divine</button>
+        <button class="trends-tab-btn" data-item="chaos">🌀 Chaos</button>
+        <button class="trends-tab-btn" data-item="mageblood">🩸 Mageblood</button>
+        <button class="trends-tab-btn" data-item="headhunter">💀 Headhunter</button>
+      </div>
+      <div class="trends-chart-container">
+        <div class="chart-stats-row">
+          <span class="chart-item-name" id="chartItemName">Mirror of Kalandra</span>
+          <span class="chart-item-price text-gold" id="chartItemPrice">40,000c</span>
+          <span class="chart-item-change" id="chartItemChange">▲ 1.4%</span>
+        </div>
+        <canvas id="marketChart" width="380" height="180"></canvas>
+        <div class="chart-axis-labels">
+          <span>7d ago</span>
+          <span>6d</span>
+          <span>5d</span>
+          <span>4d</span>
+          <span>3d</span>
+          <span>2d</span>
+          <span>Today</span>
+        </div>
+      </div>
+      <div class="trends-footer-text">
+        Economy simulates every 20s. Hover graph nodes for exact prices.
+      </div>
+    </div>
+  </div>
 
   <!-- Core Javascript -->
   <script src="app.js?v=3.2"></script>

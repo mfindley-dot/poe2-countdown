@@ -2782,3 +2782,294 @@ body.theatre-mode-active .game-viewport-container {
     font-size: 12px !important;
   }
 }
+
+/* ==========================================================================
+   STOCK TICKER & FINANCIAL MARKET TRENDS SYSTEM
+   ========================================================================== */
+
+/* Main Body Top Spacing offset when ticker is active */
+body {
+  padding-top: 32px;
+  transition: padding-top 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.ticker-hidden {
+  padding-top: 0;
+}
+
+/* Horizontal stock ticker layout */
+.stock-ticker-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 32px;
+  background: rgba(8, 6, 5, 0.94);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.65);
+}
+
+.stock-ticker-wrapper.collapsed {
+  transform: translateY(-100%);
+}
+
+.stock-ticker-container {
+  flex-grow: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.stock-ticker-track {
+  display: inline-block;
+  white-space: nowrap;
+  padding-left: 100%;
+  animation: stockMarquee 45s linear infinite;
+  box-sizing: border-box;
+}
+
+@keyframes stockMarquee {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 45px;
+  font-family: var(--font-header);
+  font-size: 0.65rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s;
+  color: var(--gold-faded);
+  letter-spacing: 0.5px;
+}
+
+.ticker-item:hover {
+  color: var(--gold-hover);
+}
+
+.ticker-pct-up {
+  color: #10b981;
+  text-shadow: 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.ticker-pct-down {
+  color: #ef4444;
+  text-shadow: 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+.stock-ticker-toggle-btn {
+  background: #110e0a;
+  border: none;
+  border-left: 1px solid rgba(212, 175, 55, 0.25);
+  color: var(--gold-faded);
+  width: 36px;
+  height: 32px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stock-ticker-toggle-btn:hover {
+  color: var(--gold-hover);
+  background: #1c150e;
+}
+
+/* Stash Header Toggle Button */
+.trends-toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-family: var(--font-header);
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+  margin-left: auto;
+  margin-right: 12px;
+}
+
+.trends-toggle-btn:hover {
+  border-color: var(--gold-hover);
+  box-shadow: 0 0 6px var(--gold-glow);
+  color: var(--gold-hover);
+}
+
+/* Fullscreen hide styles */
+:fullscreen .stock-ticker-wrapper,
+.fullscreen-active .stock-ticker-wrapper {
+  display: none !important;
+}
+
+/* Price Trends Modal popup card */
+.market-trends-modal {
+  position: fixed;
+  z-index: 1010;
+  top: 16%;
+  right: 2%;
+  width: 420px;
+  background: hsla(20, 15%, 5%, 0.98);
+  border: 2px solid var(--gold-primary);
+  border-radius: var(--border-radius-gothic);
+  padding: 20px;
+  box-shadow: 
+    0 15px 40px rgba(0, 0, 0, 0.95),
+    0 0 25px var(--gold-glow);
+  box-sizing: border-box;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  transform: scale(1);
+  opacity: 1;
+}
+
+.market-trends-modal.hidden {
+  display: none !important;
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.trends-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+}
+
+.trends-modal-title {
+  font-family: var(--font-header);
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  margin: 0;
+}
+
+.close-trends-btn {
+  background: transparent;
+  border: none;
+  color: var(--gold-faded);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color var(--transition-speed);
+  line-height: 1;
+}
+
+.close-trends-btn:hover {
+  color: var(--gold-hover);
+}
+
+.trends-item-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.trends-tab-btn {
+  background: #110e0a;
+  border: 1px solid var(--gold-primary);
+  color: var(--gold-faded);
+  font-size: 0.65rem;
+  font-family: var(--font-header);
+  padding: 5px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.trends-tab-btn:hover {
+  color: var(--gold-hover);
+  border-color: var(--gold-hover);
+}
+
+.trends-tab-btn.active {
+  color: #fff;
+  border-color: var(--gold-hover);
+  background: linear-gradient(180deg, #322519 0%, #1c130b 100%);
+  box-shadow: 0 0 8px var(--gold-glow);
+  font-weight: bold;
+}
+
+.trends-chart-container {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--border-radius-gothic);
+  padding: 15px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.chart-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-family: var(--font-header);
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 6px;
+}
+
+.chart-item-name {
+  color: #fff;
+}
+
+.chart-item-price {
+  color: #ffd700;
+}
+
+.chart-item-change {
+  font-weight: bold;
+}
+
+.chart-item-change.trend-up {
+  color: #10b981;
+}
+
+.chart-item-change.trend-down {
+  color: #ef4444;
+}
+
+#marketChart {
+  display: block;
+  width: 100%;
+  height: 180px;
+  background: transparent;
+}
+
+.chart-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  color: var(--gold-faded);
+  margin-top: 6px;
+  font-family: var(--font-header);
+  font-weight: bold;
+}
+
+.trends-footer-text {
+  font-size: 0.6rem;
+  color: #64748b;
+  text-align: center;
+  margin-top: 12px;
+  font-family: var(--font-header);
+  letter-spacing: 0.5px;
+}
+
