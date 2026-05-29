@@ -85,9 +85,17 @@ function toggleItemLabels() {
   }
 }
 
+let lastHitShakeTime = 0;
 function triggerPlayerHitEffect() {
+  player.lastDamageTime = Date.now(); // Record hit timestamp globally to safely interrupt regen!
+  
+  // Throttle screen shakes & flash overlays to prevent visual strobe effects during heavy horde hits
+  const nowMs = Date.now();
+  if (nowMs - lastHitShakeTime < 150) return;
+  lastHitShakeTime = nowMs;
+  
   damageFlashIntensity = 0.45; // Soft translucent full-screen red hit flash
-  triggerCameraShake(); // Trigger screen rumble!
+  triggerCameraShake(14, 6);   // Softer rumble for comfortable long-term play
 }
 
 // Custom 16-Bit Graphics Preloader & Cache
@@ -130,6 +138,27 @@ EnemySprites.ape.src = "assets/images/bosses/ape_boss_spritesheet.png";
 EnemySprites.banker.src = "assets/images/characters/creg_banker_spritesheet.png";
 EnemySprites.spider.src = "assets/images/enemies/spider_spritesheet.png";
 EnemySprites.ghost.src = "assets/images/enemies/ghost_spritesheet.png";
+
+// Reusable offscreen canvas for damage hit flashes (prevents whole-canvas destination compositing!)
+const scratchCanvas = document.createElement("canvas");
+const scratchCtx = scratchCanvas.getContext("2d");
+
+function drawApeFlashRed(apeImg, srcX, srcY, frameW, frameH, drawX, drawY, drawW, drawH) {
+  scratchCanvas.width = frameW;
+  scratchCanvas.height = frameH;
+  scratchCtx.clearRect(0, 0, frameW, frameH);
+  
+  // Draw the exact sprite frame onto the offscreen canvas
+  scratchCtx.drawImage(apeImg, srcX, srcY, frameW, frameH, 0, 0, frameW, frameH);
+  
+  // Apply the source-atop composite fill locally
+  scratchCtx.globalCompositeOperation = "source-atop";
+  scratchCtx.fillStyle = "rgba(239, 68, 68, 0.55)";
+  scratchCtx.fillRect(0, 0, frameW, frameH);
+  
+  // Draw the offscreen canvas onto the main game context
+  ctx.drawImage(scratchCanvas, drawX, drawY, drawW, drawH);
+}
 
 // Preload Parallax Background (8-frame sequence) & Canopy Layer
 const forestBgFrames = [];
@@ -547,6 +576,7 @@ let player = {
   lastShotTime: 0,
   shotCooldown: 280, // ms
   damage: 8,
+  lastDamageTime: 0,
   frozen: false,
   freezeTimer: 0,
   slowStacks: 0,
@@ -580,7 +610,7 @@ function setWitchClass() {
   player.maxHp = 90;
   player.hp = 90;
   player.speed = 2.6;
-  player.damage = 12;
+  player.damage = 18; // Increased player base damage (up from 12)
   player.shotCooldown = 480;
   
   const btnWitch = document.getElementById("btnSelectWitch");
@@ -594,7 +624,7 @@ function setRangerClass() {
   player.maxHp = 100;
   player.hp = 100;
   player.speed = 3.1;
-  player.damage = 8;
+  player.damage = 14; // Increased player base damage (up from 8)
   player.shotCooldown = 280;
   
   const btnWitch = document.getElementById("btnSelectWitch");
@@ -765,7 +795,7 @@ class Enemy {
     else if (type === "ape") {
       // The pillar of doom Boss!
       this.radius = 80; // Scaled to 80 to match 270px visual size
-      this.hp = 350 + (wave * 100); // reduced from 450 + 150 wave
+      this.hp = 1200 + (wave * 300); // Massive boss HP (up from 350+100) to create a long strategic encounter
       this.maxHp = this.hp;
       this.speed = 0.75;
       this.color = "#7c2d12"; // dark brick red ape
@@ -782,6 +812,8 @@ class Enemy {
       
       // Enrage state
       this.enraged = false;
+      this.isEnrageCasting = false;
+      this.enrageTimer = 0;
  
       // Cinematic intro and Combo State Machine
       this.introActive = true;
@@ -956,19 +988,23 @@ class Enemy {
         return; // Skip standard AI updates while in intro!
       }
       
-      // 1. Enrage state check (starts moving 25% faster when <= 1/3 HP)
-      if (this.hp <= this.maxHp / 3 && !this.enraged) {
-        this.enraged = true;
-        this.speed = 0.75 * 1.25; // 0.9375 speed (25% faster)
+      // 1. Enrage state check (Invincible phase-change enrage transition when <= 1/3 HP)
+      if (this.hp <= this.maxHp / 3 && !this.enraged && !this.isEnrageCasting) {
+        this.isEnrageCasting = true;
+        this.enrageTimer = 90; // 1.5 seconds invincibility/channeling!
+        
+        // Stop boss movement
+        this.vx = 0;
+        this.vy = 0;
         
         // Hype enraged text particle
         particleEffects.push({
           x: this.x,
-          y: this.y - 30,
-          text: "🚨 ENRAGED!",
-          color: "#ef4444",
+          y: this.y - 45,
+          text: "🚨 BOSS ENRAGING! SHIELD UP!",
+          color: "#dc2626",
           age: 0,
-          maxAge: 60
+          maxAge: 90
         });
         
         if (!gameMuted) {
@@ -978,6 +1014,44 @@ class Enemy {
             console.log("Synth roar error:", e);
           }
         }
+      }
+      
+      if (this.isEnrageCasting) {
+        this.enrageTimer--;
+        this.vx = 0;
+        this.vy = 0;
+        
+        // Spawn rising enrage flames
+        if (Math.random() < 0.35) {
+          particleEffects.push({
+            isProjectileTrail: true,
+            x: this.x + (Math.random() * 60 - 30),
+            y: this.y + 40,
+            vx: 0,
+            vy: -Math.random() * 2 - 1,
+            radius: Math.random() * 4 + 2,
+            color: "#ef4444",
+            age: 0,
+            maxAge: 25
+          });
+        }
+        
+        if (this.enrageTimer <= 0) {
+          this.isEnrageCasting = false;
+          this.enraged = true;
+          this.speed = 0.75 * 1.35; // 35% faster in enraged phase!
+          triggerCameraShake(20, 15);
+          
+          particleEffects.push({
+            x: this.x,
+            y: this.y - 45,
+            text: "🔥 UNLEASHED ENRAGE!",
+            color: "#ef4444",
+            age: 0,
+            maxAge: 60
+          });
+        }
+        return; // Skip other behaviors while enrage is casting!
       }
 
       // 1.5 Combo Controller
@@ -1447,24 +1521,22 @@ class Enemy {
         ctx.fill();
         ctx.restore();
         
-        // Render boss sprite frame (scaled down by 25% to 270px)
+        // Render boss sprite frame using our offscreen scratch canvas to prevent destination color leaks
         const drawW = 270;
         const drawH = drawW * (frameH / frameW);
-        ctx.drawImage(
-          apeImg,
-          srcX, srcY,
-          frameW, frameH,
-          this.x - drawW / 2, this.y - drawH / 2,
-          drawW, drawH
-        );
+        const drawX = this.x - drawW / 2;
+        const drawY = this.y - drawH / 2;
         
-        // Draw red flash overlay if recently hit (satisfying boss impact!)
         if (this.lastHitTime && Date.now() - this.lastHitTime < 150) {
-          ctx.save();
-          ctx.globalCompositeOperation = "source-atop";
-          ctx.fillStyle = "rgba(239, 68, 68, 0.55)"; // glowing red overlay
-          ctx.fillRect(this.x - drawW / 2, this.y - drawH / 2, drawW, drawH);
-          ctx.restore();
+          drawApeFlashRed(apeImg, srcX, srcY, frameW, frameH, drawX, drawY, drawW, drawH);
+        } else {
+          ctx.drawImage(
+            apeImg,
+            srcX, srcY,
+            frameW, frameH,
+            drawX, drawY,
+            drawW, drawH
+          );
         }
         
         drewSprite = true;
@@ -2251,9 +2323,16 @@ function playDarkSoulsYouDiedAudio() {
     });
 }
 
+let lastHitSoundTime = 0;
 function playRipAudioFallback() {
   initGameAudio();
   if (!gameAudioCtx || gameMuted) return;
+  
+  // Audio overlap throttle: minimum 150ms buffer between player hit sounds
+  const nowMs = Date.now();
+  if (nowMs - lastHitSoundTime < 150) return;
+  lastHitSoundTime = nowMs;
+  
   const now = gameAudioCtx.currentTime;
   const osc = gameAudioCtx.createOscillator();
   const gain = gameAudioCtx.createGain();
@@ -3256,8 +3335,8 @@ function handleEnemySpawning() {
     return;
   }
   
-  // Spawn every 4.5 seconds
-  if (now - lastWaveSpawnTime > 4500) {
+  // Spawn every 20 seconds (gives plenty of time to maneuver the hordes!)
+  if (now - lastWaveSpawnTime > 20000) {
     lastWaveSpawnTime = now;
     
     // Wave calculations: smooth exponential curves (fewer mobs early, ramps up later!)
@@ -3298,8 +3377,8 @@ function handleEnemySpawning() {
       enemies.push(new Enemy(sx, sy, type));
     }
     
-    // Spawn Boss Chieftain Ape!
-    if (wave % 3 === 0 && !activeApeBoss) {
+    // Spawn Boss Chieftain Ape! (spaced out to happen every 5 waves, pausing wave progression)
+    if (wave % 5 === 0 && !activeApeBoss) {
       // Spawn at top center
       activeApeBoss = new Enemy(canvas.width / 2, -350, "ape");
       enemies.push(activeApeBoss);
@@ -3416,6 +3495,22 @@ function processGamePhysics() {
     }
   }
 
+  // Scaling Health Regeneration (Ramps up based on how long player avoids taking combat hits!)
+  if (player.hp > 0 && player.hp < player.maxHp) {
+    const nowMs = Date.now();
+    const secondsSinceDamage = (nowMs - (player.lastDamageTime || 0)) / 1000;
+    
+    if (secondsSinceDamage >= 5.0) { // Unhit for 5+ seconds!
+      // Base regen: 0.012 HP per frame (approx 0.7 HP per second)
+      const baseRegen = 0.012;
+      
+      // Ramping rate: increases rate by 12% for every second above 5s of safety, up to 4.0x max multiplier
+      const rampMultiplier = 1.0 + Math.min(3.0, (secondsSinceDamage - 5.0) * 0.12);
+      
+      player.hp = Math.min(player.maxHp, player.hp + baseRegen * rampMultiplier);
+    }
+  }
+
   // Chill slow stacks decay ticking (decays 1 stack every 2 seconds / 120 updates)
   if (player.slowStacks > 0) {
     player.slowTimer = (player.slowTimer || 0) + 1;
@@ -3477,9 +3572,10 @@ function processGamePhysics() {
               maxAge: 35
             });
           } else {
-            // Player hit by shockwave!
-            p.hasHitPlayer = true;
-            player.hp = Math.max(0, player.hp - 45);
+        // Player hit by shockwave!
+        p.hasHitPlayer = true;
+        player.hp = Math.max(0, player.hp - 45);
+        player.lastDamageTime = Date.now();
             
             particleEffects.push({
               x: player.x,
@@ -3518,6 +3614,22 @@ function processGamePhysics() {
       
       if (dist < p.radius + e.radius) {
         // Hit!
+        if (e.type === "ape" && e.isEnrageCasting) {
+          // Boss is invulnerable while enraging/channeling!
+          p.active = false;
+          if (Math.random() < 0.15) {
+            particleEffects.push({
+              x: e.x + (Math.random() * 20 - 10),
+              y: e.y - 20,
+              text: "🛡️ SHIELDED",
+              color: "#fbbf24",
+              age: 0,
+              maxAge: 30
+            });
+          }
+          return;
+        }
+        
         e.hp -= p.damage;
         e.lastHitTime = Date.now();
         
@@ -3671,6 +3783,7 @@ function processGamePhysics() {
       
       if (e.type === "spider") {
         player.poisonRemaining = (player.poisonRemaining || 0) + e.damage;
+        player.lastDamageTime = Date.now();
         triggerPlayerHitEffect(); // Red flash and camera rumble!
         
         // Floating green poison warning text!
@@ -3684,6 +3797,7 @@ function processGamePhysics() {
         });
       } else {
         player.hp = Math.max(0, player.hp - e.damage);
+        player.lastDamageTime = Date.now();
         triggerPlayerHitEffect(); // Red flash and camera rumble!
         
         // Floating damage text
@@ -3732,6 +3846,7 @@ function processGamePhysics() {
       });
       
       triggerPlayerHitEffect(); // Red flash and camera rumble!
+      player.lastDamageTime = Date.now();
       if (!gameMuted) playRipAudioFallback();
       
       if (player.hp <= 0) {
@@ -4076,11 +4191,11 @@ function drawGamePlayScreen() {
   projectiles.forEach(p => p.draw());
   enemyProjectiles.forEach(ep => ep.draw());
 
-  // 5. Render player Exile
-  drawPlayerCharacter();
-
-  // 6. Render Particle animations
+  // 5. Render Particle animations (dodge roll trails and wind leaves now render behind players!)
   drawParticles();
+
+  // 6. Render player Exile
+  drawPlayerCharacter();
 
   // 6.5 Render Foreground Canopy Parallax Layer (anchored strictly at the top 200px, at 90% opacity)
   if (canopyImg.complete && canopyImg.naturalWidth > 0) {
@@ -4283,6 +4398,18 @@ function drawParticles() {
       ctx.stroke();
       ctx.shadowBlur = 0; // reset
     } 
+    else if (p.isAmbientLeaf) {
+      // Draw simple organic pointed leaves drifting with wind
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.radius * 1.8, p.radius * 0.8, 0, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.55; // semi-translucent for depth
+      ctx.fill();
+      ctx.restore();
+    }
     else if (p.isProjectileTrail) {
       // Draw small glowing particle trails
       const pct = p.age / p.maxAge;
