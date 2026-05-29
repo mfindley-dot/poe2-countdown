@@ -844,8 +844,8 @@ async function bulkSyncStashTab() {
   logBox.innerHTML = `Status: Initiating bulk stash fetch from GGG API...`;
   
   try {
-    // 1. Build GGG API Stash URL
-    let gggUrl = `https://www.pathofexile.com/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}`;
+    // 1. Build GGG API Stash URL (explicitly set realm=poe2 for Path of Exile 2)
+    let gggUrl = `https://www.pathofexile.com/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}&realm=poe2`;
     if (stashType === "guild") {
       gggUrl += "&guild=true";
     } else {
