@@ -2659,6 +2659,16 @@ function updateStashTabUI() {
     }
     iconImg.alt = conf.name;
 
+    // Fine-tune asymmetrical icon alignment inside the slot frame grid windows
+    if (keyForThisSlot === "chaos" || keyForThisSlot === "vaal" || keyForThisSlot === "annulment") {
+      iconImg.style.marginTop = "-4px";
+      iconImg.style.marginLeft = "3px";
+    } else if (keyForThisSlot === "exalted" || keyForThisSlot === "divine") {
+      iconImg.style.marginTop = "-4px";
+    } else if (keyForThisSlot === "mirror") {
+      iconImg.style.marginTop = "3px";
+    }
+
     if (qty > 0) {
       iconImg.className = "stash-image-icon";
       cell.appendChild(iconImg);

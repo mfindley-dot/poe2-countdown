@@ -2518,74 +2518,63 @@ body {
 /* Barcade Compact Actions Row */
 .barcade-action-row {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 32px; /* Spacious gap between floating icons */
   width: 100%;
   box-sizing: border-box;
+  padding: 12px 0;
 }
 
 .barcade-icon-btn {
-  flex: 1;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 52px;
-  background: var(--bg-panel);
-  border-radius: var(--border-radius-gothic);
-  border: 1px solid var(--gold-primary);
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   padding: 0;
   outline: none;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .barcade-icon-btn:hover {
-  transform: translateY(-2px);
-  border-color: var(--gold-hover);
-  box-shadow: 0 5px 12px rgba(251, 191, 36, 0.25), inset 0 0 6px rgba(0, 0, 0, 0.6);
+  transform: scale(1.18) translateY(-4px); /* Premium scale lift */
 }
 
 .barcade-icon-btn:active {
-  transform: translateY(0);
+  transform: scale(0.95);
 }
 
-/* Blur stack feedback on button */
-.barcade-icon-btn.drinking-active {
-  background: linear-gradient(180deg, #3a2b1d 0%, #1e140c 100%);
-  border-color: #ef4444;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4), inset 0 0 6px rgba(0, 0, 0, 0.8);
+/* Upsize the floating icons 3x larger with drop shadows */
+.barcade-icon-btn img {
+  height: 52px !important;
+  width: auto !important;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
 }
 
-.stein-btn-label {
-  display: flex;
-  flex-direction: column;
-  margin-left: 0 !important;
-  margin-top: 12px !important;
-  align-items: center !important;
-  text-align: center !important;
+.barcade-icon-btn canvas {
+  width: 88px !important;
+  height: 49.5px !important;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
 }
 
-.stein-text-content {
-  font-family: var(--font-header);
-  font-size: 1.25rem !important;
-  color: var(--gold-primary);
-  font-weight: bold;
-  letter-spacing: 1.5px;
-}
-
-.stein-subtext {
-  font-size: 0.72rem;
-  color: #cbd5e1;
-  margin-top: 4px;
+/* Blur stack feedback on floating buttons */
+.barcade-icon-btn.drinking-active img,
+.barcade-icon-btn.drinking-active canvas {
+  filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6)) !important;
 }
 
 /* Premium Reddish Brown Medallion Button for Leaderboard Pop-out */
 .leaderboard-toggle-btn {
   width: 100%;
-  padding: 15px 20px;
+  padding: 24px 16px !important; /* Spacious vertical breathing room */
   box-sizing: border-box;
   background: linear-gradient(135deg, #3d2b1f 0%, #1c110a 100%);
   border: 2px solid #5c4033; /* Unique reddish brown frame border */
@@ -2598,6 +2587,18 @@ body {
     0 4px 8px rgba(0, 0, 0, 0.6),
     inset 0 0 8px rgba(0, 0, 0, 0.8),
     0 0 8px rgba(212, 175, 55, 0.08);
+  line-height: 1.45 !important; /* Premium line height for wrapped text */
+}
+
+.leaderboard-toggle-btn h3 {
+  line-height: 1.35 !important;
+  margin: 0 !important;
+}
+
+.leaderboard-toggle-btn span {
+  margin-top: 10px !important;
+  line-height: 1.4 !important;
+  display: block;
 }
 
 .leaderboard-toggle-btn:hover {
