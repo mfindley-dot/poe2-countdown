@@ -162,7 +162,7 @@ Your task is to:
 1. Identify the active stash tab name. Look at which tab name is highlighted in blue/white in the top horizontal tab row or right vertical sidebar (e.g. CURRENCY, DUMP TAB, UNIQUE DUMP, JEWELS, MAPS, ESSENCE, DELIRIUM, RUNES, RITUAL, 1, 2, 3, etc.). Gold arrow pointers in the sidebar are also visual cues. Return this exact name in the 'detected_tab' field in uppercase.
 2. Based on the active tab type, extract either currency or equipment:
    - If the detected active tab is 'CURRENCY': Visually analyze the stash contents and extract exact quantities of all visible Path of Exile 2 currency items in the slot grids. Use the spatial visual guide below. Populate 'currency_data' and leave 'gear_items' empty.
-   - If the detected active tab is a gear tab (like DUMP, UNIQUE DUMP, JEWELS, TAB 1, 2, 3, 10, 11, etc.): Visually analyze the stash grid and extract all visible Rare and Unique equipment gear items (rings, belts, amulets, boots, gloves, helmets, weapons, body armours). Populate 'gear_items' and leave 'currency_data' empty.
+   - If the detected active tab is a gear tab (like DUMP, UNIQUE DUMP, JEWELS, TAB 1, 2, 3, 10, 11, etc.): Visually analyze the stash grid and extract all visible Rare and Unique equipment gear items (rings, belts, amulets, boots, gloves, helmets, weapons, body armours). For each visible item in the grid, only extract its base type and its rarity. Populate 'gear_items' and leave 'currency_data' empty.
 
 CURRENCY SPATIAL VISUAL GUIDE:
 1. FAR-LEFT GRID (5 rows by 3 columns of slots):
@@ -193,18 +193,9 @@ CURRENCY SPATIAL VISUAL GUIDE:
    - uncut_gem: Uncut Skill Gem (blue/green/red glowing crystal gems)
 
 EQUIPMENT EXTRACTION RULES:
-For each equipment item inside standard or quad stash grids:
-- name: The exact in-game name of the item. Uniques have fixed names (e.g. Mageblood); Rares have randomized names.
-- base: The base item type (e.g. Topaz Ring, Heavy Belt, Leather Belt, Eternal Sword, etc.).
-- rarity: 'Unique' or 'Rare' based on border color (orange for Unique, yellow for Rare).
-- level: Required level to equip, estimate if not clear (e.g. 60 or 75).
-- ilvl: Item level (ilvl) of the item, estimate if not clear (e.g. 80).
-- affixes: List of implicit and explicit modifiers visible on the item (e.g., '+35% to Fire Resistance', '+65 to maximum Life').
-- flavor: Flavor text if it is a unique item.
-- price: Estimated early league price (e.g., '5 Chaos Orbs', '35 Chaos Orbs', '142 Divine Orbs').
-- logs: Scan appraisal notes (e.g., 'Visual OCR scan').
-
-If there is no currency or gear in a scanned area, return 0 or empty lists respectively. Extra attention to double/triple digit counts on currency!`;
+For each gear item inside standard or quad stash grids, only extract:
+- base: The base item type (e.g. Topaz Ring, Heavy Belt, Leather Belt, Crossbow, Amulet, plate, helmet, boots, gloves, etc.).
+- rarity: 'Unique' or 'Rare' based on border color (orange for Unique, yellow for Rare).`;
 
 // Schema definition for visual active-tab routing stash sync
 const STASH_SCAN_SCHEMA = {
@@ -253,24 +244,14 @@ const STASH_SCAN_SCHEMA = {
     },
     gear_items: {
       type: "ARRAY",
-      description: "Visible gear equipment list. Populate only if detected_tab is a standard/quad/dump stash tab.",
+      description: "Visible gear equipment list in standard/quad stash tab grids. Extract every single item visible. For each item, only extract the base type (e.g. Topaz Ring, Crossbow, Heavy Belt, Plate, Helmet, Boots) and rarity.",
       items: {
         type: "OBJECT",
         properties: {
-          name: { type: "STRING" },
-          base: { type: "STRING" },
-          rarity: { type: "STRING" },
-          level: { type: "INTEGER" },
-          ilvl: { type: "INTEGER" },
-          affixes: {
-            type: "ARRAY",
-            items: { type: "STRING" }
-          },
-          flavor: { type: "STRING" },
-          price: { type: "STRING" },
-          logs: { type: "STRING" }
+          base: { type: "STRING", description: "The base item type, e.g. Topaz Ring, Heavy Belt, Crossbow, Helmet, Boots, Amulet, Gloves, etc." },
+          rarity: { type: "STRING", description: "Rarity of the item: Unique or Rare" }
         },
-        required: ["name", "base", "rarity", "level", "ilvl", "affixes", "price", "logs"]
+        required: ["base", "rarity"]
       }
     }
   },
@@ -650,12 +631,11 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
       const existingEntries = await existRes.json();
       log(`Database currently has ${existingEntries.length} items in this tab.`);
       
-      // 2. Count new items grouped by visual signature match key
+      // 2. Count new items grouped by visual signature match key (Rarity + Base type for stats preservation)
       function getMatchKey(item) {
         const rarity = (item.rarity || "Rare").toLowerCase();
         const base = (item.base || "Gear").toLowerCase();
-        const name = (item.name || "").toLowerCase();
-        return `${rarity}|${base}|${name}`;
+        return `${rarity}|${base}`;
       }
       
       const newCounts = {};
@@ -711,15 +691,28 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
         const totalNeeded = newCounts[key] || 0;
         
         if (matched < totalNeeded) {
+          const defaultName = `Identified ${item.base}`;
+          const defaultAffixes = ["Visual OCR Scan"];
           const fingerprint = await getFingerprint(
             item.rarity,
             item.base,
-            item.name,
-            item.affixes
+            defaultName,
+            defaultAffixes
           );
           
           itemsToUpload.push({
-            item: item,
+            item: {
+              rarity: item.rarity,
+              name: defaultName,
+              base: item.base,
+              level: 60,
+              ilvl: 80,
+              affixes: defaultAffixes,
+              price: item.rarity === "Unique" ? "Unique Item" : "5 Chaos Orbs",
+              flavor: "",
+              logs: "Visual OCR Scan",
+              url: getIconUrl(defaultName, item.base)
+            },
             name: `${deletePrefix}FINGERPRINT_${fingerprint}`
           });
           matchedCounts[key] = matched + 1;
@@ -1398,12 +1391,11 @@ async function bulkSyncStashTab() {
     // Parse new GGG items
     const newParsedItems = items.map(parsePoEItem);
     
-    // Helper to generate a match key
+    // Helper to generate a match key (Rarity + Base type for stats preservation)
     function getMatchKey(item) {
       const rarity = (item.rarity || "Rare").toLowerCase();
       const base = (item.base || "Gear").toLowerCase();
-      const name = (item.name || "").toLowerCase();
-      return `${rarity}|${base}|${name}`;
+      return `${rarity}|${base}`;
     }
     
     // Count new items grouped by match key

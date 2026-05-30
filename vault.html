@@ -144,6 +144,93 @@
       width: 100%;
     }
 
+    /* 1:1 PoE2 Currency Grid Styling */
+    .currency-grid-board {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: rgba(12, 10, 9, 0.95);
+      border: 1px solid rgba(197, 168, 128, 0.25);
+      border-radius: 4px;
+      padding: 20px;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.85);
+      box-sizing: border-box;
+      width: 100%;
+    }
+    
+    .currency-grid-board-row {
+      display: flex;
+      gap: 25px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    
+    .currency-left-side-grid {
+      display: grid;
+      grid-template-rows: repeat(5, 1fr);
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      background: rgba(5, 4, 3, 0.5);
+      border: 1px solid rgba(197, 168, 128, 0.1);
+      padding: 6px;
+      border-radius: 4px;
+      width: 210px;
+    }
+    
+    .currency-center-utility-grid {
+      display: grid;
+      grid-template-rows: repeat(3, 1fr);
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: rgba(5, 4, 3, 0.5);
+      border: 1px solid rgba(197, 168, 128, 0.1);
+      padding: 8px;
+      border-radius: 4px;
+      width: 210px;
+      align-self: center;
+    }
+    
+    .currency-right-side-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 180px;
+      justify-content: space-between;
+    }
+    
+    .currency-jewellers-cluster {
+      display: flex;
+      gap: 6px;
+      background: rgba(5, 4, 3, 0.5);
+      border: 1px solid rgba(197, 168, 128, 0.1);
+      padding: 6px;
+      border-radius: 4px;
+      justify-content: center;
+    }
+    
+    .currency-wisdom-slot-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      background: rgba(5, 4, 3, 0.3);
+      border: 1px dashed rgba(197, 168, 128, 0.15);
+      border-radius: 4px;
+    }
+    
+    .currency-bottom-runes-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      background: rgba(5, 4, 3, 0.5);
+      border: 1px solid rgba(197, 168, 128, 0.1);
+      padding: 8px;
+      border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+
     /* Gothic Tab Buttons */
     .gothic-tabs-container {
       display: flex;
@@ -992,23 +1079,51 @@
     // Core currencies config linked to beautiful local assets
     const CURRENCY_CONFIG = {
       scroll: { name: "Scroll of Wisdom", worth: 0.05, url: "assets/images/currency/item_scroll.png" },
+      
       transmute: { name: "Orb of Transmutation", worth: 0.2, url: "assets/images/currency/item_transmutation.png" },
+      greater_transmute: { name: "Greater Orb of Transmutation", worth: 0.5, url: "https://poe2db.tw/image/Art/2DItems/Currency/GreaterOrbOfTransmutation.png" },
+      perfect_transmute: { name: "Perfect Orb of Transmutation", worth: 1.2, url: "https://poe2db.tw/image/Art/2DItems/Currency/PerfectOrbOfTransmutation.png" },
+      
       augmentation: { name: "Orb of Augmentation", worth: 0.15, url: "assets/images/currency/item_augmentation.png" },
+      greater_augmentation: { name: "Greater Orb of Augmentation", worth: 0.3, url: "https://poe2db.tw/image/Art/2DItems/Currency/GreaterOrbOfAugmentation.png" },
+      perfect_augmentation: { name: "Perfect Orb of Augmentation", worth: 0.8, url: "https://poe2db.tw/image/Art/2DItems/Currency/PerfectOrbOfAugmentation.png" },
+      
       alchemy: { name: "Orb of Alchemy", worth: 0.5, url: "assets/images/currency/orb_alchemy.png" },
+      
       regal: { name: "Regal Orb", worth: 0.8, url: "assets/images/currency/item_regal.png" },
+      greater_regal: { name: "Greater Regal Orb", worth: 2.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/GreaterRegalOrb.png" },
+      perfect_regal: { name: "Perfect Regal Orb", worth: 4.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/PerfectRegalOrb.png" },
+      
       chaos: { name: "Chaos Orb", worth: 1.0, url: "assets/images/currency/item_chaos.png" },
+      greater_chaos: { name: "Greater Chaos Orb", worth: 2.2, url: "https://poe2db.tw/image/Art/2DItems/Currency/GreaterChaosOrb.png" },
+      perfect_chaos: { name: "Perfect Chaos Orb", worth: 5.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/PerfectChaosOrb.png" },
+      
       vaal: { name: "Vaal Orb", worth: 2.0, url: "assets/images/currency/item_vaal.png" },
       annulment: { name: "Orb of Annulment", worth: 5.0, url: "assets/images/currency/item_annulment.png" },
+      
       exalted: { name: "Exalted Orb", worth: 15.0, url: "assets/images/currency/item_exalted.png" },
+      greater_exalted: { name: "Greater Exalted Orb", worth: 25.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/GreaterExaltedOrb.png" },
+      perfect_exalted: { name: "Perfect Exalted Orb", worth: 45.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/PerfectExaltedOrb.png" },
+      
       divine: { name: "Divine Orb", worth: 150.0, url: "assets/images/currency/item_divine.png" },
       mirror: { name: "Mirror of Kalandra", worth: 40000.0, url: "assets/images/currency/item_mirror.png" },
-      verisium: { name: "Verisium Ore", worth: 0.5, url: "https://web.poecdn.com/image/Art/2DItems/Currency/AncestralTattoo11.png" },
-      runic_alloy: { name: "Runic Alloy", worth: 10.0, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RunicAlloy.png" },
-      aldurs_legacy: { name: "Aldur's Legacy Rune", worth: 50.0, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneAldursLegacy.png" },
-      iron_rune: { name: "Iron Rune", worth: 0.5, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneIron.png" },
-      gold_rune: { name: "Gold Rune", worth: 2.0, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneGold.png" },
-      stone_rune: { name: "Stone Rune", worth: 1.0, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneStone.png" },
-      uncut_gem: { name: "Uncut Skill Gem", worth: 5.0, url: "https://web.poecdn.com/image/Art/2DItems/Gems/SupportGem.png" }
+      
+      chance: { name: "Orb of Chance", worth: 0.2, url: "https://poe2db.tw/image/Art/2DItems/Currency/ChanceOrb.png" },
+      fracturing: { name: "Fracturing Orb", worth: 50.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/FracturingOrb.png" },
+      hinekoras_lock: { name: "Hinekora's Lock", worth: 15000.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/HinekorasLock.png" },
+      artificer: { name: "Artificer's Orb", worth: 8.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/ArtificersOrb.png" },
+      
+      lesser_jeweller: { name: "Lesser Jeweller's Orb", worth: 0.1, url: "https://poe2db.tw/image/Art/2DItems/Currency/LesserJewellersOrb.png" },
+      greater_jeweller: { name: "Greater Jeweller's Orb", worth: 1.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/GreaterJewellersOrb.png" },
+      perfect_jeweller: { name: "Perfect Jeweller's Orb", worth: 5.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/PerfectJewellersOrb.png" },
+      
+      verisium: { name: "Verisium Ore", worth: 0.5, url: "https://poe2db.tw/image/Art/2DItems/Currency/Expedition2/RefinedVerisium.png" },
+      runic_alloy: { name: "Runic Alloy", worth: 10.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/RunicAlloy.png" },
+      aldurs_legacy: { name: "Aldur's Legacy Rune", worth: 50.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/RuneAldursLegacy.png" },
+      iron_rune: { name: "Iron Rune", worth: 0.5, url: "https://poe2db.tw/image/Art/2DItems/Currency/RuneIron.png" },
+      gold_rune: { name: "Gold Rune", worth: 2.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/RuneGold.png" },
+      stone_rune: { name: "Stone Rune", worth: 1.0, url: "https://poe2db.tw/image/Art/2DItems/Currency/RuneStone.png" },
+      uncut_gem: { name: "Uncut Skill Gem", worth: 5.0, url: "https://poe2db.tw/image/Art/2DItems/Gems/SupportGem.png" }
     };
     
     // Clusters definition for the cubby box grouping
@@ -1224,7 +1339,20 @@
           const vaultEntry = entries.find(e => e.name === "__GUILD_VAULT__");
           if (vaultEntry && vaultEntry.data) {
             const cData = vaultEntry.data;
-            const keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror", "verisium", "runic_alloy", "aldurs_legacy", "iron_rune", "gold_rune", "stone_rune", "uncut_gem"];
+            const keys = [
+              "scroll", 
+              "transmute", "greater_transmute", "perfect_transmute", 
+              "augmentation", "greater_augmentation", "perfect_augmentation", 
+              "alchemy", 
+              "regal", "greater_regal", "perfect_regal", 
+              "chaos", "greater_chaos", "perfect_chaos", 
+              "vaal", "annulment", 
+              "exalted", "greater_exalted", "perfect_exalted", 
+              "divine", "mirror", 
+              "chance", "fracturing", "hinekoras_lock", "artificer", 
+              "lesser_jeweller", "greater_jeweller", "perfect_jeweller", 
+              "verisium", "runic_alloy", "aldurs_legacy", "iron_rune", "gold_rune", "stone_rune", "uncut_gem"
+            ];
             keys.forEach(key => {
               scannedCounts[key] = parseInt(cData[key], 10) || 0;
             });
@@ -1344,59 +1472,199 @@
       
       let totalWorth = 0;
       
-      CLUSTERS.forEach(cluster => {
-        const panel = document.createElement("div");
-        panel.className = "currency-cluster-panel";
+      function renderStashCell(key) {
+        const qty = scannedCounts[key] || 0;
+        const config = CURRENCY_CONFIG[key];
         
-        const header = document.createElement("div");
-        header.className = "currency-cluster-header";
-        header.textContent = cluster.title;
-        panel.appendChild(header);
-        
-        const grid = document.createElement("div");
-        grid.className = "currency-cluster-grid";
-        
-        cluster.keys.forEach(key => {
-          const qty = scannedCounts[key] || 0;
-          const config = CURRENCY_CONFIG[key];
-          
+        if (config) {
           totalWorth += qty * config.worth;
-          
-          const cubby = document.createElement("div");
-          cubby.className = "currency-cubby-box";
-          cubby.title = `${config.name}: ${qty}x`;
-          
-          const img = document.createElement("img");
-          img.src = config.url;
-          img.className = "currency-cubby-icon";
-          img.alt = config.name;
-          
-          if (qty === 0) {
-            img.style.opacity = "0.2";
-            img.style.filter = "grayscale(100%)";
-          }
-          
-          const qtyLabel = document.createElement("span");
-          qtyLabel.className = "currency-cubby-count";
-          qtyLabel.textContent = qty >= 1000 ? (qty / 1000).toFixed(1) + "k" : qty;
-          
-          if (qty === 0) {
-            qtyLabel.style.display = "none";
-          }
-          
-          const nameLabel = document.createElement("span");
-          nameLabel.className = "currency-cubby-name";
-          nameLabel.textContent = config.name;
-          
-          cubby.appendChild(img);
-          cubby.appendChild(qtyLabel);
-          cubby.appendChild(nameLabel);
-          grid.appendChild(cubby);
-        });
+        }
         
-        panel.appendChild(grid);
-        container.appendChild(panel);
+        const cell = document.createElement("div");
+        cell.className = "stash-cell occupied";
+        if (config) {
+          cell.title = `${config.name}: ${qty}x`;
+        }
+        
+        const img = document.createElement("img");
+        img.src = config ? config.url : "";
+        img.className = "stash-cell-icon";
+        if (config) img.alt = config.name;
+        
+        if (qty === 0) {
+          img.style.opacity = "0.15";
+          img.style.filter = "grayscale(100%)";
+        }
+        
+        const qtyLabel = document.createElement("span");
+        qtyLabel.className = "currency-cubby-count";
+        qtyLabel.textContent = qty >= 1000 ? (qty / 1000).toFixed(1) + "k" : qty;
+        if (qty === 0) {
+          qtyLabel.style.display = "none";
+        }
+        
+        cell.appendChild(img);
+        cell.appendChild(qtyLabel);
+        
+        if (config) {
+          cell.onclick = () => {
+            showPoeTooltip({
+              name: config.name,
+              base: "PoE2 Currency",
+              rarity: "Normal",
+              level: 1,
+              ilvl: 100,
+              affixes: [`Valued at: ${config.worth} Chaos Orbs`, `Active Guild Stacks: ${qty}x`],
+              price: `${(qty * config.worth).toFixed(1)} Chaos`,
+              flavor: "The coffers are full, the ledger is balanced.",
+              url: config.url
+            });
+          };
+        }
+        
+        return cell;
+      }
+
+      // Parent board
+      const board = document.createElement("div");
+      board.className = "currency-grid-board";
+      
+      // 1. Top Section (Main Row containing Left, Center, Right layouts)
+      const topRow = document.createElement("div");
+      topRow.className = "currency-grid-board-row";
+      
+      // A. LEFT 5x3 GRID (augment, transmute, regal, exalted, chaos)
+      const leftColWrapper = document.createElement("div");
+      leftColWrapper.style.display = "flex";
+      leftColWrapper.style.flexDirection = "column";
+      leftColWrapper.style.gap = "8px";
+      
+      const leftTitle = document.createElement("div");
+      leftTitle.className = "currency-cluster-header";
+      leftTitle.textContent = "🪙 TIERED CURRENCIES (5x3)";
+      leftColWrapper.appendChild(leftTitle);
+      
+      const leftGrid = document.createElement("div");
+      leftGrid.className = "currency-left-side-grid";
+      
+      const leftKeys = [
+        "transmute", "greater_transmute", "perfect_transmute",
+        "augmentation", "greater_augmentation", "perfect_augmentation",
+        "regal", "greater_regal", "perfect_regal",
+        "exalted", "greater_exalted", "perfect_exalted",
+        "chaos", "greater_chaos", "perfect_chaos"
+      ];
+      
+      leftKeys.forEach(k => {
+        leftGrid.appendChild(renderStashCell(k));
       });
+      leftColWrapper.appendChild(leftGrid);
+      topRow.appendChild(leftColWrapper);
+      
+      // B. CENTER 3x3 GRID (alchemy, vaal, annulment, chance, fracturing, divine, hinekoras, mirror, artificer)
+      const centerColWrapper = document.createElement("div");
+      centerColWrapper.style.display = "flex";
+      centerColWrapper.style.flexDirection = "column";
+      centerColWrapper.style.gap = "8px";
+      
+      const centerTitle = document.createElement("div");
+      centerTitle.className = "currency-cluster-header";
+      centerTitle.textContent = "🔮 UTILITY CURRENCIES (3x3)";
+      centerColWrapper.appendChild(centerTitle);
+      
+      const centerGrid = document.createElement("div");
+      centerGrid.className = "currency-center-utility-grid";
+      
+      const centerKeys = [
+        "alchemy", "vaal", "annulment",
+        "chance", "fracturing", "divine",
+        "hinekoras_lock", "mirror", "artificer"
+      ];
+      
+      centerKeys.forEach(k => {
+        centerGrid.appendChild(renderStashCell(k));
+      });
+      centerColWrapper.appendChild(centerGrid);
+      topRow.appendChild(centerColWrapper);
+      
+      // C. RIGHT COLUMN (Jewellers loops + scroll of wisdom)
+      const rightColWrapper = document.createElement("div");
+      rightColWrapper.style.display = "flex";
+      rightColWrapper.style.flexDirection = "column";
+      rightColWrapper.style.gap = "8px";
+      
+      const rightTitle = document.createElement("div");
+      rightTitle.className = "currency-cluster-header";
+      rightTitle.textContent = "📜 JEWELLERS & SCROLLS";
+      rightColWrapper.appendChild(rightTitle);
+      
+      const rightCol = document.createElement("div");
+      rightCol.className = "currency-right-side-layout";
+      
+      // Jewellers cluster
+      const jewellersTitle = document.createElement("div");
+      jewellersTitle.style.fontSize = "0.58rem";
+      jewellersTitle.style.color = "#a2a1a0";
+      jewellersTitle.style.textAlign = "center";
+      jewellersTitle.style.fontWeight = "bold";
+      jewellersTitle.textContent = "JEWELLER'S LOOP ORBS";
+      rightCol.appendChild(jewellersTitle);
+      
+      const jewellersCluster = document.createElement("div");
+      jewellersCluster.className = "currency-jewellers-cluster";
+      const jewellerKeys = ["lesser_jeweller", "greater_jeweller", "perfect_jeweller"];
+      jewellerKeys.forEach(k => {
+        jewellersCluster.appendChild(renderStashCell(k));
+      });
+      rightCol.appendChild(jewellersCluster);
+      
+      // Scroll slot
+      const scrollTitle = document.createElement("div");
+      scrollTitle.style.fontSize = "0.58rem";
+      scrollTitle.style.color = "#a2a1a0";
+      scrollTitle.style.textAlign = "center";
+      scrollTitle.style.fontWeight = "bold";
+      scrollTitle.textContent = "SCROLL OF WISDOM";
+      rightCol.appendChild(scrollTitle);
+      
+      const scrollWrapper = document.createElement("div");
+      scrollWrapper.className = "currency-wisdom-slot-wrapper";
+      scrollWrapper.appendChild(renderStashCell("scroll"));
+      rightCol.appendChild(scrollWrapper);
+      
+      rightColWrapper.appendChild(rightCol);
+      topRow.appendChild(rightColWrapper);
+      
+      board.appendChild(topRow);
+      
+      // 2. Bottom Section (Runic League & Aldur Metals)
+      const bottomColWrapper = document.createElement("div");
+      bottomColWrapper.style.display = "flex";
+      bottomColWrapper.style.flexDirection = "column";
+      bottomColWrapper.style.gap = "8px";
+      bottomColWrapper.style.marginTop = "15px";
+      
+      const bottomTitle = document.createElement("div");
+      bottomTitle.className = "currency-cluster-header";
+      bottomTitle.textContent = "⚡ ALDUR SMITHING & RUNIC EXPEDITION METALS";
+      bottomColWrapper.appendChild(bottomTitle);
+      
+      const bottomGrid = document.createElement("div");
+      bottomGrid.className = "currency-bottom-runes-grid";
+      
+      const bottomKeys = [
+        "verisium", "runic_alloy", "aldurs_legacy", 
+        "iron_rune", "gold_rune", "stone_rune", 
+        "uncut_gem"
+      ];
+      
+      bottomKeys.forEach(k => {
+        bottomGrid.appendChild(renderStashCell(k));
+      });
+      bottomColWrapper.appendChild(bottomGrid);
+      board.appendChild(bottomColWrapper);
+      
+      container.appendChild(board);
       
       if (worthBadge) {
         worthBadge.textContent = `WORTH: ${totalWorth.toLocaleString(undefined, {maximumFractionDigits: 0})}c (approx ${(totalWorth / 150).toFixed(1)} EX)`;
