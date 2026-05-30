@@ -1014,22 +1014,53 @@
         <span id="loginError" style="font-size: 0.7rem; color: #ef4444; font-weight: bold; align-self: flex-end; margin-bottom: 8px; display: none;">❌ INVALID PASSCODE</span>
       </div>
       
-      <div id="loggedInState" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; width: 100%;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 1.6rem;">👑</span>
-          <div>
-            <div style="font-size: 0.65rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">Active Guildmate Profile</div>
-            <div id="activeProfileLabel" style="font-size: 0.95rem; color: #2ecc71; font-weight: bold; font-family: 'Outfit', sans-serif; letter-spacing: 0.5px;">Mike</div>
+      <div id="loggedInState" style="display: none; flex-direction: column; gap: 15px; width: 100%;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.6rem;">👑</span>
+            <div>
+              <div style="font-size: 0.65rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">Active Guildmate Profile</div>
+              <div id="activeProfileLabel" style="font-size: 0.95rem; color: #2ecc71; font-weight: bold; font-family: 'Outfit', sans-serif; letter-spacing: 0.5px;">Mike</div>
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button id="btnToggleChangePasscode" onclick="toggleChangePasscodeSection()" class="gothic-btn" style="border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #ffd700; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+              🔒 CHANGE PASSCODE
+            </button>
+            <button id="btnProfileView" onclick="selectPersonalProfileTab()" class="gothic-btn" style="border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #ffd700; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+              👤 GO TO MY PROFILE
+            </button>
+            <button onclick="logOutUser()" class="gothic-btn" style="border: 1px solid rgba(239, 68, 68, 0.4); background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #f87171; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+              🚪 LOG OUT
+            </button>
           </div>
         </div>
         
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <button id="btnProfileView" onclick="selectPersonalProfileTab()" class="gothic-btn" style="border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #ffd700; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-            👤 GO TO MY PROFILE
-          </button>
-          <button onclick="logOutUser()" class="gothic-btn" style="border: 1px solid rgba(239, 68, 68, 0.4); background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #f87171; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-            🚪 LOG OUT
-          </button>
+        <!-- Collapsible Password Changer -->
+        <div id="changePasscodePanel" style="display: none; background: rgba(18, 15, 13, 0.95); border: 1px solid rgba(197, 168, 128, 0.2); border-radius: 4px; padding: 12px; margin-top: 10px; box-sizing: border-box;">
+          <div style="font-size: 0.72rem; color: #ffd700; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px;">
+            🔒 Change Profile Passcode (Saved to database)
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase;">Current Passcode</label>
+              <input type="password" id="changeCurrentPasscode" placeholder="••••" maxlength="8" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 5px; border-radius: 4px; font-size: 0.7rem; width: 110px; outline: none; text-align: center; font-family: monospace;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase;">New Passcode</label>
+              <input type="password" id="changeNewPasscode" placeholder="••••" maxlength="8" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 5px; border-radius: 4px; font-size: 0.7rem; width: 110px; outline: none; text-align: center; font-family: monospace;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase;">Confirm New</label>
+              <input type="password" id="changeConfirmPasscode" placeholder="••••" maxlength="8" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 5px; border-radius: 4px; font-size: 0.7rem; width: 110px; outline: none; text-align: center; font-family: monospace;">
+            </div>
+            
+            <button onclick="changeUserPasscode()" class="gothic-btn" style="border: 1px solid #ffd700; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 5px 12px; font-size: 0.68rem; color: #ffd700; border-radius: 4px; cursor: pointer; height: 26px; align-self: flex-end;">
+              UPDATE PASSCODE
+            </button>
+            <span id="changePasscodeStatus" style="font-size: 0.65rem; font-weight: bold; align-self: flex-end; margin-bottom: 6px;"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -1549,6 +1580,11 @@
               }
             }
           });
+
+          const passcodeEntry = entries.find(e => e.name === "__GUILD_PASSCODES__");
+          if (passcodeEntry && passcodeEntry.data) {
+            userPasscodeHashes = { ...DEFAULT_PASSCODE_HASHES, ...passcodeEntry.data };
+          }
 
           const vaultEntry = entries.find(e => e.name === "__GUILD_VAULT__");
           if (vaultEntry && vaultEntry.data) {
@@ -2760,14 +2796,9 @@
       
       filterSelect.innerHTML = `<option value="all">🛡️ Guild (All)</option>`;
       
-      const owners = new Set();
-      scannedItems.forEach(item => {
-        if (item.owner && item.owner !== "Shared Guild Vault") {
-          owners.add(item.owner);
-        }
-      });
+      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "Mike", "pseudofro", "Smooth"];
       
-      Array.from(owners).sort().forEach(owner => {
+      profiles.forEach(owner => {
         const opt = document.createElement("option");
         opt.value = owner.toLowerCase();
         opt.textContent = `👤 ${owner}'s Stash`;
@@ -3066,11 +3097,17 @@
     // V2.9 PERSONAL PROFILE, PASSCODE LOGIN & PoB DECODER HELPERS
     // ==========================================
 
-    const USER_PASSCODE_HASHES = {
-      "mike": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4", // "1234"
-      "creg": "a7e6074214777d0137e5ec8fa08e7ff282367d3e09bd596d1945f311c19d45e5", // "5678"
-      "radiocommander": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8" // "password"
+    const DEFAULT_PASSCODE_HASHES = {
+      "baorunner": "f00bf0465d1fede533b97579707f2557931fcf992d37eacbec7f034edd50c2ec", // bao79
+      "chaz": "ddb17e5b8507c3a861fe23bfc9a38a3ac6462cf0ed331f2cc2ae8b8e587683de", // chz42
+      "creg": "01dcef73763a5e49774bff772269f818be1ceb86600b486668ac7a659b06463a", // crg88
+      "huneybutta": "b042927dd1b6249c78655880ab617219dcb971b5176fabdac61c626614340a42", // hny13
+      "mike": "c49807536f99990640fbd85a3a5860a79a2fff0ae40dec59dddfbea5a4d99e55", // mik95
+      "pseudofro": "394d29b7998e3510c930746d15e2a61d5cb87a08f0fb59ad94d0b8212fae0d80", // psd64
+      "smooth": "9741cb6124b4184fa4d7c24400a9d35079bdc3ea98c59590af05b15f1da3cd62" // smh27
     };
+
+    let userPasscodeHashes = { ...DEFAULT_PASSCODE_HASHES };
 
     async function sha256(message) {
       const msgBuffer = new TextEncoder().encode(message);
@@ -3100,16 +3137,9 @@
       
       select.innerHTML = "";
       
-      const profiles = new Set(["Mike", "Creg", "Radiocommander"]);
+      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "Mike", "pseudofro", "Smooth"];
       
-      // Load all owners dynamically from database scans
-      scannedItems.forEach(item => {
-        if (item.owner && item.owner !== "Shared Guild Vault") {
-          profiles.add(item.owner);
-        }
-      });
-      
-      Array.from(profiles).sort().forEach(profile => {
+      profiles.forEach(profile => {
         const opt = document.createElement("option");
         opt.value = profile.toLowerCase();
         opt.textContent = profile;
@@ -3123,10 +3153,12 @@
       const label = document.getElementById("activeProfileLabel");
       const error = document.getElementById("loginError");
       const loginBtn = document.getElementById("btnToggleLoginDrawer");
+      const changePanel = document.getElementById("changePasscodePanel");
+      
+      if (changePanel) changePanel.style.display = "none";
+      if (error) error.style.display = "none";
       
       const loggedInUser = localStorage.getItem("loggedInUser");
-      
-      if (error) error.style.display = "none";
       
       if (loggedInUser) {
         if (form) form.style.display = "none";
@@ -3155,7 +3187,7 @@
       if (!passcode) return;
       
       const hash = await sha256(passcode);
-      const expectedHash = USER_PASSCODE_HASHES[profile] || "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // Default to "1234"
+      const expectedHash = userPasscodeHashes[profile] || "c49807536f99990640fbd85a3a5860a79a2fff0ae40dec59dddfbea5a4d99e55"; // Default to Mik95
       
       if (hash === expectedHash) {
         localStorage.setItem("loggedInUser", name);
@@ -3176,6 +3208,107 @@
       toggleLoginDrawer(false);
       if (activeTabId === "profile") {
         renderActiveTab();
+      }
+    }
+
+    function toggleChangePasscodeSection() {
+      const panel = document.getElementById("changePasscodePanel");
+      if (!panel) return;
+      
+      const isVisible = panel.style.display === "block";
+      panel.style.display = isVisible ? "none" : "block";
+      
+      if (!isVisible) {
+        document.getElementById("changeCurrentPasscode").value = "";
+        document.getElementById("changeNewPasscode").value = "";
+        document.getElementById("changeConfirmPasscode").value = "";
+        const status = document.getElementById("changePasscodeStatus");
+        if (status) {
+          status.style.display = "none";
+          status.textContent = "";
+        }
+      }
+    }
+
+    async function changeUserPasscode() {
+      const loggedInUser = localStorage.getItem("loggedInUser");
+      if (!loggedInUser) return;
+      
+      const profile = loggedInUser.toLowerCase();
+      const currentVal = document.getElementById("changeCurrentPasscode").value.trim();
+      const newVal = document.getElementById("changeNewPasscode").value.trim();
+      const confirmVal = document.getElementById("changeConfirmPasscode").value.trim();
+      const status = document.getElementById("changePasscodeStatus");
+      
+      if (!status) return;
+      
+      status.style.display = "inline";
+      status.style.color = "#ef4444";
+      
+      if (!currentVal || !newVal || !confirmVal) {
+        status.textContent = "❌ ALL FIELDS REQUIRED";
+        return;
+      }
+      
+      if (newVal !== confirmVal) {
+        status.textContent = "❌ CONFIRM PASSWORD MISMATCH";
+        return;
+      }
+      
+      if (newVal.length < 4) {
+        status.textContent = "❌ PASSCODE MUST BE >= 4 CHARACTERS";
+        return;
+      }
+      
+      const currentHash = await sha256(currentVal);
+      const expectedHash = userPasscodeHashes[profile];
+      
+      if (currentHash !== expectedHash) {
+        status.textContent = "❌ INCORRECT CURRENT PASSWORD";
+        return;
+      }
+      
+      status.style.color = "#ffd700";
+      status.textContent = "⏳ Syncing custom passcode to database...";
+      
+      try {
+        const newHash = await sha256(newVal);
+        
+        userPasscodeHashes[profile] = newHash;
+        
+        const syncRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            p_name: "__GUILD_PASSCODES__",
+            p_data: userPasscodeHashes,
+            p_write_key: GUILD_WRITE_KEY
+          })
+        });
+        
+        if (!syncRes.ok) {
+          throw new Error("Supabase RPC failed: " + await syncRes.text());
+        }
+        
+        status.style.color = "#2ecc71";
+        status.textContent = "✅ PASSWORD UPDATED GLOBALLY!";
+        
+        document.getElementById("changeCurrentPasscode").value = "";
+        document.getElementById("changeNewPasscode").value = "";
+        document.getElementById("changeConfirmPasscode").value = "";
+        
+        setTimeout(() => {
+          toggleChangePasscodeSection();
+        }, 1500);
+        
+      } catch (err) {
+        console.error("Failed to sync passcode to Supabase:", err);
+        status.style.color = "#ef4444";
+        status.textContent = "❌ DATABASE SYNC FAILED: " + err.message;
       }
     }
 
