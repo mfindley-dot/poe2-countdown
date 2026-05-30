@@ -954,8 +954,8 @@ async function bulkSyncStashTab() {
     log(`GGG Fetch complete! Loaded ${items.length} items.`, "success");
     
     // V2.2.1 Auto-Detect Currency Tab vs. Gear Tab routing
-    const activeTab = stashData.tabs ? stashData.tabs.find(t => t.i === tabIndex) : null;
-    const tabName = activeTab ? activeTab.n.toLowerCase() : "";
+    const activeStashTab = stashData.tabs ? stashData.tabs.find(t => t.i === tabIndex) : null;
+    const tabName = activeStashTab ? activeStashTab.n.toLowerCase() : "";
     const coreCurrencyNames = [
       "scroll of wisdom", "orb of transmutation", "orb of augmentation", "orb of alchemy", 
       "regal orb", "chaos orb", "vaal orb", "orb of annulment", 
