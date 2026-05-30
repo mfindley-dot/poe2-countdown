@@ -66,21 +66,65 @@
 
   <div class="app-container">
     <!-- Header -->
-    <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 10px 20px;">
+    <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 10px 20px; flex-wrap: wrap; gap: 15px;">
       <p class="subtitle text-gold-faded" style="margin: 0;">GOOD LOOT GANG</p>
       
-      <!-- Milestone Sigil Selector -->
-      <div class="milestone-selector-container">
-        <label for="milestoneSelect" class="sigil-label">CURRENT TARGET SIGIL:</label>
-        <div class="custom-select-wrapper">
-          <select id="milestoneSelect">
-            <option value="patch-050">Patch 0.5.0 "Return of the Ancients"</option>
-            <option value="league-1">PoE 2 League 1 "Wrath of the Karui"</option>
-            <option value="release-10">PoE 2 Full 1.0 Release</option>
-          </select>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <button id="btnToggleLoginDrawer" onclick="toggleLoginDrawer()" class="gothic-btn" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
+          👤 GUILDMATE LOGIN
+        </button>
+
+        <!-- Milestone Sigil Selector -->
+        <div class="milestone-selector-container">
+          <label for="milestoneSelect" class="sigil-label">CURRENT TARGET SIGIL:</label>
+          <div class="custom-select-wrapper">
+            <select id="milestoneSelect">
+              <option value="patch-050">Patch 0.5.0 "Return of the Ancients"</option>
+              <option value="league-1">PoE 2 League 1 "Wrath of the Karui"</option>
+              <option value="release-10">PoE 2 Full 1.0 Release</option>
+            </select>
+          </div>
         </div>
       </div>
     </header>
+
+    <!-- Collapsible Gothic Login Drawer -->
+    <div id="loginDrawer" class="vault-stash-wrapper" style="display: none; max-width: 1200px; margin: 15px auto 20px auto; padding: 15px; border-color: #ffd700; box-sizing: border-box; background: rgba(12, 10, 9, 0.98); box-shadow: 0 10px 20px rgba(0,0,0,0.8); position: relative; z-index: 20;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 8px; margin-bottom: 12px;">
+        <h3 class="text-gold" style="margin: 0; font-family: 'Outfit', sans-serif; letter-spacing: 1px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+          🔑 GUILDMATE PROFILE AUTHENTICATION
+        </h3>
+        <button onclick="toggleLoginDrawer(false)" style="background: none; border: none; color: #a2a1a0; font-size: 1.1rem; cursor: pointer; padding: 0 5px;">✕</button>
+      </div>
+      
+      <div id="loginForm" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.6rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase;">Exile Handle</label>
+          <select id="loginProfileSelect" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.75rem; outline: none; font-family: 'Outfit', sans-serif; cursor: pointer; min-width: 160px;">
+            <!-- Populated via script -->
+          </select>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.6rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase;">Passcode</label>
+          <input type="password" id="loginPasscode" placeholder="••••" maxlength="8" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.75rem; width: 120px; outline: none; box-sizing: border-box; text-align: center; font-family: monospace;">
+        </div>
+        <button onclick="authenticateUser()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.75rem; padding: 6px 15px; cursor: pointer; margin-top: auto; height: 32px;">
+          ⚡ ENTER MY ROOM
+        </button>
+        <span id="loginError" style="font-size: 0.7rem; color: #ef4444; font-weight: bold; align-self: flex-end; margin-bottom: 8px; display: none;">❌ INVALID PASSCODE</span>
+      </div>
+      
+      <div id="loggedInState" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+        <div style="font-family: 'Outfit', sans-serif; font-size: 0.85rem; color: #cbd5e1; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.1rem;">🛡️</span> Logged in as: <strong class="text-gold" id="activeProfileLabel">Creg</strong>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="logOutUser()" class="gothic-btn danger" style="padding: 4px 12px; font-size: 0.7rem; border-color: #ef4444; color: #ef4444; cursor: pointer; font-weight: bold;">
+            🚪 LOG OUT
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Main Content Area -->
     <main class="main-layout">
@@ -585,5 +629,134 @@
   <!-- Core Javascript -->
   <script src="app.js?v=3.2"></script>
   <script src="game.js?v=3.2"></script>
+
+  <!-- Login & Authentication Helpers for Countdown Lobby -->
+  <script>
+    const DEFAULT_PASSCODE_HASHES = {
+      "baorunner": "f00bf0465d1fede533b97579707f2557931fcf992d37eacbec7f034edd50c2ec", // bao79
+      "chaz": "ddb17e5b8507c3a861fe23bfc9a38a3ac6462cf0ed331f2cc2ae8b8e587683de", // chz42
+      "creg": "01dcef73763a5e49774bff772269f818be1ceb86600b486668ac7a659b06463a", // crg88
+      "huneybutta": "b042927dd1b6249c78655880ab617219dcb971b5176fabdac61c626614340a42", // hny13
+      "pseudofro": "394d29b7998e3510c930746d15e2a61d5cb87a08f0fb59ad94d0b8212fae0d80", // psd64
+      "radiocommander": "1bc844f5e006387edaf2de438063666b0c21c72dfd4636666d6db2b64cd6bf9b", // rad75
+      "smooth": "9741cb6124b4184fa4d7c24400a9d35079bdc3ea98c59590af05b15f1da3cd62" // smh27
+    };
+
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function toggleLoginDrawer(show) {
+      const drawer = document.getElementById("loginDrawer");
+      if (!drawer) return;
+      
+      const loggedInUser = localStorage.getItem("loggedInUser");
+      if (loggedInUser && show !== false) {
+        // If already logged in, redirect straight to their personal quarters room!
+        window.location.href = `room.html?user=${loggedInUser.toLowerCase()}`;
+        return;
+      }
+      
+      const isVisible = drawer.style.display === "block";
+      const targetShow = show !== undefined ? show : !isVisible;
+      
+      drawer.style.display = targetShow ? "block" : "none";
+      
+      if (targetShow) {
+        populateLoginProfiles();
+        updateLoginUIState();
+      }
+    }
+
+    function populateLoginProfiles() {
+      const select = document.getElementById("loginProfileSelect");
+      if (!select) return;
+      
+      select.innerHTML = "";
+      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth"];
+      profiles.forEach(profile => {
+        const opt = document.createElement("option");
+        opt.value = profile.toLowerCase();
+        opt.textContent = profile;
+        select.appendChild(opt);
+      });
+    }
+
+    function updateLoginUIState() {
+      const form = document.getElementById("loginForm");
+      const state = document.getElementById("loggedInState");
+      const label = document.getElementById("activeProfileLabel");
+      const error = document.getElementById("loginError");
+      const loginBtn = document.getElementById("btnToggleLoginDrawer");
+      
+      if (error) error.style.display = "none";
+      const loggedInUser = localStorage.getItem("loggedInUser");
+      
+      if (loggedInUser) {
+        if (form) form.style.display = "none";
+        if (state) state.style.display = "flex";
+        if (label) label.textContent = loggedInUser;
+        if (loginBtn) loginBtn.textContent = `👑 ${loggedInUser.toUpperCase()}`;
+      } else {
+        if (form) form.style.display = "flex";
+        if (state) state.style.display = "none";
+        if (loginBtn) loginBtn.textContent = "👤 GUILDMATE LOGIN";
+        const passcode = document.getElementById("loginPasscode");
+        if (passcode) passcode.value = "";
+      }
+      
+      // Update game submission prompt if game UI exists
+      const lobbyPrompt = document.getElementById("leaderboardLoginPrompt");
+      if (lobbyPrompt) {
+        if (loggedInUser) {
+          lobbyPrompt.innerHTML = `🛡️ LOGGED IN AS: <span id="lblSubmitPlayerName" style="color: #ffd700;">${loggedInUser}</span>`;
+        } else {
+          lobbyPrompt.innerHTML = `⚠️ YOU MUST BE LOGGED IN TO SUBMIT LOOT.`;
+        }
+      }
+    }
+
+    async function authenticateUser() {
+      const profileSelect = document.getElementById("loginProfileSelect");
+      const passcodeField = document.getElementById("loginPasscode");
+      const error = document.getElementById("loginError");
+      
+      if (!profileSelect || !passcodeField) return;
+      
+      const profile = profileSelect.value.toLowerCase();
+      const name = profileSelect.options[profileSelect.selectedIndex].text;
+      const passcode = passcodeField.value.trim();
+      
+      if (!passcode) return;
+      
+      const hash = await sha256(passcode);
+      const expectedHash = DEFAULT_PASSCODE_HASHES[profile];
+      
+      if (hash === expectedHash) {
+        localStorage.setItem("loggedInUser", name);
+        updateLoginUIState();
+        toggleLoginDrawer(false);
+        window.location.href = `room.html?user=${profile}`;
+      } else {
+        if (error) error.style.display = "inline";
+        passcodeField.value = "";
+        passcodeField.focus();
+      }
+    }
+
+    function logOutUser() {
+      localStorage.removeItem("loggedInUser");
+      updateLoginUIState();
+      toggleLoginDrawer(false);
+    }
+
+    // Initialize on page load
+    document.addEventListener("DOMContentLoaded", () => {
+      updateLoginUIState();
+    });
+  </script>
 </body>
 </html>

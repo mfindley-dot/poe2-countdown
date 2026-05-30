@@ -1212,8 +1212,8 @@
             <button id="btnToggleChangePasscode" onclick="toggleChangePasscodeSection()" class="gothic-btn" style="border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #ffd700; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
               🔒 CHANGE PASSCODE
             </button>
-            <button id="btnProfileView" onclick="selectPersonalProfileTab()" class="gothic-btn" style="border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #ffd700; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-              👤 GO TO MY PROFILE
+            <button id="btnProfileView" onclick="window.location.href='room.html'" class="gothic-btn" style="border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #ffd700; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+              🚪 ENTER MY CHAMBERS
             </button>
             <button onclick="logOutUser()" class="gothic-btn" style="border: 1px solid rgba(239, 68, 68, 0.4); background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #f87171; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
               🚪 LOG OUT
@@ -1568,7 +1568,6 @@
 
     // Overhauled PoE2 Stash Tabs Configuration (24 Effective Synchronization Tabs)
     const STASH_TABS = [
-      { id: "profile", name: "👤 PROFILE VIEW", type: "profile", tabIndex: -1, color: "#2d2616", textColor: "#ffd700" },
       { id: "currency", name: "🪙 CURRENCY", type: "currency", tabIndex: 0, color: "#1a3020", textColor: "#2ecc71" },
       { id: "dump", name: "🎒 DUMP TAB", type: "standard", tabIndex: 1, color: "#4a1c1c", textColor: "#ff4d4d" },
       { id: "uniq_dump", name: "🛡️ UNIQUE DUMP", type: "standard", tabIndex: 2, color: "#4a1c1c", textColor: "#ff4d4d" },
@@ -1714,8 +1713,6 @@
       if (activeTabId === "currency") {
         viewport.innerHTML = `<div class="currency-vault-container" id="vaultContainer"></div>`;
         renderVaultGrid();
-      } else if (activeTabId === "profile") {
-        renderProfileTab();
       } else if (activeTabId === "essence") {
         renderEssenceTab();
       } else if (activeTabId === "delirium") {
@@ -3314,6 +3311,12 @@
       const drawer = document.getElementById("loginDrawer");
       if (!drawer) return;
       
+      const loggedInUser = localStorage.getItem("loggedInUser");
+      if (loggedInUser && show !== false) {
+        window.location.href = `room.html?user=${loggedInUser.toLowerCase()}`;
+        return;
+      }
+      
       const isVisible = drawer.style.display === "block";
       const targetShow = show !== undefined ? show : !isVisible;
       
@@ -3386,9 +3389,8 @@
       if (hash === expectedHash) {
         localStorage.setItem("loggedInUser", name);
         updateLoginUIState();
-        if (activeTabId === "profile") {
-          renderActiveTab();
-        }
+        toggleLoginDrawer(false);
+        window.location.href = `room.html?user=${profile}`;
       } else {
         if (error) error.style.display = "inline";
         passcodeField.value = "";
@@ -3400,9 +3402,6 @@
       localStorage.removeItem("loggedInUser");
       updateLoginUIState();
       toggleLoginDrawer(false);
-      if (activeTabId === "profile") {
-        renderActiveTab();
-      }
     }
 
     function toggleChangePasscodeSection() {
@@ -3507,20 +3506,13 @@
     }
 
     function selectPersonalProfileTab() {
-      const loggedInUser = localStorage.getItem("loggedInUser") || "Mike";
-      // Update owner select filter to trigger profile loading
-      const ownerSelect = document.getElementById("stashOwnerFilter");
-      if (ownerSelect) {
-        // Find option that matches
-        for (let i = 0; i < ownerSelect.options.length; i++) {
-          if (ownerSelect.options[i].text.toLowerCase().includes(loggedInUser.toLowerCase())) {
-            ownerSelect.selectedIndex = i;
-            break;
-          }
-        }
-      }
+      const loggedInUser = localStorage.getItem("loggedInUser") || "";
       toggleLoginDrawer(false);
-      selectStashTab("profile");
+      if (loggedInUser) {
+        window.location.href = `room.html?user=${loggedInUser.toLowerCase()}`;
+      } else {
+        window.location.href = "room.html";
+      }
     }
 
     function renderProfileTab() {

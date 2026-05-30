@@ -5,6 +5,13 @@
 
 (() => {
 // ==========================================================================
+// Hard Reset for V3.2 to wipe old stats and mock scores
+if (!localStorage.getItem("GLG_RESET_V3.2")) {
+  localStorage.removeItem("GLG_LIFETIME_STASH");
+  localStorage.removeItem("poe_guild_leaderboard_cache");
+  localStorage.setItem("GLG_RESET_V3.2", "true");
+}
+// ==========================================================================
 // 1. GAME SETUP, CONSTANTS & STASH TAB CONFIG
 // ==========================================================================
 
@@ -3126,19 +3133,8 @@ let leaderboardEntriesRaw = [];       // Cache raw records to prevent repeat API
 let guildBankerUnlocked = false;       // Set globally base on collective tax reserves
 let globalGuildTaxChaos = 0;
 
-// Default premium gothic/PoE themed local mock entries as offline fallback
-const defaultMockEntries = [
-  { name: "ChrisWilson-1716912000", score: "50000", seconds: "Witch" },
-  { name: "GoodLootGuy-1716912100", score: "32000", seconds: "Ranger" },
-  { name: "Neon-1716912200", score: "25000", seconds: "Ranger" },
-  { name: "Mathil-1716912300", score: "18000", seconds: "Witch" },
-  { name: "Zizaran-1716912400", score: "15000", seconds: "Ranger" },
-  { name: "Octavian-1716912500", score: "12000", seconds: "Witch" },
-  { name: "StillSaneExile-1716912600", score: "8500", seconds: "Witch" },
-  { name: "CregTheBanker-1716912700", score: "-5000", seconds: "Banker" },
-  { name: "NoCregsAllowed-1716912800", score: "4500", seconds: "Ranger" },
-  { name: "WraeclastEnjoyer-1716912900", score: "3200", seconds: "Witch" }
-];
+// Default premium local mock entries as offline fallback (Empty for V3.2 Hard Reset)
+const defaultMockEntries = [];
 
 // Read cached leaderboards or initialize with defaults
 function getLeaderboardCache() {
@@ -4554,10 +4550,37 @@ function handlePlayerDeath() {
     mobileActionButtons.classList.add("hidden");
   }
   
-  // Reset scoreboard forms
-  document.getElementById("playerNameInput").disabled = false;
-  document.getElementById("btnSubmitScore").disabled = false;
-  document.getElementById("submitStatusMsg").textContent = "";
+  // Reset scoreboard forms based on active authenticated exile handle
+  const loggedInUser = localStorage.getItem("loggedInUser");
+  const submissionForm = document.querySelector(".score-submission-form");
+  if (submissionForm) {
+    if (loggedInUser) {
+      submissionForm.innerHTML = `
+        <div id="leaderboardLoginPrompt" class="text-gold" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">
+          🛡️ LOGGED IN AS: <span id="lblSubmitPlayerName" style="color: #ffd700;">${loggedInUser}</span>
+        </div>
+        <div class="input-group-row">
+          <input type="hidden" id="playerNameInput" value="${loggedInUser}">
+          <button class="gothic-btn border-gold" id="btnSubmitScore" style="width: 100%;">SUBMIT LOOT</button>
+        </div>
+        <div id="submitStatusMsg" class="status-msg"></div>
+      `;
+      // Re-bind click event for dynamic submit score button
+      const newSubmitBtn = document.getElementById("btnSubmitScore");
+      if (newSubmitBtn) {
+        newSubmitBtn.addEventListener("click", submitScoreToLeaderboard);
+      }
+    } else {
+      submissionForm.innerHTML = `
+        <div class="text-red" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">
+          ⚠️ YOU MUST BE LOGGED IN TO SUBMIT LOOT TO THE LEADERBOARD.
+        </div>
+        <button onclick="toggleLoginDrawer(true)" class="gothic-btn border-gold" style="width: 100%;">
+          👤 GUILDMATE LOGIN
+        </button>
+      `;
+    }
+  }
   gameScoreSubmitted = false;
   
   // Play You Died music/chime
