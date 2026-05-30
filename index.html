@@ -66,30 +66,22 @@
 
   <div class="app-container">
     <!-- Header -->
-    <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 10px 20px; flex-wrap: wrap; gap: 15px;">
-      <p class="subtitle text-gold-faded" style="margin: 0;">GOOD LOOT GANG</p>
+    <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 180px 20px 10px 20px; flex-wrap: wrap; gap: 15px; box-sizing: border-box;">
+      <p class="subtitle text-gold-faded" style="margin: 0; align-self: center;">GOOD LOOT GANG</p>
       
-      <div style="display: flex; align-items: center; gap: 15px;">
+      <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
         <a href="admin.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
           ⚙️ ADMIN CONSOLE
         </a>
         <a href="room.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
           🚪 VISIT CHAMBERS
         </a>
-        <button id="btnToggleLoginDrawer" onclick="toggleLoginDrawer()" class="gothic-btn" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-          👤 GUILDMATE LOGIN
-        </button>
-
-        <!-- Milestone Sigil Selector -->
-        <div class="milestone-selector-container">
-          <label for="milestoneSelect" class="sigil-label">CURRENT TARGET SIGIL:</label>
-          <div class="custom-select-wrapper">
-            <select id="milestoneSelect">
-              <option value="patch-050">Patch 0.5.0 "Return of the Ancients"</option>
-              <option value="league-1">PoE 2 League 1 "Wrath of the Karui"</option>
-              <option value="release-10">PoE 2 Full 1.0 Release</option>
-            </select>
-          </div>
+        
+        <div style="display: inline-flex; align-items: center; gap: 8px;">
+          <img src="assets/images/rooms/goblin-butler_alpha.png" alt="Goblin Butler" style="height: 48px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.6));" />
+          <button id="btnToggleLoginDrawer" onclick="toggleLoginDrawer()" class="gothic-btn" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
+            👤 GUILDMATE LOGIN
+          </button>
         </div>
       </div>
     </header>
@@ -181,6 +173,18 @@
             <span class="time-block" id="displaySeconds">00s</span>
           </div>
           <div class="time-status-message" id="timeStatusMessage">CALCULATING CORRELATION WITH THE COSMOS...</div>
+        </div>
+
+        <!-- Milestone Sigil Selector (Relocated underneath the timer card) -->
+        <div class="milestone-selector-container" style="margin-top: 15px;">
+          <label for="milestoneSelect" class="sigil-label">CURRENT TARGET SIGIL:</label>
+          <div class="custom-select-wrapper">
+            <select id="milestoneSelect">
+              <option value="patch-050">Patch 0.5.0 "Return of the Ancients"</option>
+              <option value="league-1">PoE 2 League 1 "Wrath of the Karui"</option>
+              <option value="release-10">PoE 2 Full 1.0 Release</option>
+            </select>
+          </div>
         </div>
       </section>
 

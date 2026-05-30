@@ -1160,16 +1160,19 @@
           </h1>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
         <a href="admin.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
           ⚙️ ADMIN CONSOLE
         </a>
         <a href="room.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
           🚪 VISIT CHAMBERS
         </a>
-        <button id="btnToggleLoginDrawer" onclick="toggleLoginDrawer()" class="gothic-btn" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-          👤 GUILDMATE LOGIN
-        </button>
+        <div style="display: inline-flex; align-items: center; gap: 8px;">
+          <img src="assets/images/rooms/goblin-butler_alpha.png" alt="Goblin Butler" style="height: 48px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.6));" />
+          <button id="btnToggleLoginDrawer" onclick="toggleLoginDrawer()" class="gothic-btn" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
+            👤 GUILDMATE LOGIN
+          </button>
+        </div>
         <a href="index.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
           🔙 BACK TO COUNTDOWN
         </a>
@@ -4798,14 +4801,16 @@ Context:
 
       const partsList = [
         { text: `You are an expert medieval/gothic RPG character portrait designer.
-Your task is to draw/render a single, highly detailed, professional RPG character portrait image for a player.
-Composition & Style Requirements:
-- Model Priority: target stable high-fidelity rendering equivalent to 'gemini-3-pro-image' / Nano Banana Pro.
-- Frame: MUST be a "mid-shot portrait" (half-body shot, showing head down to waist).
-- Aesthetics: A hilarious, goofy, high-fidelity oil painting in an ornate gilded gold Victorian portrait frame. High-society Victorian apparel mixed with bulky, absurd PoE2 plate armor. Cinematic candle lighting, oil on canvas, highly detailed.
-- Baseline Likeness Description: "${likeness}".
+Your task is to write a single, highly detailed, professional text-to-image prompt (approx 60-80 words) for a player.
+Composition & Style Requirements for the prompt:
+- Style: Highly realistic gothic oil painting, rich colors, deep dramatic shadows, medieval RPG look. Cinematic candlelight lighting, oil on canvas, highly detailed.
+- Frame: A "mid-shot portrait" (half-body shot, showing head down to waist).
+- Character details: A medieval character matching this baseline likeness: "${likeness}".
 - Player Class: ${pClass}.
-- Equipped weapons/gear details: ${weapons}.` }
+- Equipped weapons/gear details: ${weapons}.
+Important:
+- If a reference image is attached, carefully analyze their face, gender, hair style/color, glasses, and expression, ensuring a highly accurate facial match.
+- Return ONLY the raw generated image prompt string. Do NOT write any introduction, code blocks, quotes, or conversational text. Return only the prompt itself.` }
       ];
 
       if (refImageBase64) {
@@ -4823,54 +4828,46 @@ Composition & Style Requirements:
       }
 
       try {
-        const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${geminiApiKey}`, {
+        const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: partsList }],
-            generationConfig: {
-              responseModalities: ["IMAGE"]
-            }
+            contents: [{ parts: partsList }]
           })
         });
 
         if (gResponse.ok) {
           const gJson = await gResponse.json();
-          const parts = gJson?.candidates?.[0]?.content?.parts;
-          if (parts && Array.isArray(parts)) {
-            const imagePart = parts.find(p => p.inlineData || p.inline_data);
-            if (imagePart) {
-              const inlineDataObj = imagePart.inlineData || imagePart.inline_data;
-              const mime = inlineDataObj.mimeType || inlineDataObj.mime_type || "image/png";
-              const dataStr = inlineDataObj.data || inlineDataObj.inlineData;
-              const dataUrl = `data:${mime};base64,${dataStr}`;
+          const promptText = gJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (promptText) {
+            const seed = Math.floor(Math.random() * 1000000);
+            const dataUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText.trim())}?width=512&height=768&nologo=true&seed=${seed}`;
 
-              imgEl.src = dataUrl;
-              localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, dataUrl);
-              
-              if (!window.__GUILD_PORTRAITS__) window.__GUILD_PORTRAITS__ = {};
-              window.__GUILD_PORTRAITS__[lowerOwner] = dataUrl;
+            imgEl.src = dataUrl;
+            localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, dataUrl);
+            
+            if (!window.__GUILD_PORTRAITS__) window.__GUILD_PORTRAITS__ = {};
+            window.__GUILD_PORTRAITS__[lowerOwner] = dataUrl;
 
-              await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
-                method: "POST",
-                headers: {
-                  "apikey": SUPABASE_ANON_KEY,
-                  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                  "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                  p_name: "__GUILD_PORTRAITS__",
-                  p_data: window.__GUILD_PORTRAITS__,
-                  p_write_key: GUILD_WRITE_KEY
-                })
-              });
-              return;
-            }
+            await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+              method: "POST",
+              headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                p_name: "__GUILD_PORTRAITS__",
+                p_data: window.__GUILD_PORTRAITS__,
+                p_write_key: GUILD_WRITE_KEY
+              })
+            });
+            return;
           }
         }
         throw new Error("Direct image generation returned non-ok or empty image");
       } catch(err) {
-        console.error("Direct gemini-3.1-flash-image generation in vault.html failed:", err);
+        console.error("Direct gemini prompt generation or image fetch in vault.html failed:", err);
       }
     }
 

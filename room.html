@@ -327,9 +327,12 @@
         <a href="admin.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
           ⚙️ ADMIN CONSOLE
         </a>
-        <button id="btnToggleLoginDrawer" onclick="toggleLoginDrawer()" class="gothic-btn" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-          👤 GUILDMATE LOGIN
-        </button>
+        <div style="display: inline-flex; align-items: center; gap: 8px;">
+          <img src="assets/images/rooms/goblin-butler_alpha.png" alt="Goblin Butler" style="height: 48px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.6));" />
+          <button id="btnToggleLoginDrawer" onclick="toggleLoginDrawer()" class="gothic-btn" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
+            👤 GUILDMATE LOGIN
+          </button>
+        </div>
         <a href="vault.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
           🛡️ GUILD HALL VAULT
         </a>
@@ -656,27 +659,17 @@
       const isMyProfile = loggedInUser.toLowerCase() === activeOwner;
 
       viewport.innerHTML = `
-        <!-- Title scroll banner matching the wireframe -->
-        <div style="background: linear-gradient(180deg, rgba(45,38,22,0.85) 0%, rgba(12,10,9,0.98) 100%); border: 2px solid #ffd700; border-radius: 4px; width: 100%; max-width: 600px; margin: 0 auto 15px auto; padding: 20px 20px; text-align: center; box-sizing: border-box; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.6));">
-          <h2 id="guildmateCharacterNameHeader" style="margin: 0; font-family: var(--font-header); font-size: 1.8rem; color: #ffd700; font-weight: 800; text-transform: uppercase;">
-            ${capitalizedOwner}'s Chambers
-          </h2>
-          <div id="guildmateCharacterSillyTitle" style="font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: bold; color: #cbd5e1; margin-top: 6px; font-style: italic; letter-spacing: 0.5px;">
-            ⌛ Loading silly character title...
-          </div>
-        </div>
-
         <div style="font-size: 0.72rem; text-align: center; color: #a2a1a0; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 8px;">
           <span>${isMyProfile ? '🟢 ACTIVE PROFILE (Authorized Writer)' : '👁️ READ ONLY SIGHTSEEING'}</span>
           <span>•</span>
           <a href="room.html" style="color: #ffd700; text-decoration: none; font-weight: bold;">🚪 LEAVE CHAMBERS</a>
         </div>
 
-        <div class="profile-layout-container">
+        <div class="profile-layout-container" style="display: flex; flex-direction: column; align-items: center;">
           
-          <!-- Ornate Gold-Framed Victorian Portrait & Dynamic Trophy Cabinet Side Table Section -->
-          <div style="text-align: center; position: relative; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; gap: 30px; flex-wrap: wrap;">
-            <div class="gold-portrait-frame" style="width: 480px; height: 600px; border: none; border-radius: 0; box-shadow: none; background: none; position: relative; margin: 0;">
+          <!-- Centered Ornate Gold-Framed Victorian Portrait Section -->
+          <div style="text-align: center; position: relative; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; width: 100%;">
+            <div class="gold-portrait-frame" style="width: 480px; height: 600px; border: none; border-radius: 0; box-shadow: none; background: none; position: relative; margin: 0 auto; z-index: 2;">
               <!-- The actual image fits nicely inside the frame opening -->
               <img id="victorianPortraitImg" class="gold-portrait-image" src="" alt="Victorian Portrait" style="position: absolute; top: 58px; left: 68px; width: 344px; height: 484px; object-fit: cover; border: none; z-index: 1;">
               <!-- The frame image layered absolutely on top -->
@@ -688,20 +681,18 @@
                 </button>
               </div>
             </div>
+          </div>
 
-            <!-- Dynamic Side Table / Trophy Shelf next to portrait! -->
-            <div id="trophyShelfContainer" style="width: 180px; height: 600px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative;">
-              <!-- Absolutely positioned active trophies floating on the table -->
-              <div id="trophiesDisplay" style="position: absolute; bottom: 125px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 3;">
-                <!-- Dynamic trophy icons mapped here -->
-              </div>
-              
-              <!-- Visual side table backdrop -->
-              <div style="width: 150px; height: 120px; background: linear-gradient(180deg, #3d2f1f 0%, #1e150d 100%); border-top: 3px solid #ffd700; border-radius: 4px; box-shadow: 0 8px 16px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
-                <span style="font-size: 0.65rem; color: #c5a880; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">TROPHY STAND</span>
-              </div>
+          <!-- Title scroll banner passing slightly under the portrait frame -->
+          <div style="background-image: url('assets/images/rooms/scroll_placard.png'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; width: 100%; max-width: 580px; height: 180px; margin: -50px auto 25px auto; padding: 48px 45px 35px 45px; text-align: center; box-sizing: border-box; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.75)); position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h2 id="guildmateCharacterNameHeader" style="margin: 0; font-family: var(--font-header); font-size: 2.1rem; color: #3b2314; font-weight: 800; text-transform: uppercase; text-shadow: 0px 1px 1px rgba(255,255,255,0.3); line-height: 1.1;">
+              ${capitalizedOwner}
+            </h2>
+            <div id="guildmateCharacterSillyTitle" style="font-family: 'Cinzel', serif; font-size: 1.0rem; font-weight: 800; color: #694a37; margin-top: 8px; font-style: italic; letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.2;">
+              ⌛ Loading silly character title...
             </div>
           </div>
+
 
           <!-- Light 30% Opacity Background Chambers Panel -->
           <div class="glass-chambers-panel">
@@ -852,6 +843,19 @@
                 <svg id="passiveConstellationSvg" class="constellation-map-svg">
                   <!-- SVG nodes drawn here dynamically -->
                 </svg>
+              </div>
+            </div>
+            
+            <!-- Centered Trophy Stand at the bottom of the page -->
+            <div id="trophyShelfContainer" style="width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 160px; position: relative; margin: 30px auto 10px auto;">
+              <!-- Absolutely positioned active trophies floating on the table -->
+              <div id="trophiesDisplay" style="position: absolute; bottom: 65px; display: flex; flex-direction: row; justify-content: center; align-items: flex-end; gap: 25px; z-index: 3; width: 100%;">
+                <!-- Dynamic trophy icons mapped here -->
+              </div>
+              
+              <!-- Visual side table backdrop -->
+              <div style="width: 320px; height: 55px; background: linear-gradient(180deg, #3d2f1f 0%, #1e150d 100%); border-top: 3px solid #ffd700; border-radius: 4px; box-shadow: 0 8px 16px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+                <span style="font-size: 0.65rem; color: #c5a880; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">🏆 TROPHY STAND 🏆</span>
               </div>
             </div>
 
@@ -1746,7 +1750,7 @@
       }
       
       let cachedPortrait = window.__GUILD_PORTRAITS__[owner.toLowerCase()];
-      if (cachedPortrait && !cachedPortrait.startsWith("data:image")) {
+      if (cachedPortrait && !cachedPortrait.startsWith("data:image") && !cachedPortrait.startsWith("http")) {
         cachedPortrait = ""; // discard legacy seed strings
       }
       
@@ -1785,104 +1789,100 @@
         } catch(e) {}
       }
 
+      let likenessPrompt = "gothic medieval PoE exile adventurer, dark atmospheric backdrop";
+      let refImageBase64 = "";
       if (activeConf) {
-        const likenessPrompt = activeConf.portrait_prompt || "gothic exile, dark atmospheric tavern backdrop";
+        likenessPrompt = activeConf.portrait_prompt || likenessPrompt;
+        refImageBase64 = activeConf.reference_image || "";
+      }
         
-        if (forceRegen || !cachedPortrait) {
-          if (btn) {
-            btn.disabled = true;
-            btn.textContent = "⌛ BRUSHING ART LIKENESS...";
-          }
-          
-          try {
-            const hasArmorRef = !!activeConf.reference_image;
-            const hasEquippedGear = gearParts.length > 0;
-            const pauperInstruction = (!hasArmorRef && !hasEquippedGear)
-              ? "CRITICAL DEFAULT: The player has NO reference face/armor image and NO equipped gear. You MUST force generate them as a pauper in rags!"
-              : "";
+      if (forceRegen || !cachedPortrait) {
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "⌛ BRUSHING ART LIKENESS...";
+        }
+        
+        try {
+          const hasArmorRef = !!refImageBase64;
+          const hasEquippedGear = gearParts.length > 0;
+          const pauperInstruction = (!hasArmorRef && !hasEquippedGear)
+            ? "CRITICAL DEFAULT: The player has NO reference face/armor image and NO equipped gear. You MUST force generate them as a pauper in rags!"
+            : "";
 
-            const partsList = [
-              { text: `You are an expert medieval/gothic RPG character portrait designer.
-Your task is to draw/render a single, highly detailed, professional RPG character portrait image for a player named "${capitalized}".
-Composition & Style Requirements:
-- Model Priority: target stable high-fidelity rendering equivalent to 'gemini-3-pro-image' / Nano Banana Pro.
-- Frame: MUST be a "mid-shot portrait" (half-body shot, showing head down to waist).
-- Aesthetics: High-fidelity, extremely realistic gothic oil painting, rich colors, deep dramatic shadows, medieval RPG look.
-- Baseline Likeness Description: "${likenessPrompt}".
+          const partsList = [
+            { text: `You are an expert medieval/gothic RPG character portrait designer.
+Your task is to write a single, highly detailed, professional text-to-image prompt (approx 60-80 words) for a player named "${capitalized}".
+Composition & Style Requirements for the prompt:
+- Style: Highly realistic gothic oil painting, rich colors, deep dramatic shadows, medieval RPG look. Cinematic candlelight lighting, oil on canvas, highly detailed.
+- Frame: A "mid-shot portrait" (half-body shot, showing head down to waist).
+- Character details: A medieval character matching this baseline likeness: "${likenessPrompt}".
 - Equipped Gear details: "${gearStr || 'None equipped'}".
-- Path of Exile class & ascendancy context: "${pobClassStr || 'None loaded'}".
-${pauperInstruction}` }
-            ];
+- Class & ascendancy context: "${pobClassStr || 'None loaded'}".
+${pauperInstruction}
+Important:
+- If a reference image is attached, carefully analyze their face, gender, hair style/color, glasses, and expression, ensuring a highly accurate facial match.
+- Return ONLY the raw generated image prompt string. Do NOT write any introduction, code blocks, quotes, or conversational text. Return only the prompt itself.` }
+          ];
 
-            // If a reference image base64 was configured by the admin, feed it directly to the model parts!
-            if (activeConf.reference_image) {
-              const base64Clean = activeConf.reference_image.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-              partsList.push({
-                inlineData: {
-                  mimeType: "image/jpeg",
-                  data: base64Clean
-                }
-              });
-              partsList[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
-- Carefully analyze the face in the attached photo.
-- You MUST explicitly copy their exact gender, hair style (e.g. wavy dark hair), hair color (black/brown), presence of glasses (glasses must be explicitly described in the prompt!), stubble/facial hair, face shape, and expression.
-- Incorporate a medieval/fantasy version of their clothing and colors from the photo (e.g. if they are wearing blue, draw them wearing dark blue medieval robes).
-- The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
-            }
-
-            const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${GEMINI_API_KEY}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ parts: partsList }],
-                generationConfig: {
-                  responseModalities: ["IMAGE"]
-                }
-              })
-            });
-            
-            if (gResponse.ok) {
-              const gJson = await gResponse.json();
-              const parts = gJson?.candidates?.[0]?.content?.parts;
-              if (parts && Array.isArray(parts)) {
-                // Find image part
-                let imagePart = parts.find(p => p.inlineData || p.inline_data);
-                if (imagePart) {
-                  const inlineDataObj = imagePart.inlineData || imagePart.inline_data;
-                  const dataUrl = as_image(inlineDataObj);
-                  if (dataUrl) {
-                    img.src = dataUrl;
-                    window.__GUILD_PORTRAITS__[owner.toLowerCase()] = dataUrl;
-                    
-                    // Sync portraits config back to Supabase
-                    try {
-                      await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
-                        method: "POST",
-                        headers: {
-                          "apikey": SUPABASE_ANON_KEY,
-                          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                          "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                          p_name: "__GUILD_PORTRAITS__",
-                          p_data: window.__GUILD_PORTRAITS__,
-                          p_write_key: GUILD_WRITE_KEY
-                        })
-                      });
-                    } catch(e) {
-                      console.warn("Portrait sync fail:", e);
-                    }
-                    resetBtn();
-                    return;
-                  }
-                }
+          // If a reference image base64 is configured, feed it directly to the model parts!
+          if (refImageBase64) {
+            const base64Clean = refImageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+            partsList.push({
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: base64Clean
               }
-            }
-            throw new Error("Direct image generation returned non-ok or empty image");
-          } catch(err) {
-            console.error("Direct gemini-3.1-flash-image generation failed:", err);
-            resetBtn();
+            });
+            partsList[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
+- Carefully analyze the face in the attached photo.
+- You MUST explicitly copy their exact gender, hair style, hair color, presence of glasses (glasses must be explicitly described in the prompt!), stubble, face shape, and expression.
+- The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
           }
+
+          const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: partsList }]
+            })
+          });
+          
+          if (gResponse.ok) {
+            const gJson = await gResponse.json();
+            const promptText = gJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (promptText) {
+              const seed = Math.floor(Math.random() * 1000000);
+              const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText.trim())}?width=512&height=768&nologo=true&seed=${seed}`;
+              
+              img.src = imageUrl;
+              window.__GUILD_PORTRAITS__[owner.toLowerCase()] = imageUrl;
+              
+              // Sync portraits config back to Supabase
+              try {
+                await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+                  method: "POST",
+                  headers: {
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({
+                    p_name: "__GUILD_PORTRAITS__",
+                    p_data: window.__GUILD_PORTRAITS__,
+                    p_write_key: GUILD_WRITE_KEY
+                  })
+                });
+              } catch(e) {
+                console.warn("Portrait sync fail:", e);
+              }
+              resetBtn();
+              return;
+            }
+          }
+          throw new Error("Gemini generation returned non-ok or empty prompt");
+        } catch(err) {
+          console.error("Direct gemini prompt generation or image fetch failed:", err);
+          resetBtn();
         }
       }
       
