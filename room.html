@@ -761,10 +761,46 @@
               <div style="display: flex; flex-direction: column; gap: 8px;">
                 <textarea id="pobShareCodeArea" placeholder="Paste your Path of Building Share Code (Base64 string) copied from Export..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.68rem; width: 100%; height: 60px; outline: none; box-sizing: border-box; resize: none; font-family: monospace;"></textarea>
                 <div style="display: flex; gap: 8px;">
-                  <button id="btnImportPob" onclick="handlePobImport()" class="gothic-btn" style="flex: 1; border-color: #c5a880; color: #ffd700; padding: 4px; font-size: 0.68rem; cursor: pointer;">
+                  <button id="btnImportPob" onclick="handlePobImport()" class="gothic-btn" style="flex: 3; border-color: #c5a880; color: #ffd700; padding: 4px; font-size: 0.68rem; cursor: pointer; font-weight: bold;">
                     📥 DECODE POB CODE
                   </button>
+                  <button id="btnTogglePobGuide" onclick="togglePobInstructions()" class="gothic-btn" style="flex: 2; border-color: #ffd700; color: #ffd700; padding: 4px; font-size: 0.68rem; cursor: pointer; font-weight: bold;">
+                    ❓ HOW TO USE
+                  </button>
                 </div>
+                
+                <!-- Collapsible Step-by-Step PoB Guide -->
+                <div id="pobInstructionsPanel" style="display: none; background: rgba(20, 16, 14, 0.98); border: 1px solid #c5a880; border-radius: 4px; padding: 12px; margin-top: 5px; text-align: left; box-sizing: border-box; box-shadow: 0 4px 10px rgba(0,0,0,0.6);">
+                  <div style="font-family: 'Cinzel', serif; color: #ffd700; font-size: 0.72rem; font-weight: bold; border-bottom: 1px solid rgba(197, 168, 128, 0.2); padding-bottom: 4px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">
+                    🛡️ Path of Building Export Guide
+                  </div>
+                  
+                  <div style="font-size: 0.62rem; color: #cbd5e1; line-height: 1.45; display: flex; flex-direction: column; gap: 8px; font-family: 'Outfit', sans-serif;">
+                    <div>
+                      <strong style="color: #ffd700;">1. Download Path of Building (Community Fork):</strong><br>
+                      If you do not have it, download the official software tool from GitHub releases:<br>
+                      <a href="https://github.com/PathofBuildingCommunity/PathOfBuilding/releases" target="_blank" style="color: #58a6ff; text-decoration: underline; font-weight: bold; display: inline-flex; align-items: center; gap: 3px; margin-top: 3px;">
+                        🔗 Download PoB Community Fork ➔
+                      </a>
+                    </div>
+                    
+                    <div>
+                      <strong style="color: #ffd700;">2. Import your PoE 2 Character inside PoB:</strong><br>
+                      Open PoB, click <strong>"New"</strong>, go to <strong>"Import/Export Build"</strong>, type in your GGG account name, select your PoE 2 league/character, and click <strong>"Import"</strong>. (Ensure character list is public on pathofexile.com privacy settings).
+                    </div>
+                    
+                    <div>
+                      <strong style="color: #ffd700;">3. Generate Build Share Code:</strong><br>
+                      Click <strong>"Generate"</strong> next to the Share Code box in the "Import/Export Build" menu.
+                    </div>
+                    
+                    <div>
+                      <strong style="color: #ffd700;">4. Copy & Paste here:</strong><br>
+                      Click the <strong>"Copy"</strong> button inside PoB to capture the zlib Base64 string directly to your clipboard, paste it in the textarea above, and click <strong>"DECODE POB CODE"</strong>!
+                    </div>
+                  </div>
+                </div>
+
                 <div id="pobStatusMessage" style="font-size: 0.65rem; color: #2ecc71; text-align: center; display: none; font-weight: bold; line-height: 1.2;"></div>
               </div>
             </div>
@@ -1232,6 +1268,16 @@
       } catch (err) {
         console.error("Failed to sync character loadout slot online:", err);
       }
+    }
+
+    function togglePobInstructions() {
+      const panel = document.getElementById("pobInstructionsPanel");
+      const btn = document.getElementById("btnTogglePobGuide");
+      if (!panel || !btn) return;
+      
+      const isVisible = panel.style.display === "block";
+      panel.style.display = isVisible ? "none" : "block";
+      btn.textContent = isVisible ? "❓ HOW TO USE" : "❌ CLOSE GUIDE";
     }
 
     // 8. Pako POB decompress logics
