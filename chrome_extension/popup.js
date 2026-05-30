@@ -926,6 +926,10 @@ async function bulkSyncStashTab() {
       throw new Error("Invalid tab index or no items found in this stash tab.");
     }
     
+    if (stashData.tabs) {
+      console.log("All Available Stash Tabs:", stashData.tabs.map(t => `Index ${t.i}: "${t.n}"`));
+    }
+    
     const items = stashData.items;
     log(`GGG Fetch complete! Loaded ${items.length} items.`, "success");
     
