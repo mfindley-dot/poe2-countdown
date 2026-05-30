@@ -903,35 +903,19 @@ async function bulkSyncStashTab() {
   logBox.innerHTML = `Status: Initiating bulk stash fetch from GGG API...`;
   
   try {
-    // V2.8.5: Auto-detect if browser is on pathofexile2.com vs pathofexile.com
-    let hostDomain = "www.pathofexile.com";
-    try {
-      const activeTabs = await new Promise(resolve => {
-        chrome.tabs.query({ active: true, currentWindow: true }, resolve);
-      });
-      if (activeTabs && activeTabs[0] && activeTabs[0].url) {
-        const parsedUrl = new URL(activeTabs[0].url);
-        if (parsedUrl.hostname.includes("pathofexile2.com")) {
-          hostDomain = "pathofexile2.com";
-        }
-      }
-    } catch (e) {
-      console.warn("Failed to detect active tab domain:", e);
-    }
-    
-    // 1. Build GGG API Stash URL (explicitly set realm=poe2 for Path of Exile 2)
-    let gggUrl = `https://${hostDomain}/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}&realm=poe2`;
+    // 1. Build GGG API Stash URL (realm must be 'pc' for PoE2 on PC, 'poe2' is not a valid endpoint realm value)
+    let gggUrl = `https://www.pathofexile.com/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}&realm=pc`;
     if (stashType === "guild") {
       gggUrl += "&guild=true";
     } else {
       gggUrl += `&accountName=${encodeURIComponent(accountName)}`;
     }
     
-    log(`Connecting to GGG Stash (Tab #${tabIndex}) on ${hostDomain}...`);
+    log(`Connecting to GGG Stash (Tab #${tabIndex}) on www.pathofexile.com...`);
     const res = await fetch(gggUrl);
     
     if (res.status === 403 || res.redirected) {
-      throw new Error(`Access Denied (403). Please make sure you are logged into ${hostDomain} in this browser first!`);
+      throw new Error("Access Denied (403). Please make sure you are logged into pathofexile.com in this browser first!");
     }
     if (!res.ok) {
       throw new Error(`GGG API returned status ${res.status}`);
