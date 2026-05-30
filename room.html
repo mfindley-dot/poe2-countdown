@@ -16,11 +16,27 @@
   <style>
     body {
       background-color: #0c0a09;
+      background-image: url('assets/images/rooms/guild-room_default_bg.png');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center top;
       font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 0;
       color: #cbd5e1;
       overflow-x: hidden;
+    }
+
+    .glass-chambers-panel {
+      background: rgba(12, 10, 9, 0.3);
+      border: 1px solid rgba(197, 168, 128, 0.15);
+      border-radius: 8px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      margin-top: 20px;
+      box-sizing: border-box;
+      width: 100%;
     }
 
     .app-container {
@@ -293,12 +309,7 @@
 </head>
 <body>
 
-  <!-- Full Screen Loop Video Background Wrapper -->
-  <div class="background-overlay-wrapper" id="backgroundOverlayWrapper">
-    <video id="bgVideoLoop" class="bg-video-loop" autoplay loop muted playsinline poster="assets/images/backgrounds/GLG_guild-hall_background-image.png">
-      <source src="assets/animations/GLG_guild-hall-bg_(looped).webm" type="video/webm">
-    </video>
-  </div>
+
 
   <div class="app-container" style="position: relative; z-index: 10;">
     <!-- Header -->
@@ -313,6 +324,9 @@
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
+        <a href="admin.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
+          ⚙️ ADMIN CONSOLE
+        </a>
         <button id="btnToggleLoginDrawer" onclick="toggleLoginDrawer()" class="gothic-btn" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
           👤 GUILDMATE LOGIN
         </button>
@@ -647,131 +661,152 @@
 
         <div class="profile-layout-container">
           
-          <!-- Ornate Gold-Framed Victorian Portrait Section -->
-          <div style="text-align: center; position: relative;">
-            <div class gold-portrait-frame>
-              <img id="victorianPortraitImg" class="gold-portrait-image" src="" alt="Victorian Portrait Placeholder">
-              <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(12,10,9,0.9); padding: 8px; box-sizing: border-box; border-top: 1px solid rgba(197,168,128,0.3); text-align: center;">
-                <button id="btnRegenPortrait" onclick="generateVictorianPortrait(true)" class="gothic-btn" style="padding: 2px 10px; font-size: 0.6rem; border-color: #ffd700; color: #ffd700; cursor: pointer;">
-                  🎨 GENERATE / REFRESH PORTRAIT
+          <!-- Ornate Gold-Framed Victorian Portrait & Dynamic Trophy Cabinet Side Table Section -->
+          <div style="text-align: center; position: relative; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; gap: 30px; flex-wrap: wrap;">
+            <div class="gold-portrait-frame" style="width: 320px; height: 400px; border: none; border-radius: 0; box-shadow: none; background: none; position: relative; margin: 0;">
+              <!-- The actual image fits nicely inside the frame opening -->
+              <img id="victorianPortraitImg" class="gold-portrait-image" src="" alt="Victorian Portrait" style="position: absolute; top: 38px; left: 45px; width: 230px; height: 322px; object-fit: cover; border: none; z-index: 1;">
+              <!-- The frame image layered absolutely on top -->
+              <img src="assets/images/rooms/guild-room_portrait-frame.png" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; pointer-events: none;">
+              
+              <div style="position: absolute; bottom: 42px; left: 45px; width: 230px; background: rgba(12,10,9,0.92); padding: 4px; box-sizing: border-box; border-top: 1px solid rgba(197,168,128,0.3); text-align: center; z-index: 3;">
+                <button id="btnRegenPortrait" onclick="generateVictorianPortrait(true)" class="gothic-btn" style="padding: 1px 8px; font-size: 0.55rem; border-color: #ffd700; color: #ffd700; cursor: pointer; background: transparent;">
+                  🎨 REFRESH PORTRAIT
                 </button>
               </div>
             </div>
-          </div>
 
-          <!-- Latest Adventures Scroll story Builder widget -->
-          <div class="vault-stash-wrapper" style="border-color: rgba(197, 168, 128, 0.35); max-width: 600px; margin: 0 auto; width: 100%;">
-            <div style="text-align: center; font-family: var(--font-header); font-size: 1.1rem; color: #ffd700; border-bottom: 1px solid rgba(197,168,128,0.2); padding-bottom: 6px; margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase;">
-              📜 LATEST ADVENTURES LOG
-            </div>
-            
-            <!-- Parchment text narrative log -->
-            <div class="scroll-parchment" id="adventureScrollLog" style="margin-bottom: 15px;">
-              <i>A quiet fireplace crackles in the Guild Hall. Select your campaign location, enter a prompt, and summon the bard...</i>
-            </div>
-            
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 130px;">
-                  <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Active Campaign Act</label>
-                  <select id="adventureActSelect" onchange="onAdventureActChange()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.72rem; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif;">
-                    <option value="Act 1">Act 1</option>
-                    <option value="Act 2">Act 2</option>
-                    <option value="Act 3">Act 3</option>
-                    <option value="Act 4">Act 4</option>
-                    <option value="Endgame">Endgame</option>
-                  </select>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: 4px; flex: 1.2; min-width: 150px;">
-                  <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Main Quest</label>
-                  <select id="adventureQuestSelect" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.72rem; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif;">
-                    <!-- Populated dynamically -->
-                  </select>
-                </div>
-                
-                <div style="display: flex; flex-direction: column; gap: 4px; flex: 1.8; min-width: 200px;">
-                  <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Short narrative details</label>
-                  <input type="text" id="adventurePromptInput" placeholder="e.g. dropped a divine orb, got slammed..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.72rem; outline: none; box-sizing: border-box;">
-                </div>
+            <!-- Dynamic Side Table / Trophy Shelf next to portrait! -->
+            <div id="trophyShelfContainer" style="width: 140px; height: 400px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative;">
+              <!-- Absolutely positioned active trophies floating on the table -->
+              <div id="trophiesDisplay" style="position: absolute; bottom: 85px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 3;">
+                <!-- Dynamic trophy icons mapped here -->
               </div>
               
-              <div style="display: flex; gap: 8px; justify-content: center; margin-top: 5px;">
-                <button id="btnGenerateAdventure" onclick="generateBardicTale()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.7rem; padding: 6px 15px; cursor: pointer;">
-                  🎙️ HEAR MY TALE! (SUBMIT)
-                </button>
-                <button id="btnSaveMp3" onclick="downloadBardicAudio()" class="gothic-btn" style="border-color: #2ecc71; color: #2ecc71; font-size: 0.7rem; padding: 6px 15px; display: none; cursor: pointer; font-weight: bold;">
-                  💾 SAVE (AS MP3)
-                </button>
+              <!-- Visual side table backdrop -->
+              <div style="width: 120px; height: 80px; background: linear-gradient(180deg, #3d2f1f 0%, #1e150d 100%); border-top: 3px solid #ffd700; border-radius: 4px; box-shadow: 0 8px 16px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+                <span style="font-size: 0.55rem; color: #c5a880; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">TROPHY STAND</span>
               </div>
             </div>
           </div>
 
-          <!-- Path of Building shares importer -->
-          <div class="vault-stash-wrapper" style="border-color: rgba(197, 168, 128, 0.2); max-width: 600px; margin: 0 auto; width: 100%;">
-            <div style="font-family: 'Outfit', sans-serif; font-size: 0.7rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 8px; text-transform: uppercase; text-align: center;">
-              📥 PATH OF BUILDING SHARE CODES
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              <textarea id="pobShareCodeArea" placeholder="Paste your Path of Building Share Code (Base64 string) copied from Export..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.68rem; width: 100%; height: 60px; outline: none; box-sizing: border-box; resize: none; font-family: monospace;"></textarea>
-              <div style="display: flex; gap: 8px;">
-                <button id="btnImportPob" onclick="handlePobImport()" class="gothic-btn" style="flex: 1; border-color: #c5a880; color: #ffd700; padding: 4px; font-size: 0.68rem; cursor: pointer;">
-                  📥 DECODE POB CODE
-                </button>
+          <!-- Light 30% Opacity Background Chambers Panel -->
+          <div class="glass-chambers-panel">
+
+            <!-- Latest Adventures Scroll story Builder widget -->
+            <div class="vault-stash-wrapper" style="border-color: rgba(197, 168, 128, 0.35); max-width: 600px; margin: 0 auto; width: 100%;">
+              <div style="text-align: center; font-family: var(--font-header); font-size: 1.1rem; color: #ffd700; border-bottom: 1px solid rgba(197,168,128,0.2); padding-bottom: 6px; margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase;">
+                📜 LATEST ADVENTURES LOG
               </div>
-              <div id="pobStatusMessage" style="font-size: 0.65rem; color: #2ecc71; text-align: center; display: none; font-weight: bold; line-height: 1.2;"></div>
-            </div>
-          </div>
+              
+              <!-- Parchment text narrative log -->
+              <div class="scroll-parchment" id="adventureScrollLog" style="margin-bottom: 15px;">
+                <i>A quiet fireplace crackles in the Guild Hall. Select your campaign location, enter a prompt, and summon the bard...</i>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 130px;">
+                    <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Active Campaign Act</label>
+                    <select id="adventureActSelect" onchange="onAdventureActChange()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.72rem; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif;">
+                      <option value="Act 1">Act 1</option>
+                      <option value="Act 2">Act 2</option>
+                      <option value="Act 3">Act 3</option>
+                      <option value="Act 4">Act 4</option>
+                      <option value="Endgame">Endgame</option>
+                    </select>
+                  </div>
 
-          <!-- 1:1 PoE-Style Visual Inventory Overlay Panel -->
-          <div style="max-width: 480px; width: 100%; margin: 10px auto; position: relative; box-sizing: border-box;">
-            <div style="font-family: var(--font-header); font-size: 0.8rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px; margin-bottom: 15px; text-transform: uppercase; text-align: center;">
-              🛡️ EQUIPPED CHARACTER LOADOUT ${isMyProfile ? '(Click slot -> Ctrl+V)' : ''}
+                  <div style="display: flex; flex-direction: column; gap: 4px; flex: 1.2; min-width: 150px;">
+                    <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Main Quest</label>
+                    <select id="adventureQuestSelect" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.72rem; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif;">
+                      <!-- Populated dynamically -->
+                    </select>
+                  </div>
+                  
+                  <div style="display: flex; flex-direction: column; gap: 4px; flex: 1.8; min-width: 200px;">
+                    <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Short narrative details</label>
+                    <input type="text" id="adventurePromptInput" placeholder="e.g. dropped a divine orb, got slammed..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.72rem; outline: none; box-sizing: border-box;">
+                  </div>
+                </div>
+                
+                <div style="display: flex; gap: 8px; justify-content: center; margin-top: 5px;">
+                  <button id="btnGenerateAdventure" onclick="generateBardicTale()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.7rem; padding: 6px 15px; cursor: pointer;">
+                    🎙️ HEAR MY TALE! (SUBMIT)
+                  </button>
+                  <button id="btnSaveMp3" onclick="downloadBardicAudio()" class="gothic-btn" style="border-color: #2ecc71; color: #2ecc71; font-size: 0.7rem; padding: 6px 15px; display: none; cursor: pointer; font-weight: bold;">
+                    💾 SAVE (AS MP3)
+                  </button>
+                </div>
+              </div>
             </div>
-            
-            <div class="poe-inventory-container" id="poeInventoryBoard">
-              <!-- Render slots absolutely according to PoE in-game client coordinate bounds -->
+
+            <!-- Path of Building shares importer -->
+            <div class="vault-stash-wrapper" style="border-color: rgba(197, 168, 128, 0.2); max-width: 600px; margin: 15px auto; width: 100%;">
+              <div style="font-family: 'Outfit', sans-serif; font-size: 0.7rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 8px; text-transform: uppercase; text-align: center;">
+                📥 PATH OF BUILDING SHARE CODES
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <textarea id="pobShareCodeArea" placeholder="Paste your Path of Building Share Code (Base64 string) copied from Export..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.68rem; width: 100%; height: 60px; outline: none; box-sizing: border-box; resize: none; font-family: monospace;"></textarea>
+                <div style="display: flex; gap: 8px;">
+                  <button id="btnImportPob" onclick="handlePobImport()" class="gothic-btn" style="flex: 1; border-color: #c5a880; color: #ffd700; padding: 4px; font-size: 0.68rem; cursor: pointer;">
+                    📥 DECODE POB CODE
+                  </button>
+                </div>
+                <div id="pobStatusMessage" style="font-size: 0.65rem; color: #2ecc71; text-align: center; display: none; font-weight: bold; line-height: 1.2;"></div>
+              </div>
             </div>
-          </div>
 
-          <!-- Dashboard buttons -->
-          <div style="display: flex; justify-content: center; gap: 12px; margin-top: 5px;">
-            <button onclick="togglePersonalStashModal(true)" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.72rem; padding: 8px 20px; cursor: pointer;">
-              📁 VIEW PERSONAL STASH
-            </button>
-            <button onclick="toggleBuildOptimizerModal(true)" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.72rem; padding: 8px 20px; cursor: pointer;">
-              ⚖️ OPEN BUILD OPTIMIZER
-            </button>
-          </div>
+            <!-- 1:1 PoE-Style Visual Inventory Overlay Panel -->
+            <div style="max-width: 480px; width: 100%; margin: 15px auto; position: relative; box-sizing: border-box;">
+              <div style="font-family: var(--font-header); font-size: 0.8rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px; margin-bottom: 15px; text-transform: uppercase; text-align: center;">
+                🛡️ EQUIPPED CHARACTER LOADOUT ${isMyProfile ? '(Click slot -> Ctrl+V)' : ''}
+              </div>
+              
+              <div class="poe-inventory-container" id="poeInventoryBoard">
+                <!-- Render slots absolutely according to PoE in-game client coordinate bounds -->
+              </div>
+            </div>
 
-          <!-- Tabbed interface for Constellation passives and resistance stats -->
-          <div class="vault-stash-wrapper" style="border-color: rgba(197,168,128,0.25); max-width: 750px; width: 100%; margin: 15px auto 0 auto; box-sizing: border-box; background: rgba(12, 10, 9, 0.98);">
-            <div style="display: flex; border-bottom: 1px solid rgba(197,168,128,0.2); margin-bottom: 15px; gap: 8px;">
-              <button id="btnProfileTabStats" onclick="switchProfileSubTab('stats')" class="gothic-tab-btn active" style="font-family: var(--font-header); font-size: 0.72rem; letter-spacing: 1px; padding: 6px 12px; background: none; border: none; color: #ffd700; border-bottom: 2px solid #ffd700; cursor: pointer;">
-                📊 ACTIVE ATTRIBUTES & DEFICIENCIES
+            <!-- Dashboard buttons -->
+            <div style="display: flex; justify-content: center; gap: 12px; margin-top: 15px;">
+              <button onclick="togglePersonalStashModal(true)" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.72rem; padding: 8px 20px; cursor: pointer;">
+                📁 VIEW PERSONAL STASH
               </button>
-              <button id="btnProfileTabPassives" onclick="switchProfileSubTab('passives')" class="gothic-tab-btn" style="font-family: var(--font-header); font-size: 0.72rem; letter-spacing: 1px; padding: 6px 12px; background: none; border: none; color: #a2a1a0; cursor: pointer;">
-                ✨ CONSTELLATION SKILLS MAP
+              <button onclick="toggleBuildOptimizerModal(true)" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.72rem; padding: 8px 20px; cursor: pointer;">
+                ⚖️ OPEN BUILD OPTIMIZER
               </button>
             </div>
 
-            <!-- Profile tab content panel -->
-            <div id="profileSubTabContentStats">
-              <div style="display: flex; flex-direction: column; gap: 10px;" id="profileGaugesList">
-                <!-- Symmetrical resistances progress bar bars populated here -->
+            <!-- Tabbed interface for Constellation passives and resistance stats -->
+            <div class="vault-stash-wrapper" style="border-color: rgba(197,168,128,0.25); max-width: 750px; width: 100%; margin: 20px auto 0 auto; box-sizing: border-box; background: rgba(12, 10, 9, 0.98);">
+              <div style="display: flex; border-bottom: 1px solid rgba(197,168,128,0.2); margin-bottom: 15px; gap: 8px;">
+                <button id="btnProfileTabStats" onclick="switchProfileSubTab('stats')" class="gothic-tab-btn active" style="font-family: var(--font-header); font-size: 0.72rem; letter-spacing: 1px; padding: 6px 12px; background: none; border: none; color: #ffd700; border-bottom: 2px solid #ffd700; cursor: pointer;">
+                  📊 ACTIVE ATTRIBUTES & DEFICIENCIES
+                </button>
+                <button id="btnProfileTabPassives" onclick="switchProfileSubTab('passives')" class="gothic-tab-btn" style="font-family: var(--font-header); font-size: 0.72rem; letter-spacing: 1px; padding: 6px 12px; background: none; border: none; color: #a2a1a0; cursor: pointer;">
+                  ✨ CONSTELLATION SKILLS MAP
+                </button>
+              </div>
+
+              <!-- Profile tab content panel -->
+              <div id="profileSubTabContentStats">
+                <div style="display: flex; flex-direction: column; gap: 10px;" id="profileGaugesList">
+                  <!-- Symmetrical resistances progress bar bars populated here -->
+                </div>
+              </div>
+
+              <div id="profileSubTabContentPassives" style="display: none;">
+                <div style="font-size: 0.65rem; color: #a2a1a0; margin-bottom: 8px; font-style: italic;">
+                  🌠 Active Keystone and Notable constellations decoded from your imported build tree (Drag to Pan, Scroll to Zoom):
+                </div>
+                <svg id="passiveConstellationSvg" class="constellation-map-svg">
+                  <!-- SVG nodes drawn here dynamically -->
+                </svg>
               </div>
             </div>
 
-            <div id="profileSubTabContentPassives" style="display: none;">
-              <div style="font-size: 0.65rem; color: #a2a1a0; margin-bottom: 8px; font-style: italic;">
-                🌠 Active Keystone and Notable constellations decoded from your imported build tree (Drag to Pan, Scroll to Zoom):
-              </div>
-              <svg id="passiveConstellationSvg" class="constellation-map-svg">
-                <!-- SVG nodes drawn here dynamically -->
-              </svg>
-            </div>
-          </div>
-
+          </div> <!-- Close glass-chambers-panel -->
         </div>
 
         <!-- Draggable Pop-out modal for Personal Stash items -->
@@ -860,6 +895,7 @@
       onAdventureActChange();
 
       // Run profile room loaders
+      applyAdminChamberCustomizations(activeOwner);
       generateVictorianPortrait(false);
       generateCharacterSillyTitle();
       populateEquippedSlotsGrid(activeOwner, isMyProfile);
@@ -879,6 +915,52 @@
         }
       } else {
         drawPassiveConstellationMap(new DOMParser().parseFromString(`<Spec></Spec>`, "application/xml"));
+      }
+    }
+
+    // Admin console dynamically configured chambers customizations
+    function applyAdminChamberCustomizations(owner) {
+      const adminConfigStr = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
+      if (!adminConfigStr) return;
+      
+      try {
+        const config = JSON.parse(adminConfigStr);
+        const activeConf = config[owner.toLowerCase()];
+        if (!activeConf) return;
+        
+        // 1. Apply customized background image
+        const bgImage = activeConf.custom_background || activeConf.room_background || "assets/images/rooms/guild-room_default_bg.png";
+        document.body.style.backgroundImage = `url('${bgImage}')`;
+        
+        // 2. Render unlocked dynamic trophies cabinet side table stand
+        const display = document.getElementById("trophiesDisplay");
+        if (display) {
+          display.innerHTML = "";
+          const trophies = activeConf.trophies || [];
+          
+          if (trophies.includes("divine_orb")) {
+            display.innerHTML += `
+              <div style="font-size: 1.8rem; filter: drop-shadow(0 0 8px #ffd700); cursor: help;" title="Milestone: Divine Orb Trophy Pile">🪙</div>
+            `;
+          }
+          if (trophies.includes("elder_tentacle")) {
+            display.innerHTML += `
+              <div style="font-size: 1.8rem; filter: drop-shadow(0 0 8px #9b59b6); cursor: help;" title="Conquest: Defeated The Elder in T16 Spire">🐙</div>
+            `;
+          }
+          if (trophies.includes("sirus_crown")) {
+            display.innerHTML += `
+              <div style="font-size: 1.8rem; filter: drop-shadow(0 0 8px #e74c3c); cursor: help;" title="Sovereignty: Conquered The Awakener of Worlds (Sirus)">👑</div>
+            `;
+          }
+          if (trophies.includes("mirror_shard")) {
+            display.innerHTML += `
+              <div style="font-size: 1.8rem; filter: drop-shadow(0 0 8px #cbd5e1); cursor: help;" title="Extreme Luck: Mirror of Kalandra Raw Drop Shard">🪞</div>
+            `;
+          }
+        }
+      } catch(e) {
+        console.warn("Failed to apply admin chamber configurations:", e);
       }
     }
 
@@ -1620,25 +1702,89 @@
       
       let basePrompt = `detailed gothic historical oil painting, medieval victorian PoE portrait of ${capitalized} the Exile, Path of Exile aesthetic, dark atmospheric tavern background, armor and jewelry, high detail masterpiece`;
       
-      const adminConfig = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
-      if (adminConfig) {
+      const adminConfigStr = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
+      let activeConf = null;
+      if (adminConfigStr) {
         try {
-          const config = JSON.parse(adminConfig);
-          if (config[owner.toLowerCase()]) {
-            basePrompt = `detailed gothic historical oil painting, medieval PoE portrait of ${capitalized} the Exile, ${config[owner.toLowerCase()]}, dark atmospheric fantasy background, masterpiece`;
-          }
+          const config = JSON.parse(adminConfigStr);
+          activeConf = config[owner.toLowerCase()];
         } catch(e) {}
+      }
+
+      // Build dynamic equipped gear details
+      const charData = (window.charGearData && window.charGearData[owner.toLowerCase()]) || {};
+      const gearParts = [];
+      if (charData.Helm) gearParts.push(`wearing helmet: ${charData.Helm.BaseName || charData.Helm.Name}`);
+      if (charData.Body) gearParts.push(`wearing armor: ${charData.Body.BaseName || charData.Body.Name}`);
+      if (charData.Weapon) gearParts.push(`wielding main hand weapon: ${charData.Weapon.BaseName || charData.Weapon.Name}`);
+      if (charData.Offhand) gearParts.push(`wielding offhand/shield: ${charData.Offhand.BaseName || charData.Offhand.Name}`);
+      const gearStr = gearParts.join(", ") || "wearing atmospheric rags";
+
+      if (activeConf) {
+        const likenessPrompt = activeConf.portrait_prompt || "gothic exile, dark atmospheric tavern backdrop";
+        
+        if (forceRegen) {
+          if (btn) {
+            btn.disabled = true;
+            btn.textContent = "⌛ BRUSHING ART LIKENESS...";
+          }
+          
+          try {
+            const partsList = [
+              { text: `You are an expert generative AI prompt engineer for medieval/gothic RPG characters.
+Your task is to write a single, highly detailed, atmospheric Pollinations image prompt (max 60 words) for a character named "${capitalized}".
+Baseline likeness description: "${likenessPrompt}".
+Equipped gear: "${gearStr}".
+Ensure the output prompt is a single contiguous string of descriptive modifiers separated by commas. Return ONLY the prompt itself without prefix, quotes, or markdown.` }
+            ];
+
+            // If a reference image base64 was configured by the admin, feed it to Gemini Vision!
+            if (activeConf.reference_image) {
+              const base64Clean = activeConf.reference_image.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+              partsList.push({
+                inlineData: {
+                  mimeType: "image/jpeg",
+                  data: base64Clean
+                }
+              });
+              partsList[0].text += `\nCRITICAL: Analyze the attached reference image structure, posture, and facial expression. Incorporate these key details to align the portrait beautifully with their real likeness!`;
+            }
+
+            const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GUILD_WRITE_KEY}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: partsList }]
+              })
+            });
+            
+            if (gResponse.ok) {
+              const gJson = await gResponse.ok ? await gResponse.json() : null;
+              const gText = gJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (gText) {
+                basePrompt = gText.trim();
+                if (!window.__GUILD_PORTRAIT_PROMPTS__) window.__GUILD_PORTRAIT_PROMPTS__ = {};
+                window.__GUILD_PORTRAIT_PROMPTS__[owner.toLowerCase()] = basePrompt;
+              }
+            }
+          } catch(err) {
+            console.warn("Gemini vision prompt compile failed, falling back:", err);
+            basePrompt = `detailed gothic historical oil painting, medieval PoE portrait of ${capitalized} the Exile, ${likenessPrompt}, ${gearStr}, masterpiece`;
+          }
+        } else if (window.__GUILD_PORTRAIT_PROMPTS__ && window.__GUILD_PORTRAIT_PROMPTS__[owner.toLowerCase()]) {
+          basePrompt = window.__GUILD_PORTRAIT_PROMPTS__[owner.toLowerCase()];
+        } else {
+          basePrompt = `detailed gothic historical oil painting, medieval PoE portrait of ${capitalized} the Exile, ${likenessPrompt}, ${gearStr}, masterpiece`;
+        }
       }
       
       img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(basePrompt)}?width=320&height=400&nologo=true&seed=${seed}`;
       
       if (btn && forceRegen) {
-        btn.disabled = true;
-        btn.textContent = "⌛ ART BARD PAINTING LIKENESS...";
         setTimeout(() => {
           btn.disabled = false;
-          btn.textContent = "🎨 GENERATE / REFRESH PORTRAIT";
-        }, 5000);
+          btn.textContent = "🎨 REFRESH PORTRAIT";
+        }, 3000);
       }
     }
 
@@ -1667,14 +1813,34 @@
       log.innerHTML = `<span style="font-family: monospace; font-size: 0.72rem; color: #a2a1a0;">⌛ Singing the song of the constellation dust...</span>`;
       saveBtn.style.display = "none";
       
+      // Get active goofy character title from banner
+      const titleBanner = document.getElementById("guildmateCharacterSillyTitle");
+      const goofyTitle = titleBanner ? titleBanner.textContent.replace("🔮", "").replace(/"/g, "").trim() : "the Exile";
+      
+      const adminConfigStr = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
+      let bardInstructions = "Keep the tone immersive, silly, and under 80 words. Return ONLY the story text.";
+      if (adminConfigStr) {
+        try {
+          const config = JSON.parse(adminConfigStr);
+          const activeConf = config[owner.toLowerCase()];
+          if (activeConf && activeConf.bard_instructions) {
+            bardInstructions = `${activeConf.bard_instructions}. Keep the tone immersive, silly, and under 80 words. Return ONLY the story text.`;
+          }
+        } catch(e) {}
+      }
+
       try {
+        const promptText = `Tell the tale of ${capitalized} the ${goofyTitle} on their adventure as follows:
+Write a highly dramatic, mock-heroic poem or story set in Path of Exile 2, specifically in the campaign location: ${act} during the quest: "${quest}". Incorporate the following player actions: "${details}".
+Extra structure & instructions: ${bardInstructions}`;
+
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GUILD_WRITE_KEY}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `You are a low-pitch dramatic high-fantasy bard. Write a highly dramatic, mock-heroic poem or story set in Path of Exile 2, specifically in the campaign location: ${act} during the quest: "${quest}". Incorporate the following player actions: "${details}". Keep the tone immersive, silly, and under 80 words. Return ONLY the story text.`
+                text: promptText
               }]
             }]
           })

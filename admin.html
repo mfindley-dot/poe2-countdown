@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guild Administration - Path of Exile 2</title>
+  <meta name="description" content="Administration panel for managing Good Loot Gang character chambers, portraits, and narratives.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;700;800&family=Outfit:wght@300;400;600;700;800&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Styling -->
+  <link rel="stylesheet" href="style.css?v=3.2">
+  <style>
+    body {
+      background-color: #0c0a09;
+      background-image: radial-gradient(circle at center, #1a1512 0%, #070605 100%);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #cbd5e1;
+      min-height: 100vh;
+    }
+
+    .admin-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .admin-card {
+      background: rgba(20, 16, 14, 0.95);
+      border: 2px solid #ffd700;
+      border-radius: 4px;
+      padding: 25px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.9), 0 0 25px rgba(255, 215, 0, 0.1);
+      margin-bottom: 25px;
+      box-sizing: border-box;
+    }
+
+    .admin-section-header {
+      font-family: 'Cinzel', serif;
+      color: #ffd700;
+      font-size: 1.15rem;
+      letter-spacing: 1.5px;
+      border-bottom: 1px solid rgba(255,215,0,0.25);
+      padding-bottom: 8px;
+      margin-top: 0;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .player-tabs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .player-tab-btn {
+      background: linear-gradient(180deg, #1c1917 0%, #0d0a09 100%);
+      border: 1px solid rgba(197, 168, 128, 0.35);
+      color: #cbd5e1;
+      padding: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-align: center;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .player-tab-btn:hover {
+      border-color: #ffd700;
+      color: #ffd700;
+      box-shadow: 0 0 10px rgba(255,215,0,0.1);
+    }
+
+    .player-tab-btn.active-tab {
+      background: linear-gradient(180deg, #2d2616 0%, #12100e 100%);
+      border-color: #ffd700;
+      color: #ffd700;
+      box-shadow: inset 0 0 8px rgba(255,215,0,0.15), 0 4px 6px rgba(0,0,0,0.4);
+      font-weight: bold;
+    }
+
+    .admin-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .admin-form-group label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      color: #c5a880;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-input, .admin-textarea, .admin-select {
+      background: #0c0a09;
+      border: 1px solid rgba(197, 168, 128, 0.35);
+      color: #cbd5e1;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: 'Outfit', sans-serif;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+
+    .admin-input:focus, .admin-textarea:focus, .admin-select:focus {
+      border-color: #ffd700;
+      box-shadow: 0 0 8px rgba(255,215,0,0.1);
+    }
+
+    .admin-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .trophy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .trophy-checkbox-card {
+      background: #0f0d0c;
+      border: 1px solid rgba(197, 168, 128, 0.2);
+      border-radius: 4px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+
+    .trophy-checkbox-card:hover {
+      border-color: rgba(255,215,0,0.4);
+      background: #141110;
+    }
+
+    .trophy-checkbox-card input[type="checkbox"] {
+      cursor: pointer;
+      accent-color: #ffd700;
+      width: 14px;
+      height: 14px;
+    }
+
+    .trophy-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .trophy-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    .trophy-desc {
+      font-size: 0.58rem;
+      color: #a2a1a0;
+      margin-top: 1px;
+    }
+
+    /* Reference Image Display */
+    .reference-image-preview-box {
+      width: 120px;
+      height: 150px;
+      border: 1px dashed rgba(197, 168, 128, 0.4);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0c0a09;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .reference-image-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .reference-image-empty {
+      font-size: 0.58rem;
+      color: #a2a1a0;
+      text-align: center;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-container">
+    
+    <!-- Header -->
+    <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0 10px 0; box-sizing: border-box; border-bottom: 1px solid rgba(197, 168, 128, 0.15); margin-bottom: 25px;">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <img src="assets/images/icons/glg_stash-scanner_icon.png" alt="GLG Logo" style="height: 64px; width: auto; object-fit: contain; filter: drop-shadow(0 0 6px rgba(255,215,0,0.45));">
+        <div>
+          <p class="subtitle text-gold-faded" style="margin: 0; text-align: left;">GOOD LOOT GANG</p>
+          <h1 class="text-gold" style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; margin: 2px 0 0 0; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; text-shadow: 0 0 8px rgba(197, 168, 128, 0.3);">
+            Administration Console
+          </h1>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <a href="room.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
+          🚪 VISIT CHAMBERS LOBBY
+        </a>
+      </div>
+    </header>
+
+    <!-- Passcode Gate Shield -->
+    <div id="adminAuthShield" class="admin-card" style="text-align: center; max-width: 500px; margin: 50px auto;">
+      <h3 class="text-gold" style="font-family: 'Cinzel', serif; letter-spacing: 1px; font-size: 1.2rem; margin-top: 0; margin-bottom: 15px;">
+        🛡️ ADMINISTRATOR LOCK
+      </h3>
+      <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 20px; line-height: 1.5;">
+        You must enter your Guild Administrator Passcode to access likeness records, room variables, and theorycrafting parameters.
+      </p>
+      
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+        <input type="password" id="adminPasscode" placeholder="••••" maxlength="8" style="background: #0c0a09; border: 1px solid #ffd700; color: #cbd5e1; padding: 8px 15px; border-radius: 4px; font-size: 1rem; width: 140px; text-align: center; letter-spacing: 2px; outline: none; font-family: monospace;">
+        <button onclick="unlockConsole()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.85rem; padding: 8px 25px; cursor: pointer;">
+          🔑 UNLOCK CONSOLE
+        </button>
+        <span id="authError" style="font-size: 0.72rem; color: #ef4444; font-weight: bold; display: none; margin-top: 5px;">❌ INVALID ADMIN PASSCODE</span>
+      </div>
+    </div>
+
+    <!-- Active Management Board -->
+    <div id="adminBoard" style="display: none;">
+      
+      <!-- Player Tabs -->
+      <div class="player-tabs-grid" id="playerTabsGrid">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Settings Layout -->
+      <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        
+        <div class="admin-card">
+          <div class="admin-section-header">
+            👤 Management for: <span id="activeExileLabel" style="color: #ffd700; font-weight: bold; margin-left: 5px;">Creg</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr lg(2fr 1fr); gap: 20px;">
+            <div>
+              <!-- Likeness description -->
+              <div class="admin-form-group">
+                <label>Gemini Likeness Portrait Prompt description</label>
+                <textarea id="exilePortraitPrompt" class="admin-textarea" placeholder="e.g. a wise baritone commander clad in gold silk and glowing steel, weathered features, holding a massive scroll..."></textarea>
+                <span style="font-size: 0.58rem; color: #a2a1a0;">
+                  This description is injected directly into the Gemini model. Gemini blends this baseline with their equipped character gear (weapons, helm, body armor) to paint their high-DPI portrait frame!
+                </span>
+              </div>
+
+              <!-- Upload reference image -->
+              <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap; margin-top: 15px;">
+                <div class="reference-image-preview-box">
+                  <img id="refImagePreview" class="reference-image-preview" style="display: none;">
+                  <div id="refImageEmpty" class="reference-image-empty">
+                    🖼️ NO REFERENCE PHOTO UPLOADED
+                  </div>
+                </div>
+                
+                <div style="flex: 1; min-width: 200px;">
+                  <div class="admin-form-group">
+                    <label>Upload Reference Image (Gemini Vision Input)</label>
+                    <input type="file" id="refImageUpload" accept="image/*" onchange="handleImageUpload(event)" style="background: transparent; color: #cbd5e1; font-size: 0.72rem; cursor: pointer;">
+                    <span style="font-size: 0.58rem; color: #a2a1a0; margin-top: 4px;">
+                      Upload a real-life face or avatar drawing. When generating the portrait, Gemini Vision processes this image alongside active gear to replicate posture, expression, and armor color matching!
+                    </span>
+                  </div>
+                  <button id="btnClearRefImage" onclick="clearRefImage()" class="gothic-btn danger" style="padding: 2px 10px; font-size: 0.6rem; border-color: #ef4444; color: #ef4444; margin-top: 5px; display: none;">
+                    🗑️ REMOVE REFERENCE
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-section-header">
+            📜 Bard story Prompt Customizations
+          </div>
+          
+          <div class="admin-form-group">
+            <label>Extra Bardic tale Instructions & Structure</label>
+            <textarea id="exileBardInstructions" class="admin-textarea" placeholder="e.g. Ensure the story is written as a dramatic Shakespearean sonnet and mentions the tragedy of Creg's failed exalted slams. Keep it low-pitch..."></textarea>
+            <span style="font-size: 0.58rem; color: #a2a1a0;">
+              Inject custom layout constraints, character lore, inside jokes, or specific structures that will be dynamically blended with the player's campaign selections on the front end!
+            </span>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-section-header">
+            🖼️ Room background & Trophy Side Table Setup
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div class="admin-form-group">
+              <label>Room Background Image Selector</label>
+              <select id="exileRoomBackground" class="admin-select">
+                <option value="assets/images/rooms/guild-room_default_bg.png">🏰 Default Static Tall Room Hall (GLG Backdrop)</option>
+                <option value="assets/images/backgrounds/GLG_vault_backdrop.png">🪙 Communal Vault Chamber Backdrop</option>
+                <option value="assets/images/terrain/forest_parallax_bg.png">🌲 Sarn Wilderness Forest Parallax</option>
+              </select>
+              
+              <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 0.6rem; color: #a2a1a0;">OR Custom URL / File Path:</label>
+                <input type="text" id="exileCustomBgInput" class="admin-input" placeholder="e.g. assets/images/backgrounds/boss_kill_arena.png">
+              </div>
+            </div>
+
+            <div>
+              <label style="font-family: 'Outfit', sans-serif; font-size: 0.72rem; color: #c5a880; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                🏆 TROPHY CABINET UNLOCKS
+              </label>
+              <span style="display: block; font-size: 0.58rem; color: #a2a1a0; margin-bottom: 10px;">
+                Trophies earned by this player from in-game accomplishments or big boss kills. Unlocked items render on their side table!
+              </span>
+
+              <div class="trophy-grid" id="trophiesContainer">
+                <div class="trophy-checkbox-card" onclick="toggleTrophyCheckbox('divine_orb')">
+                  <input type="checkbox" id="trophy_divine_orb" value="divine_orb">
+                  <div class="trophy-info">
+                    <span class="trophy-name">🪙 Divine Orb Pile</span>
+                    <span class="trophy-desc">Cumulative league net worth milestone.</span>
+                  </div>
+                </div>
+                <div class="trophy-checkbox-card" onclick="toggleTrophyCheckbox('elder_tentacle')">
+                  <input type="checkbox" id="trophy_elder_tentacle" value="elder_tentacle">
+                  <div class="trophy-info">
+                    <span class="trophy-name">🐙 Elder's Tentacle</span>
+                    <span class="trophy-desc">Defeated the Elder in T16 Spire.</span>
+                  </div>
+                </div>
+                <div class="trophy-checkbox-card" onclick="toggleTrophyCheckbox('sirus_crown')">
+                  <input type="checkbox" id="trophy_sirus_crown" value="sirus_crown">
+                  <div class="trophy-info">
+                    <span class="trophy-name">👑 Sirus's Crown</span>
+                    <span class="trophy-desc">Conquered the Awakener of Worlds.</span>
+                  </div>
+                </div>
+                <div class="trophy-checkbox-card" onclick="toggleTrophyCheckbox('mirror_shard')">
+                  <input type="checkbox" id="trophy_mirror_shard" value="mirror_shard">
+                  <div class="trophy-info">
+                    <span class="trophy-name">🪞 Mirror of Kalandra Shard</span>
+                    <span class="trophy-desc">Extremely lucky raw drop trophy.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 10px; margin-bottom: 40px;">
+          <button onclick="saveExileConfigs()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-size: 1rem; font-weight: bold; padding: 12px 35px; width: 100%; max-width: 400px; cursor: pointer; box-shadow: 0 5px 15px rgba(255,215,0,0.15);">
+            ⚡ SYNC & UPDATE CHAMBER CONFIGS
+          </button>
+          <div id="syncStatus" style="font-size: 0.8rem; color: #2ecc71; margin-top: 10px; font-weight: bold; display: none;">
+            🔮 SUCCESS: CHAMBERS CONFIGURATIONS SYNCHRONIZED TO SUPABASE!
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://qqljadcpxsubawmzkecl.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_T8G6w3OtwXRG_cXd_-h9YQ_s8U9iDnx";
+    const GUILD_WRITE_KEY = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A";
+
+    const PROFILES_LIST = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth"];
+
+    const ADMIN_PASSCODE_HASHES = [
+      "01dcef73763a5e49774bff772269f818be1ceb86600b486668ac7a659b06463a", // crg88 (Creg)
+      "1bc844f5e006387edaf2de438063666b0c21c72dfd4636666d6db2b64cd6bf9b"  // rad75 (Radiocommander)
+    ];
+
+    let guildAdminConfigs = {};
+    let activeExile = "creg";
+    let activeImageBase64 = "";
+
+    // 1. SHA-256 Hasher
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // 2. Unlock panel check
+    async function unlockConsole() {
+      const field = document.getElementById("adminPasscode");
+      const err = document.getElementById("authError");
+      if (!field) return;
+      
+      const val = field.value.trim();
+      if (!val) return;
+      
+      const hash = await sha256(val);
+      if (ADMIN_PASSCODE_HASHES.includes(hash)) {
+        document.getElementById("adminAuthShield").style.display = "none";
+        document.getElementById("adminBoard").style.display = "block";
+        localStorage.setItem("adminAuthenticated", "true");
+        await loadAllConfigs();
+        renderPlayerTabs();
+        loadActiveExile();
+      } else {
+        err.style.display = "block";
+        field.value = "";
+        field.focus();
+      }
+    }
+
+    // Auto-login check on load
+    window.addEventListener("load", async () => {
+      const auth = localStorage.getItem("adminAuthenticated");
+      if (auth === "true") {
+        document.getElementById("adminAuthShield").style.display = "none";
+        document.getElementById("adminBoard").style.display = "block";
+        await loadAllConfigs();
+        renderPlayerTabs();
+        loadActiveExile();
+      }
+    });
+
+    // 3. Retrieve DB configs
+    async function loadAllConfigs() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/poe2_guild_vault?name=eq.__GUILD_ADMIN_CONFIG__&select=*`, {
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (response.ok) {
+          const rows = await response.json();
+          if (rows && rows.length > 0 && rows[0].data) {
+            guildAdminConfigs = rows[0].data;
+          }
+        }
+      } catch(e) {
+        console.warn("Failed to fetch admin configurations:", e);
+      }
+    }
+
+    // 4. Render vertical player tabs
+    function renderPlayerTabs() {
+      const container = document.getElementById("playerTabsGrid");
+      if (!container) return;
+      
+      container.innerHTML = PROFILES_LIST.map(profile => {
+        const nameLower = profile.toLowerCase();
+        const activeClass = nameLower === activeExile.toLowerCase() ? "active-tab" : "";
+        return `
+          <button onclick="switchActiveExile('${nameLower}')" class="player-tab-btn ${activeClass}">
+            👤 ${profile}
+          </button>
+        `;
+      }).join("");
+    }
+
+    function switchActiveExile(exile) {
+      // Save current input state locally before switching tabs
+      saveLocalCurrentExileState();
+      
+      activeExile = exile;
+      renderPlayerTabs();
+      loadActiveExile();
+    }
+
+    // Save temporary local cache state
+    function saveLocalCurrentExileState() {
+      if (!guildAdminConfigs[activeExile]) {
+        guildAdminConfigs[activeExile] = {};
+      }
+      
+      const conf = guildAdminConfigs[activeExile];
+      conf.portrait_prompt = document.getElementById("exilePortraitPrompt").value.trim();
+      conf.bard_instructions = document.getElementById("exileBardInstructions").value.trim();
+      conf.reference_image = activeImageBase64;
+      conf.room_background = document.getElementById("exileRoomBackground").value;
+      conf.custom_background = document.getElementById("exileCustomBgInput").value.trim();
+      
+      // Trophies
+      conf.trophies = [];
+      const checkboxIds = ["divine_orb", "elder_tentacle", "sirus_crown", "mirror_shard"];
+      checkboxIds.forEach(id => {
+        const checkbox = document.getElementById(`trophy_${id}`);
+        if (checkbox && checkbox.checked) {
+          conf.trophies.push(id);
+        }
+      });
+    }
+
+    // Load active player configurations into panel inputs
+    function loadActiveExile() {
+      const label = document.getElementById("activeExileLabel");
+      const matched = PROFILES_LIST.find(p => p.toLowerCase() === activeExile);
+      if (label) label.textContent = matched || activeExile;
+
+      const conf = guildAdminConfigs[activeExile] || {};
+      
+      document.getElementById("exilePortraitPrompt").value = conf.portrait_prompt || "";
+      document.getElementById("exileBardInstructions").value = conf.bard_instructions || "";
+      document.getElementById("exileRoomBackground").value = conf.room_background || "assets/images/rooms/guild-room_default_bg.png";
+      document.getElementById("exileCustomBgInput").value = conf.custom_background || "";
+      
+      activeImageBase64 = conf.reference_image || "";
+      updateReferenceImagePreview();
+
+      // Reset trophies checkbox states
+      const checkboxIds = ["divine_orb", "elder_tentacle", "sirus_crown", "mirror_shard"];
+      checkboxIds.forEach(id => {
+        const checkbox = document.getElementById(`trophy_${id}`);
+        if (checkbox) {
+          checkbox.checked = Array.isArray(conf.trophies) && conf.trophies.includes(id);
+        }
+      });
+    }
+
+    // Toggle trophy checkbox card clicking
+    function toggleTrophyCheckbox(id) {
+      const checkbox = document.getElementById(`trophy_${id}`);
+      if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+      }
+    }
+
+    // 5. Image uploads and Base64 compressor
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const imgObj = new Image();
+        imgObj.src = event.target.result;
+        imgObj.onload = function() {
+          // Resize large image to stay under database limits (max width 400px)
+          const canvas = document.createElement("canvas");
+          const maxDim = 400;
+          let w = imgObj.width;
+          let h = imgObj.height;
+          
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round(h * (maxDim / w));
+              w = maxDim;
+            } else {
+              w = Math.round(w * (maxDim / h));
+              h = maxDim;
+            }
+          }
+          
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(imgObj, 0, 0, w, h);
+          
+          activeImageBase64 = canvas.toDataURL("image/jpeg", 0.75); // compress high quality
+          updateReferenceImagePreview();
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearRefImage() {
+      activeImageBase64 = "";
+      document.getElementById("refImageUpload").value = "";
+      updateReferenceImagePreview();
+    }
+
+    function updateReferenceImagePreview() {
+      const preview = document.getElementById("refImagePreview");
+      const empty = document.getElementById("refImageEmpty");
+      const clearBtn = document.getElementById("btnClearRefImage");
+      
+      if (activeImageBase64) {
+        if (preview) {
+          preview.src = activeImageBase64;
+          preview.style.display = "block";
+        }
+        if (empty) empty.style.display = "none";
+        if (clearBtn) clearBtn.style.display = "inline-block";
+      } else {
+        if (preview) {
+          preview.src = "";
+          preview.style.display = "none";
+        }
+        if (empty) empty.style.display = "block";
+        if (clearBtn) clearBtn.style.display = "none";
+      }
+    }
+
+    // 6. Direct sync updates to Supabase PostgreSQL database
+    async function saveExileConfigs() {
+      saveLocalCurrentExileState(); // ensure active fields are captured
+      
+      const statusDiv = document.getElementById("syncStatus");
+      if (statusDiv) {
+        statusDiv.textContent = "⚡ SYNCHRONIZING EXILE CHAMBERS CONFIGURATIONS...";
+        statusDiv.style.display = "block";
+        statusDiv.style.color = "#ffd700";
+      }
+
+      const payload = {
+        p_name: "__GUILD_ADMIN_CONFIG__",
+        p_data: guildAdminConfigs,
+        p_write_key: GUILD_WRITE_KEY
+      };
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          statusDiv.textContent = "🔮 SUCCESS: CHAMBERS CONFIGURATIONS SYNCHRONIZED TO SUPABASE!";
+          statusDiv.style.color = "#2ecc71";
+          setTimeout(() => {
+            statusDiv.style.display = "none";
+          }, 4000);
+        } else {
+          throw new Error("RPC returned status: " + response.status);
+        }
+      } catch(err) {
+        console.warn("Configurations synchronization failed:", err);
+        statusDiv.textContent = "❌ ERROR: FAIL TO COMMUNICATE CONFIGS TO WRITING INTERFACE.";
+        statusDiv.style.color = "#ef4444";
+      }
+    }
+  </script>
+</body>
+</html>
