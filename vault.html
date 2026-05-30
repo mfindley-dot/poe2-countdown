@@ -4828,13 +4828,13 @@ Composition & Style Requirements:
       }
 
       try {
-        const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image:generateContent?key=${geminiApiKey}`, {
+        const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${geminiApiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: partsList }],
             generationConfig: {
-              responseModalalities: ["IMAGE"]
+              responseModalities: ["IMAGE"]
             }
           })
         });
@@ -4875,85 +4875,7 @@ Composition & Style Requirements:
         }
         throw new Error("Direct image generation returned non-ok or empty image");
       } catch(err) {
-        console.warn("Direct image generation in vault.html failed, falling back to Gemini prompt + Pollinations AI:", err);
-        
-        // Fallback Stage 1: Generate prompt with gemini-2.5-flash
-        try {
-          const promptParts = [
-            { text: `Write a high-detail text prompt for Stable Diffusion describing a goofy Victorian portrait of a Path of Exile 2 player.
-Details:
-- Player Class: ${pClass}
-- Weapons/Gear details: ${weapons}
-- Player physical/personality description: ${likeness}
-Artistic style:
-- A hilarious, goofy, high-fidelity oil painting in an ornate gilded gold Victorian portrait frame.
-- High-society Victorian apparel mixed with bulky, absurd PoE2 plate armor.
-- Dramatic candlelight shadows, heavy canvas oil textures, rich colors, cinematic moody lighting.
-- Respond with ONLY the image generator prompt text, no quotes.` }
-          ];
-
-          if (refImageBase64) {
-            const base64Clean = refImageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-            promptParts.push({
-              inlineData: {
-                mimeType: "image/jpeg",
-                data: base64Clean
-              }
-            });
-            promptParts[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
-- Carefully analyze the face in the attached photo.
-- You MUST explicitly copy their exact gender, hair style, hair color, presence of glasses (glasses must be explicitly described in the prompt!), stubble, face shape, and expression.
-- The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
-          }
-
-          const flashRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: promptParts }]
-            })
-          });
-
-          if (flashRes.ok) {
-            const flashJson = await flashRes.json();
-            const textPrompt = flashJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (textPrompt) {
-              const finalPrompt = textPrompt.trim();
-              const seed = Math.floor(Math.random() * 1000000);
-              const dataUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=512&height=768&nologo=true&seed=${seed}`;
-
-              imgEl.src = dataUrl;
-              localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, dataUrl);
-              
-              if (!window.__GUILD_PORTRAITS__) window.__GUILD_PORTRAITS__ = {};
-              window.__GUILD_PORTRAITS__[lowerOwner] = dataUrl;
-
-              await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
-                method: "POST",
-                headers: {
-                  "apikey": SUPABASE_ANON_KEY,
-                  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                  "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                  p_name: "__GUILD_PORTRAITS__",
-                  p_data: window.__GUILD_PORTRAITS__,
-                  p_write_key: GUILD_WRITE_KEY
-                })
-              });
-              return;
-            }
-          }
-        } catch(e) {
-          console.warn("Flash prompt generator failed:", e);
-        }
-
-        // Hard Fallback Stage 2: Default hardcoded prompt + Pollinations
-        const hardPrompt = `A goofy, whimsical, high-fidelity oil painting in a framed Victorian style. A ${likeness} dressed as a Path of Exile 2 ${pClass} holding ${weapons}, surrounded by golden coins. Dark gothic dungeon background, cinematic candle lighting, oil on canvas, highly detailed.`;
-        const seed = Math.floor(Math.random() * 1000000);
-        const dataUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(hardPrompt)}?width=512&height=768&nologo=true&seed=${seed}`;
-        imgEl.src = dataUrl;
-        localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, dataUrl);
+        console.error("Direct gemini-3.1-flash-image generation in vault.html failed:", err);
       }
     }
 

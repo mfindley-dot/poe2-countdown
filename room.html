@@ -1829,7 +1829,7 @@ ${pauperInstruction}` }
 - The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
             }
 
-            const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image:generateContent?key=${GUILD_WRITE_KEY}`, {
+            const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${GUILD_WRITE_KEY}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -1879,85 +1879,7 @@ ${pauperInstruction}` }
             }
             throw new Error("Direct image generation returned non-ok or empty image");
           } catch(err) {
-            console.warn("Direct gemini-3-pro-image generation failed, falling back to Gemini prompt + Pollinations AI:", err);
-            
-            // Fallback Stage 1: Generate prompt with gemini-2.5-flash
-            try {
-              const promptParts = [
-                { text: `You are an expert generative AI prompt engineer for medieval/gothic RPG characters.
-Your task is to write a single, highly detailed, atmospheric image prompt (max 60 words) for a character named "${capitalized}".
-Composition & Style Requirements:
-- Frame: MUST be a "mid-shot portrait" (half-body shot, showing head down to waist).
-- Aesthetics: High-fidelity, extremely realistic gothic oil painting, rich colors, deep dramatic shadows, medieval RPG look in the style of Google Imagen 3 Pro (Nano Banana Pro).
-- Baseline Likeness Description: "${likenessPrompt}".
-- Equipped Gear: "${gearStr || 'None equipped'}".
-- Path of Exile Class & Ascendancy: "${pobClassStr || 'None loaded'}".
-
-Ensure the output prompt is a single contiguous string of descriptive modifiers separated by commas. Return ONLY the prompt itself without prefix, quotes, or markdown.
-${pauperInstruction}` }
-              ];
-
-              if (activeConf.reference_image) {
-                const base64Clean = activeConf.reference_image.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-                promptParts.push({
-                  inlineData: {
-                    mimeType: "image/jpeg",
-                    data: base64Clean
-                  }
-                });
-                promptParts[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
-- Carefully analyze the face in the attached photo.
-- You MUST explicitly copy their exact gender, hair style (e.g. wavy dark hair), hair color (black/brown), presence of glasses (glasses must be explicitly described in the prompt!), stubble/facial hair, face shape, and expression.
-- Incorporate a medieval/fantasy version of their clothing and colors from the photo (e.g. if they are wearing blue, prompt for dark blue medieval robes).
-- Describe these exact features in high detail in the prompt you output to ensure 1:1 subject consistency!`;
-              }
-
-              const flashRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GUILD_WRITE_KEY}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  contents: [{ parts: promptParts }]
-                })
-              });
-              
-              if (flashRes.ok) {
-                const flashJson = await flashRes.json();
-                const textPrompt = flashJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (textPrompt) {
-                  const finalPrompt = textPrompt.trim();
-                  const dataUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=640&height=800&nologo=true&seed=glg_${owner.toLowerCase()}`;
-                  
-                  img.src = dataUrl;
-                  window.__GUILD_PORTRAITS__[owner.toLowerCase()] = dataUrl;
-                  
-                  try {
-                    await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
-                      method: "POST",
-                      headers: {
-                        "apikey": SUPABASE_ANON_KEY,
-                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                        "Content-Type": "application/json"
-                      },
-                      body: JSON.stringify({
-                        p_name: "__GUILD_PORTRAITS__",
-                        p_data: window.__GUILD_PORTRAITS__,
-                        p_write_key: GUILD_WRITE_KEY
-                      })
-                    });
-                  } catch(e) {}
-                  resetBtn();
-                  return;
-                }
-              }
-            } catch(e) {
-              console.warn("Flash prompt compiler failed:", e);
-            }
-            
-            // Hard Fallback Stage 2: Default hardcoded prompt + Pollinations
-            const hardPrompt = `detailed gothic historical oil painting, medieval PoE portrait of ${capitalized} the Exile, ${likenessPrompt}, ${gearStr || 'pauper in rags'}, ${pobClassStr}, masterpiece`;
-            const dataUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(hardPrompt)}?width=640&height=800&nologo=true&seed=glg_${owner.toLowerCase()}`;
-            img.src = dataUrl;
-            window.__GUILD_PORTRAITS__[owner.toLowerCase()] = dataUrl;
+            console.error("Direct gemini-3.1-flash-image generation failed:", err);
             resetBtn();
           }
         }
