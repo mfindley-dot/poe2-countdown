@@ -17,6 +17,8 @@
     "http://dreamlo.com/*",
     "https://corsproxy.io/*",
     "https://*.pathofexile.com/*",
-    "https://*.pathofexile2.com/*"
+    "https://pathofexile.com/*",
+    "https://*.pathofexile2.com/*",
+    "https://pathofexile2.com/*"
   ]
 }

@@ -352,8 +352,8 @@ class GLGOverlayApp:
         If it IS a valid Path of Exile 2 Currency Stash Tab, extract the exact quantities of all visible Path of Exile 2 currency items using this spatial visual guide:
         
         1. FAR-LEFT GRID (5 rows by 3 columns of slots):
-           - Row 1: augmentation (Col 1, Base) | greater_augmentation (Col 2, II) | perfect_augmentation (Col 3, III)
-           - Row 2: transmute (Col 1, Base) | greater_transmute (Col 2, II) | perfect_transmute (Col 3, III)
+           - Row 1: transmute (Col 1, Base) | greater_transmute (Col 2, II) | perfect_transmute (Col 3, III)
+           - Row 2: augmentation (Col 1, Base) | greater_augmentation (Col 2, II) | perfect_augmentation (Col 3, III)
            - Row 3: regal (Col 1, Base) | greater_regal (Col 2, II) | perfect_regal (Col 3, III)
            - Row 4: exalted (Col 1, Base) | greater_exalted (Col 2, II) | perfect_exalted (Col 3, III)
            - Row 5: chaos (Col 1, Base) | greater_chaos (Col 2, II) | perfect_chaos (Col 3, III)

@@ -85,8 +85,8 @@ const SYSTEM_INSTRUCTION = `You are an expert Path of Exile 2 Currency Stash Tab
 Analyze the Currency Stash Tab screenshot and match numbers/quantities carefully. Use this spatial visual guide:
 
 1. FAR-LEFT GRID (5 rows by 3 columns of slots):
-   - Row 1: augmentation (Col 1, Base) | greater_augmentation (Col 2, II) | perfect_augmentation (Col 3, III) [Bronze/copper circular multi-faced orbs]
-   - Row 2: transmute (Col 1, Base) | greater_transmute (Col 2, II) | perfect_transmute (Col 3, III) [Dark blue circular multi-faced orbs]
+   - Row 1: transmute (Col 1, Base) | greater_transmute (Col 2, II) | perfect_transmute (Col 3, III) [Dark blue circular multi-faced orbs]
+   - Row 2: augmentation (Col 1, Base) | greater_augmentation (Col 2, II) | perfect_augmentation (Col 3, III) [Bronze/copper circular multi-faced orbs]
    - Row 3: regal (Col 1, Base) | greater_regal (Col 2, II) | perfect_regal (Col 3, III) [Half-blue, half-gold face orbs]
    - Row 4: exalted (Col 1, Base) | greater_exalted (Col 2, II) | perfect_exalted (Col 3, III) [Shiny gold cracked face orbs]
    - Row 5: chaos (Col 1, Base) | greater_chaos (Col 2, II) | perfect_chaos (Col 3, III) [Golden face orbs composed of multiple stacked mini-faces]
@@ -904,14 +904,14 @@ async function bulkSyncStashTab() {
   
   try {
     // 1. Build GGG API Stash URL (realm must be 'pc' for PoE2 on PC, 'poe2' is not a valid endpoint realm value)
-    let gggUrl = `https://www.pathofexile.com/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}&realm=pc`;
+    let gggUrl = `https://pathofexile.com/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}&realm=pc`;
     if (stashType === "guild") {
       gggUrl += "&guild=true";
     } else {
       gggUrl += `&accountName=${encodeURIComponent(accountName)}`;
     }
     
-    log(`Connecting to GGG Stash (Tab #${tabIndex}) on www.pathofexile.com...`);
+    log(`Connecting to GGG Stash (Tab #${tabIndex}) on pathofexile.com...`);
     const res = await fetch(gggUrl, { credentials: "include" });
     
     if (res.status === 403 || res.redirected) {
