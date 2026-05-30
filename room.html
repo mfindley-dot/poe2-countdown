@@ -675,29 +675,29 @@
           
           <!-- Ornate Gold-Framed Victorian Portrait & Dynamic Trophy Cabinet Side Table Section -->
           <div style="text-align: center; position: relative; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; gap: 30px; flex-wrap: wrap;">
-            <div class="gold-portrait-frame" style="width: 320px; height: 400px; border: none; border-radius: 0; box-shadow: none; background: none; position: relative; margin: 0;">
+            <div class="gold-portrait-frame" style="width: 480px; height: 600px; border: none; border-radius: 0; box-shadow: none; background: none; position: relative; margin: 0;">
               <!-- The actual image fits nicely inside the frame opening -->
-              <img id="victorianPortraitImg" class="gold-portrait-image" src="" alt="Victorian Portrait" style="position: absolute; top: 38px; left: 45px; width: 230px; height: 322px; object-fit: cover; border: none; z-index: 1;">
+              <img id="victorianPortraitImg" class="gold-portrait-image" src="" alt="Victorian Portrait" style="position: absolute; top: 58px; left: 68px; width: 344px; height: 484px; object-fit: cover; border: none; z-index: 1;">
               <!-- The frame image layered absolutely on top -->
               <img src="assets/images/rooms/guild-room_portrait-frame.png" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; pointer-events: none;">
               
-              <div style="position: absolute; bottom: 42px; left: 45px; width: 230px; background: rgba(12,10,9,0.92); padding: 4px; box-sizing: border-box; border-top: 1px solid rgba(197,168,128,0.3); text-align: center; z-index: 3;">
-                <button id="btnRegenPortrait" onclick="generateVictorianPortrait(true)" class="gothic-btn" style="padding: 1px 8px; font-size: 0.55rem; border-color: #ffd700; color: #ffd700; cursor: pointer; background: transparent;">
+              <div style="position: absolute; bottom: 63px; left: 68px; width: 344px; background: rgba(12,10,9,0.92); padding: 5px; box-sizing: border-box; border-top: 1px solid rgba(197,168,128,0.3); text-align: center; z-index: 3;">
+                <button id="btnRegenPortrait" onclick="generateVictorianPortrait(true)" class="gothic-btn" style="padding: 2px 12px; font-size: 0.65rem; border-color: #ffd700; color: #ffd700; cursor: pointer; background: transparent; font-weight: bold;">
                   🎨 REFRESH PORTRAIT
                 </button>
               </div>
             </div>
 
             <!-- Dynamic Side Table / Trophy Shelf next to portrait! -->
-            <div id="trophyShelfContainer" style="width: 140px; height: 400px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative;">
+            <div id="trophyShelfContainer" style="width: 180px; height: 600px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative;">
               <!-- Absolutely positioned active trophies floating on the table -->
-              <div id="trophiesDisplay" style="position: absolute; bottom: 85px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 3;">
+              <div id="trophiesDisplay" style="position: absolute; bottom: 125px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 3;">
                 <!-- Dynamic trophy icons mapped here -->
               </div>
               
               <!-- Visual side table backdrop -->
-              <div style="width: 120px; height: 80px; background: linear-gradient(180deg, #3d2f1f 0%, #1e150d 100%); border-top: 3px solid #ffd700; border-radius: 4px; box-shadow: 0 8px 16px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
-                <span style="font-size: 0.55rem; color: #c5a880; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">TROPHY STAND</span>
+              <div style="width: 150px; height: 120px; background: linear-gradient(180deg, #3d2f1f 0%, #1e150d 100%); border-top: 3px solid #ffd700; border-radius: 4px; box-shadow: 0 8px 16px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+                <span style="font-size: 0.65rem; color: #c5a880; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">TROPHY STAND</span>
               </div>
             </div>
           </div>
@@ -1814,10 +1814,14 @@
 
             const partsList = [
               { text: `You are an expert generative AI prompt engineer for medieval/gothic RPG characters.
-Your task is to write a single, highly detailed, atmospheric Pollinations image prompt (max 60 words) for a character named "${capitalized}".
-Baseline likeness description: "${likenessPrompt}".
-Equipped gear details: "${gearStr || 'None equipped'}".
-Path of Exile class & ascendancy context: "${pobClassStr || 'None loaded'}".
+Your task is to write a single, highly detailed, atmospheric image prompt (max 60 words) for a character named "${capitalized}".
+Composition & Style Requirements:
+- Frame: MUST be a "mid-shot portrait" (half-body shot, showing head down to waist).
+- Aesthetics: High-fidelity, extremely realistic gothic oil painting, rich colors, deep dramatic shadows, medieval RPG look in the style of Google Imagen 3 Pro (Nano Banana Pro).
+- Baseline Likeness Description: "${likenessPrompt}".
+- Equipped Gear: "${gearStr || 'None equipped'}".
+- Path of Exile Class & Ascendancy: "${pobClassStr || 'None loaded'}".
+
 Ensure the output prompt is a single contiguous string of descriptive modifiers separated by commas. Return ONLY the prompt itself without prefix, quotes, or markdown.
 ${pauperInstruction}` }
             ];
@@ -1831,7 +1835,11 @@ ${pauperInstruction}` }
                   data: base64Clean
                 }
               });
-              partsList[0].text += `\nCRITICAL: Analyze the attached reference image structure, posture, and facial expression. Incorporate these key details to align the portrait beautifully with their real likeness!`;
+              partsList[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
+- Carefully analyze the face in the attached photo.
+- You MUST explicitly copy their exact gender, hair style (e.g. wavy dark hair), hair color (black/brown), presence of glasses (glasses must be explicitly described in the prompt!), stubble/facial hair, face shape, and expression.
+- Incorporate a medieval/fantasy version of their clothing and colors from the photo (e.g. if they are wearing blue, prompt for dark blue medieval robes).
+- Describe these exact features in high detail in the prompt you output to ensure 1:1 subject consistency!`;
             }
 
             const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GUILD_WRITE_KEY}`, {
@@ -1862,7 +1870,7 @@ ${pauperInstruction}` }
         }
       }
       
-      img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(basePrompt)}?width=320&height=400&nologo=true&seed=${seed}`;
+      img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(basePrompt)}?width=640&height=800&nologo=true&seed=${seed}`;
       
       if (btn && forceRegen) {
         setTimeout(() => {
