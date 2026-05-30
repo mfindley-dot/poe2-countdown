@@ -1725,6 +1725,13 @@
     }
 
     // 14. Victorian custom portrait frame logic
+    function as_image(inlineDataObj) {
+      if (!inlineDataObj) return "";
+      const mime = inlineDataObj.mimeType || inlineDataObj.mime_type || "image/png";
+      const dataStr = inlineDataObj.data || inlineDataObj.inlineData;
+      return `data:${mime};base64,${dataStr}`;
+    }
+
     async function generateVictorianPortrait(forceRegen) {
       const img = document.getElementById("victorianPortraitImg");
       const btn = document.getElementById("btnRegenPortrait");
@@ -1737,34 +1744,15 @@
         window.__GUILD_PORTRAITS__ = {};
       }
       
-      let seed = window.__GUILD_PORTRAITS__[owner.toLowerCase()];
-      if (!seed || forceRegen) {
-        seed = `glg_exile_${owner.toLowerCase()}_${Date.now()}`;
-        window.__GUILD_PORTRAITS__[owner.toLowerCase()] = seed;
-        
-        // Sync portraits config back to Supabase
-        try {
-          const payload = {
-            p_name: "__GUILD_PORTRAITS__",
-            p_data: window.__GUILD_PORTRAITS__,
-            p_write_key: GUILD_WRITE_KEY
-          };
-          
-          await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
-            method: "POST",
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-          });
-        } catch(e) {
-          console.warn("Portrait seed sync fail:", e);
-        }
+      let cachedPortrait = window.__GUILD_PORTRAITS__[owner.toLowerCase()];
+      if (cachedPortrait && !cachedPortrait.startsWith("data:image")) {
+        cachedPortrait = ""; // discard legacy seed strings
       }
       
-      let basePrompt = `detailed gothic historical oil painting, medieval victorian PoE portrait of ${capitalized} the Exile, Path of Exile aesthetic, dark atmospheric tavern background, armor and jewelry, high detail masterpiece`;
+      if (cachedPortrait && !forceRegen) {
+        img.src = cachedPortrait;
+        return;
+      }
       
       const adminConfigStr = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
       let activeConf = null;
@@ -1799,7 +1787,7 @@
       if (activeConf) {
         const likenessPrompt = activeConf.portrait_prompt || "gothic exile, dark atmospheric tavern backdrop";
         
-        if (forceRegen) {
+        if (forceRegen || !cachedPortrait) {
           if (btn) {
             btn.disabled = true;
             btn.textContent = "⌛ BRUSHING ART LIKENESS...";
@@ -1813,20 +1801,19 @@
               : "";
 
             const partsList = [
-              { text: `You are an expert generative AI prompt engineer for medieval/gothic RPG characters.
-Your task is to write a single, highly detailed, atmospheric image prompt (max 60 words) for a character named "${capitalized}".
+              { text: `You are an expert medieval/gothic RPG character portrait designer.
+Your task is to draw/render a single, highly detailed, professional RPG character portrait image for a player named "${capitalized}".
 Composition & Style Requirements:
+- Model Priority: target stable high-fidelity rendering equivalent to 'gemini-3-pro-image' / Nano Banana Pro.
 - Frame: MUST be a "mid-shot portrait" (half-body shot, showing head down to waist).
-- Aesthetics: High-fidelity, extremely realistic gothic oil painting, rich colors, deep dramatic shadows, medieval RPG look in the style of Google Imagen 3 Pro (Nano Banana Pro).
+- Aesthetics: High-fidelity, extremely realistic gothic oil painting, rich colors, deep dramatic shadows, medieval RPG look.
 - Baseline Likeness Description: "${likenessPrompt}".
-- Equipped Gear: "${gearStr || 'None equipped'}".
-- Path of Exile Class & Ascendancy: "${pobClassStr || 'None loaded'}".
-
-Ensure the output prompt is a single contiguous string of descriptive modifiers separated by commas. Return ONLY the prompt itself without prefix, quotes, or markdown.
+- Equipped Gear details: "${gearStr || 'None equipped'}".
+- Path of Exile class & ascendancy context: "${pobClassStr || 'None loaded'}".
 ${pauperInstruction}` }
             ];
 
-            // If a reference image base64 was configured by the admin, feed it to Gemini Vision!
+            // If a reference image base64 was configured by the admin, feed it directly to the model parts!
             if (activeConf.reference_image) {
               const base64Clean = activeConf.reference_image.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
               partsList.push({
@@ -1838,39 +1825,63 @@ ${pauperInstruction}` }
               partsList[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
 - Carefully analyze the face in the attached photo.
 - You MUST explicitly copy their exact gender, hair style (e.g. wavy dark hair), hair color (black/brown), presence of glasses (glasses must be explicitly described in the prompt!), stubble/facial hair, face shape, and expression.
-- Incorporate a medieval/fantasy version of their clothing and colors from the photo (e.g. if they are wearing blue, prompt for dark blue medieval robes).
-- Describe these exact features in high detail in the prompt you output to ensure 1:1 subject consistency!`;
+- Incorporate a medieval/fantasy version of their clothing and colors from the photo (e.g. if they are wearing blue, draw them wearing dark blue medieval robes).
+- The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
             }
 
-            const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GUILD_WRITE_KEY}`, {
+            const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image:generateContent?key=${GUILD_WRITE_KEY}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                contents: [{ parts: partsList }]
+                contents: [{ parts: partsList }],
+                generationConfig: {
+                  responseModalities: ["IMAGE"]
+                }
               })
             });
             
             if (gResponse.ok) {
               const gJson = await gResponse.json();
-              const gText = gJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (gText) {
-                basePrompt = gText.trim();
-                if (!window.__GUILD_PORTRAIT_PROMPTS__) window.__GUILD_PORTRAIT_PROMPTS__ = {};
-                window.__GUILD_PORTRAIT_PROMPTS__[owner.toLowerCase()] = basePrompt;
+              const parts = gJson?.candidates?.[0]?.content?.parts;
+              if (parts && Array.isArray(parts)) {
+                // Find image part
+                let imagePart = parts.find(p => p.inlineData || p.inline_data);
+                if (imagePart) {
+                  const inlineDataObj = imagePart.inlineData || imagePart.inline_data;
+                  const dataUrl = as_image(inlineDataObj);
+                  if (dataUrl) {
+                    img.src = dataUrl;
+                    window.__GUILD_PORTRAITS__[owner.toLowerCase()] = dataUrl;
+                    
+                    // Sync portraits config back to Supabase
+                    try {
+                      await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+                        method: "POST",
+                        headers: {
+                          "apikey": SUPABASE_ANON_KEY,
+                          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                          "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                          p_name: "__GUILD_PORTRAITS__",
+                          p_data: window.__GUILD_PORTRAITS__,
+                          p_write_key: GUILD_WRITE_KEY
+                        })
+                      });
+                    } catch(e) {
+                      console.warn("Portrait sync fail:", e);
+                    }
+                  }
+                }
               }
+            } else {
+              throw new Error("API returned status: " + gResponse.status);
             }
           } catch(err) {
-            console.warn("Gemini vision prompt compile failed, falling back:", err);
-            basePrompt = `detailed gothic historical oil painting, medieval PoE portrait of ${capitalized} the Exile, ${likenessPrompt}, ${gearStr || 'pauper in rags'}, ${pobClassStr}, masterpiece`;
+            console.warn("Direct image generation failed, falling back to basic prompt:", err);
           }
-        } else if (window.__GUILD_PORTRAIT_PROMPTS__ && window.__GUILD_PORTRAIT_PROMPTS__[owner.toLowerCase()]) {
-          basePrompt = window.__GUILD_PORTRAIT_PROMPTS__[owner.toLowerCase()];
-        } else {
-          basePrompt = `detailed gothic historical oil painting, medieval PoE portrait of ${capitalized} the Exile, ${likenessPrompt}, ${gearStr || 'pauper in rags'}, ${pobClassStr}, masterpiece`;
         }
       }
-      
-      img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(basePrompt)}?width=640&height=800&nologo=true&seed=${seed}`;
       
       if (btn && forceRegen) {
         setTimeout(() => {

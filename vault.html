@@ -4787,70 +4787,93 @@ Context:
       }
       
       let finalPrompt = "";
-      const key = localStorage.getItem("geminiKey") || "";
+      const geminiApiKey = localStorage.getItem("geminiKey") || GUILD_WRITE_KEY;
       
-      if (key) {
-        try {
-          const geminiPrompt = `Write a high-detail text prompt for Stable Diffusion describing a goofy Victorian portrait of a Path of Exile 2 player.
-Details:
-- Player Class: ${pClass}
-- Weapons/Gear details: ${weapons}
-- Player physical/personality description: ${likeness}
-Artistic style:
-- A hilarious, goofy, high-fidelity oil painting in an ornate gilded gold Victorian portrait frame.
-- High-society Victorian apparel mixed with bulky, absurd PoE2 plate armor.
-- Dramatic candlelight shadows, heavy canvas oil textures, rich colors, cinematic moody lighting.
-- Respond with ONLY the image generator prompt text, no quotes.`;
-
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-          const res = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: geminiPrompt }] }],
-              generationConfig: { maxOutputTokens: 120 }
-            })
-          });
-          
-          if (res.ok) {
-            const resJson = await res.json();
-            finalPrompt = resJson.candidates[0].content.parts[0].text.trim();
-            finalPrompt = finalPrompt.replace(/^["']|["']$/g, "");
-          }
-        } catch(e) {
-          console.warn("Failed to generate custom Gemini portrait prompt:", e);
-        }
-      }
-      
-      if (!finalPrompt) {
-        finalPrompt = `A goofy, whimsical, high-fidelity oil painting in a framed Victorian style. A ${likeness} dressed as a Path of Exile 2 ${pClass} holding ${weapons}, surrounded by golden coins. Dark gothic dungeon background, cinematic candle lighting, oil on canvas, highly detailed.`;
-      }
-      
-      const seed = Math.floor(Math.random() * 1000000);
-      const pollinationsUrl = `https://image.pollinations.ai/p/${encodeURIComponent(finalPrompt)}?width=512&height=768&nologo=true&seed=${seed}`;
-      
-      imgEl.src = pollinationsUrl;
-      localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, pollinationsUrl);
-      
+      let refImageBase64 = "";
       try {
-        if (!window.__GUILD_PORTRAITS__) window.__GUILD_PORTRAITS__ = {};
-        window.__GUILD_PORTRAITS__[lowerOwner] = pollinationsUrl;
-        
-        await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+        const storedConfig = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
+        if (storedConfig) {
+          const parsed = JSON.parse(storedConfig);
+          const activeConf = parsed[lowerOwner];
+          if (activeConf && activeConf.reference_image) {
+            refImageBase64 = activeConf.reference_image;
+          }
+        }
+      } catch(e){}
+
+      const partsList = [
+        { text: `You are an expert medieval/gothic RPG character portrait designer.
+Your task is to draw/render a single, highly detailed, professional RPG character portrait image for a player.
+Composition & Style Requirements:
+- Model Priority: target stable high-fidelity rendering equivalent to 'gemini-3-pro-image' / Nano Banana Pro.
+- Frame: MUST be a "mid-shot portrait" (half-body shot, showing head down to waist).
+- Aesthetics: A hilarious, goofy, high-fidelity oil painting in an ornate gilded gold Victorian portrait frame. High-society Victorian apparel mixed with bulky, absurd PoE2 plate armor. Cinematic candle lighting, oil on canvas, highly detailed.
+- Baseline Likeness Description: "${likeness}".
+- Player Class: ${pClass}.
+- Equipped weapons/gear details: ${weapons}.` }
+      ];
+
+      if (refImageBase64) {
+        const base64Clean = refImageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+        partsList.push({
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: base64Clean
+          }
+        });
+        partsList[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
+- Carefully analyze the face in the attached photo.
+- You MUST explicitly copy their exact gender, hair style, hair color, presence of glasses (glasses must be explicitly described in the prompt!), stubble, face shape, and expression.
+- The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
+      }
+
+      try {
+        const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image:generateContent?key=${geminiApiKey}`, {
           method: "POST",
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            p_name: "__GUILD_PORTRAITS__",
-            p_data: window.__GUILD_PORTRAITS__,
-            p_write_key: GUILD_WRITE_KEY
+            contents: [{ parts: partsList }],
+            generationConfig: {
+              responseModalities: ["IMAGE"]
+            }
           })
         });
-      } catch(e) {
-        console.warn("Failed to save portrait globally:", e);
+
+        if (gResponse.ok) {
+          const gJson = await gResponse.json();
+          const parts = gJson?.candidates?.[0]?.content?.parts;
+          if (parts && Array.isArray(parts)) {
+            const imagePart = parts.find(p => p.inlineData || p.inline_data);
+            if (imagePart) {
+              const inlineDataObj = imagePart.inlineData || imagePart.inline_data;
+              const mime = inlineDataObj.mimeType || inlineDataObj.mime_type || "image/png";
+              const dataStr = inlineDataObj.data || inlineDataObj.inlineData;
+              const dataUrl = `data:${mime};base64,${dataStr}`;
+
+              imgEl.src = dataUrl;
+              localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, dataUrl);
+              
+              if (!window.__GUILD_PORTRAITS__) window.__GUILD_PORTRAITS__ = {};
+              window.__GUILD_PORTRAITS__[lowerOwner] = dataUrl;
+
+              await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+                method: "POST",
+                headers: {
+                  "apikey": SUPABASE_ANON_KEY,
+                  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  p_name: "__GUILD_PORTRAITS__",
+                  p_data: window.__GUILD_PORTRAITS__,
+                  p_write_key: GUILD_WRITE_KEY
+                })
+              });
+            }
+          }
+        }
+      } catch(err) {
+        console.warn("Direct image generation in vault.html failed:", err);
       }
     }
 
