@@ -80,10 +80,91 @@ let hotkeyIdentify = { ctrl: false, alt: true, shift: false, key: "i" };
 let hotkeyAppraise = { ctrl: false, alt: true, shift: false, key: "o" };
 let activeRemapTarget = null; // "identify" or "appraise"
 
-// Spatial visual prompt coordinate guides matching true PoE2 stash tab layout
-const SYSTEM_INSTRUCTION = `You are an expert Path of Exile 2 Currency Stash Tab indexer. 
-Analyze the Currency Stash Tab screenshot and match numbers/quantities carefully. Use this spatial visual guide:
+// Visual active-tab metadata matching true PoE2 stash tabs in vault.html
+const STASH_TABS_METADATA = [
+  { id: "currency", name: "CURRENCY", tabIndex: 0, type: "currency" },
+  { id: "dump", name: "DUMP TAB", tabIndex: 1, type: "standard" },
+  { id: "uniq_dump", name: "UNIQUE DUMP", tabIndex: 2, type: "standard" },
+  { id: "tab_1", name: "STASH TAB 1", tabIndex: 3, type: "standard" },
+  { id: "tab_2", name: "STASH TAB 2", tabIndex: 4, type: "standard" },
+  { id: "tab_3", name: "STASH TAB 3", tabIndex: 5, type: "standard" },
+  { id: "jewels", name: "JEWELS", tabIndex: 6, type: "standard" },
+  { id: "tab_10", name: "TAB 10 (QUAD)", tabIndex: 7, type: "quad" },
+  { id: "tab_11", name: "TAB 11 (QUAD)", tabIndex: 8, type: "quad" },
+  { id: "tab_12", name: "TAB 12 (QUAD)", tabIndex: 9, type: "quad" },
+  { id: "tab_13", name: "TAB 13 (QUAD)", tabIndex: 10, type: "quad" },
+  { id: "tab_14", name: "TAB 14 (QUAD)", tabIndex: 11, type: "quad" },
+  { id: "tab_15", name: "TAB 15 (QUAD)", tabIndex: 12, type: "quad" },
+  { id: "tab_16", name: "TAB 16 (QUAD)", tabIndex: 13, type: "quad" },
+  { id: "tab_17", name: "TAB 17 (QUAD)", tabIndex: 14, type: "quad" },
+  { id: "tab_18", name: "TAB 18 (QUAD)", tabIndex: 15, type: "quad" },
+  { id: "essence", name: "ESSENCE", tabIndex: 16, type: "essence" },
+  { id: "delirium", name: "DELIRIUM", tabIndex: 17, type: "delirium" },
+  { id: "runes", name: "RUNES", tabIndex: 18, type: "runes" },
+  { id: "ritual", name: "RITUAL", tabIndex: 19, type: "ritual" }
+];
 
+const IGNORED_TABS_METADATA = [
+  { id: "unique", name: "UNIQUE STASH" },
+  { id: "maps", name: "MAPS STASH" },
+  { id: "flasks", name: "FLASKS STASH" },
+  { id: "gems", name: "GEMS STASH" }
+];
+
+// Flexible string matching helper matching GGG tab indexes
+function findMatchedTab(detectedStr) {
+  if (!detectedStr) return null;
+  const clean = detectedStr.toUpperCase().trim();
+  
+  // Clean punctuation but keep spaces/numbers
+  const cleanSpaced = clean.replace(/[^A-Z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+  
+  // 1. Check ignored list first
+  for (const tab of IGNORED_TABS_METADATA) {
+    if (cleanSpaced.includes(tab.name) || tab.name.includes(cleanSpaced)) {
+      return { ...tab, isIgnored: true };
+    }
+  }
+
+  // 2. Exact match check
+  for (const tab of STASH_TABS_METADATA) {
+    if (cleanSpaced === tab.name) {
+      return tab;
+    }
+  }
+  
+  // 3. ID match check
+  for (const tab of STASH_TABS_METADATA) {
+    if (cleanSpaced === tab.id.toUpperCase()) {
+      return tab;
+    }
+  }
+
+  // 4. Flexible match check (contains)
+  for (const tab of STASH_TABS_METADATA) {
+    if (cleanSpaced.includes(tab.name) || tab.name.includes(cleanSpaced)) {
+      // Numerical protection (e.g. '1' matches 'TAB 1' but not 'TAB 10')
+      if (/\d+/.test(cleanSpaced) && /\d+/.test(tab.name)) {
+        const numInClean = cleanSpaced.match(/\d+/)[0];
+        const numInTab = tab.name.match(/\d+/)[0];
+        if (numInClean !== numInTab) continue;
+      }
+      return tab;
+    }
+  }
+  
+  return null;
+}
+
+// Spatial visual prompt coordinate guides matching true active tab layout and contents
+const SYSTEM_INSTRUCTION = `You are a Path of Exile 2 Stash Tab visual auditor. 
+Your task is to:
+1. Identify the active stash tab name. Look at which tab name is highlighted in blue/white in the top horizontal tab row or right vertical sidebar (e.g. CURRENCY, DUMP TAB, UNIQUE DUMP, JEWELS, MAPS, ESSENCE, DELIRIUM, RUNES, RITUAL, 1, 2, 3, etc.). Gold arrow pointers in the sidebar are also visual cues. Return this exact name in the 'detected_tab' field in uppercase.
+2. Based on the active tab type, extract either currency or equipment:
+   - If the detected active tab is 'CURRENCY': Visually analyze the stash contents and extract exact quantities of all visible Path of Exile 2 currency items in the slot grids. Use the spatial visual guide below. Populate 'currency_data' and leave 'gear_items' empty.
+   - If the detected active tab is a gear tab (like DUMP, UNIQUE DUMP, JEWELS, TAB 1, 2, 3, 10, 11, etc.): Visually analyze the stash grid and extract all visible Rare and Unique equipment gear items (rings, belts, amulets, boots, gloves, helmets, weapons, body armours). Populate 'gear_items' and leave 'currency_data' empty.
+
+CURRENCY SPATIAL VISUAL GUIDE:
 1. FAR-LEFT GRID (5 rows by 3 columns of slots):
    - Row 1: transmute (Col 1, Base) | greater_transmute (Col 2, II) | perfect_transmute (Col 3, III) [Dark blue circular multi-faced orbs]
    - Row 2: augmentation (Col 1, Base) | greater_augmentation (Col 2, II) | perfect_augmentation (Col 3, III) [Bronze/copper circular multi-faced orbs]
@@ -92,78 +173,108 @@ Analyze the Currency Stash Tab screenshot and match numbers/quantities carefully
    - Row 5: chaos (Col 1, Base) | greater_chaos (Col 2, II) | perfect_chaos (Col 3, III) [Golden face orbs composed of multiple stacked mini-faces]
 
 2. CENTRAL UTILITY GRID (3 rows by 3 columns of slots directly to the right of the 5x3 grid):
-   - Row 1 (Top row):
-     * Column 1 (Left): alchemy - Orb of Alchemy [Reddish-gold smooth face orb, count 195]
-     * Column 2 (Middle): vaal - Vaal Orb [Red multi-faced skull shape, count 386]
-     * Column 3 (Right): annulment - Orb of Annulment [Blue/white half-split mask, count 18]
-   - Row 2 (Middle row):
-     * Column 1 (Left): chance - Orb of Chance [Cracked white/gold face orb, count 38]
-     * Column 2 (Middle): fracturing - Fracturing Orb [Shattered glowing yellow crystal, count 3]
-     * Column 3 (Right): divine - Divine Orb [Gold coin with serene serene face, count 169]
-   - Row 3 (Bottom row):
-     * Column 1 (Left): hinekoras_lock - Hinekora's Lock [Dark braided purple lock/ribbon, count 0]
-     * Column 2 (Middle): mirror - Mirror of Kalandra [Silver metallic runic mirror, count 0]
-     * Column 3 (Right): artificer - Artificer's Orb [Dark green/grey bag shape, count 81]
+   - Row 1 (Top row): Column 1 (Left) is alchemy | Column 2 (Middle) is vaal | Column 3 (Right) is annulment
+   - Row 2 (Middle row): Column 1 (Left) is chance | Column 2 (Middle) is fracturing | Column 3 (Right) is divine
+   - Row 3 (Bottom row): Column 1 (Left) is hinekoras_lock | Column 2 (Middle) is mirror | Column 3 (Right) is artificer
 
 3. TOP-RIGHT HORIZONTAL CLUSTER (Jewellers' Currency):
-   - lesser_jeweller (Left, plain copper/bronze loop, count 349. Ensure you read all three digits '349' fully!)
-   - greater_jeweller (Middle, bronze loop with inner notches, count 12)
-   - perfect_jeweller (Right, gold loop holding a central blue/purple gem, count 1)
+   - lesser_jeweller (Left, plain loop) | greater_jeweller (Middle) | perfect_jeweller (Right, with gem)
 
 4. SCROLL OF WISDOM:
-   - scroll: Red-ribbon tied blue scroll icon, located on the right side under general/popular/secondary stacks (count 91).
+   - scroll (Red-tied blue scroll icon on the right side)
 
-5. BOTTOM DUMP/LEAGUE SLOTS (located at the very bottom of the Currency Stash tab, there is a grid of slots under the main grids):
-   - Identify active items from the Runes of Aldur League:
-     * verisium: Verisium Ore (stacks of blue crystals/shards)
-     * runic_alloy: Runic Alloy (stacks of blue metallic bars)
-     * aldurs_legacy: Aldur's Legacy Rune (rare golden rune with intricate glyph)
-     * iron_rune: Iron Rune (round dark grey rune with an iron symbol)
-     * gold_rune: Gold Rune (round gold rune with a gold symbol)
-     * stone_rune: Stone Rune (round grey stone rune with a stone symbol)
-     * uncut_gem: Uncut Skill Gem (blue/green/red glowing crystal gems)
+5. BOTTOM DUMP/LEAGUE SLOTS (Runes of Aldur League items):
+   - verisium: Verisium Ore (stacks of blue crystals/shards)
+   - runic_alloy: Runic Alloy (stacks of blue metallic bars)
+   - aldurs_legacy: Aldur's Legacy Rune (rare golden rune with intricate glyph)
+   - iron_rune: Iron Rune (round dark grey rune with an iron symbol)
+   - gold_rune: Gold Rune (round gold rune with a gold symbol)
+   - stone_rune: Stone Rune (round grey stone rune with a stone symbol)
+   - uncut_gem: Uncut Skill Gem (blue/green/red glowing crystal gems)
 
-RULES:
- - For any slot that is completely empty or has no quantity, return 0.
- - Output numbers exactly as read. Pay extra attention to double-digit and triple-digit numbers. Do not miss the leading digit near slot borders (e.g. read '349' instead of '49').`;
+EQUIPMENT EXTRACTION RULES:
+For each equipment item inside standard or quad stash grids:
+- name: The exact in-game name of the item. Uniques have fixed names (e.g. Mageblood); Rares have randomized names.
+- base: The base item type (e.g. Topaz Ring, Heavy Belt, Leather Belt, Eternal Sword, etc.).
+- rarity: 'Unique' or 'Rare' based on border color (orange for Unique, yellow for Rare).
+- level: Required level to equip, estimate if not clear (e.g. 60 or 75).
+- ilvl: Item level (ilvl) of the item, estimate if not clear (e.g. 80).
+- affixes: List of implicit and explicit modifiers visible on the item (e.g., '+35% to Fire Resistance', '+65 to maximum Life').
+- flavor: Flavor text if it is a unique item.
+- price: Estimated early league price (e.g., '5 Chaos Orbs', '35 Chaos Orbs', '142 Divine Orbs').
+- logs: Scan appraisal notes (e.g., 'Visual OCR scan').
 
-// Schema definition for Structured JSON responses
-const RESPONSE_SCHEMA = {
+If there is no currency or gear in a scanned area, return 0 or empty lists respectively. Extra attention to double/triple digit counts on currency!`;
+
+// Schema definition for visual active-tab routing stash sync
+const STASH_SCAN_SCHEMA = {
   type: "OBJECT",
   properties: {
-    scroll: { type: "INTEGER" },
-    transmute: { type: "INTEGER" },
-    greater_transmute: { type: "INTEGER" },
-    perfect_transmute: { type: "INTEGER" },
-    augmentation: { type: "INTEGER" },
-    greater_augmentation: { type: "INTEGER" },
-    perfect_augmentation: { type: "INTEGER" },
-    alchemy: { type: "INTEGER" },
-    regal: { type: "INTEGER" },
-    greater_regal: { type: "INTEGER" },
-    perfect_regal: { type: "INTEGER" },
-    chaos: { type: "INTEGER" },
-    greater_chaos: { type: "INTEGER" },
-    perfect_chaos: { type: "INTEGER" },
-    vaal: { type: "INTEGER" },
-    annulment: { type: "INTEGER" },
-    exalted: { type: "INTEGER" },
-    greater_exalted: { type: "INTEGER" },
-    perfect_exalted: { type: "INTEGER" },
-    divine: { type: "INTEGER" },
-    mirror: { type: "INTEGER" },
-    lesser_jeweller: { type: "INTEGER" },
-    greater_jeweller: { type: "INTEGER" },
-    perfect_jeweller: { type: "INTEGER" },
-    verisium: { type: "INTEGER" },
-    runic_alloy: { type: "INTEGER" },
-    aldurs_legacy: { type: "INTEGER" },
-    iron_rune: { type: "INTEGER" },
-    gold_rune: { type: "INTEGER" },
-    stone_rune: { type: "INTEGER" },
-    uncut_gem: { type: "INTEGER" }
+    detected_tab: {
+      type: "STRING",
+      description: "Active stash tab name detected from screenshot cues, in UPPERCASE."
+    },
+    currency_data: {
+      type: "OBJECT",
+      description: "Currency stash tab values. Populate only if detected_tab is 'CURRENCY'.",
+      properties: {
+        scroll: { type: "INTEGER" },
+        transmute: { type: "INTEGER" },
+        greater_transmute: { type: "INTEGER" },
+        perfect_transmute: { type: "INTEGER" },
+        augmentation: { type: "INTEGER" },
+        greater_augmentation: { type: "INTEGER" },
+        perfect_augmentation: { type: "INTEGER" },
+        alchemy: { type: "INTEGER" },
+        regal: { type: "INTEGER" },
+        greater_regal: { type: "INTEGER" },
+        perfect_regal: { type: "INTEGER" },
+        chaos: { type: "INTEGER" },
+        greater_chaos: { type: "INTEGER" },
+        perfect_chaos: { type: "INTEGER" },
+        vaal: { type: "INTEGER" },
+        annulment: { type: "INTEGER" },
+        exalted: { type: "INTEGER" },
+        greater_exalted: { type: "INTEGER" },
+        perfect_exalted: { type: "INTEGER" },
+        divine: { type: "INTEGER" },
+        mirror: { type: "INTEGER" },
+        lesser_jeweller: { type: "INTEGER" },
+        greater_jeweller: { type: "INTEGER" },
+        perfect_jeweller: { type: "INTEGER" },
+        verisium: { type: "INTEGER" },
+        runic_alloy: { type: "INTEGER" },
+        aldurs_legacy: { type: "INTEGER" },
+        iron_rune: { type: "INTEGER" },
+        gold_rune: { type: "INTEGER" },
+        stone_rune: { type: "INTEGER" },
+        uncut_gem: { type: "INTEGER" }
+      }
+    },
+    gear_items: {
+      type: "ARRAY",
+      description: "Visible gear equipment list. Populate only if detected_tab is a standard/quad/dump stash tab.",
+      items: {
+        type: "OBJECT",
+        properties: {
+          name: { type: "STRING" },
+          base: { type: "STRING" },
+          rarity: { type: "STRING" },
+          level: { type: "INTEGER" },
+          ilvl: { type: "INTEGER" },
+          affixes: {
+            type: "ARRAY",
+            items: { type: "STRING" }
+          },
+          flavor: { type: "STRING" },
+          price: { type: "STRING" },
+          logs: { type: "STRING" }
+        },
+        required: ["name", "base", "rarity", "level", "ilvl", "affixes", "price", "logs"]
+      }
+    }
   },
-  required: ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror", "lesser_jeweller", "greater_jeweller", "perfect_jeweller", "verisium", "runic_alloy", "aldurs_legacy", "iron_rune", "gold_rune", "stone_rune", "uncut_gem"]
+  required: ["detected_tab"]
 };
 
 // Item Appraiser Prompt coordination V2.0
@@ -378,18 +489,19 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
     const videoWidth = tempVideo.videoWidth;
     const videoHeight = tempVideo.videoHeight;
     
-    // Aspect Ratio / Bounding Box Multiplier (0.5 for 16:9, can be tweaked to 0.35 for 21:9 or 0.25 for 32:9)
+    // Aspect Ratio / Bounding Box Multiplier (0.5 for 16:9 width, 0.8 to crop out bottom fifth health/search overlay)
     const CROP_PERCENT = 0.5; 
     const cropWidth = Math.floor(videoWidth * CROP_PERCENT);
+    const cropHeight = Math.floor(videoHeight * 0.8);
     
-    log(`Capturing with aspect-crop: ${CROP_PERCENT * 100}% width (${cropWidth}x${videoHeight})...`);
+    log(`Capturing with aspect-crop: ${CROP_PERCENT * 100}% width, 80% height (${cropWidth}x${cropHeight})...`);
     
     const ctx = previewCanvas.getContext("2d");
     previewCanvas.width = cropWidth;
-    previewCanvas.height = videoHeight;
+    previewCanvas.height = cropHeight;
     
-    // Crop and draw only the left-side stash panel
-    ctx.drawImage(tempVideo, 0, 0, cropWidth, videoHeight, 0, 0, cropWidth, videoHeight);
+    // Crop and draw only the left-side stash panel, cutting out the bottom fifth
+    ctx.drawImage(tempVideo, 0, 0, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
     
     stream.getTracks().forEach(track => track.stop());
     log("Captured and cropped screen frame successfully.");
@@ -398,14 +510,14 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
     const base64Data = dataUrl.split(",")[1];
     
     previewCanvas.style.display = "block";
-    log("Running Gemini Multimodal Vision analysis...");
+    log("Running Gemini Multimodal Vision active-tab classification...");
     
     const apiUrL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
     
     const payload = {
       contents: [{
         parts: [
-          { text: "Extract the exact quantities of all visible Path of Exile 2 currency items in this Currency Stash Tab image." },
+          { text: "Visually audit this Path of Exile 2 stash tab. Classify the active tab and extract its items." },
           {
             inlineData: {
               mimeType: "image/png",
@@ -419,7 +531,7 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
       },
       generationConfig: {
         responseMimeType: "application/json",
-        responseSchema: RESPONSE_SCHEMA
+        responseSchema: STASH_SCAN_SCHEMA
       }
     };
     
@@ -436,71 +548,251 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
     
     const resJson = await res.json();
     const responseText = resJson.candidates[0].content.parts[0].text;
-    log("Gemini parsed stash metrics successfully.");
     
     const data = JSON.parse(responseText);
+    const rawTab = data.detected_tab || "CURRENCY";
+    log(`Gemini Vision classified active tab: "${rawTab}"`, "success");
     
-    const core_data = {
-      scroll: data.scroll || 0,
-      transmute: (data.transmute || 0) + (data.greater_transmute || 0) + (data.perfect_transmute || 0),
-      augmentation: (data.augmentation || 0) + (data.greater_augmentation || 0) + (data.perfect_augmentation || 0),
-      alchemy: data.alchemy || 0,
-      regal: (data.regal || 0) + (data.greater_regal || 0) + (data.perfect_regal || 0),
-      chaos: (data.chaos || 0) + (data.greater_chaos || 0) + (data.perfect_chaos || 0),
-      vaal: data.vaal || 0,
-      annulment: data.annulment || 0,
-      exalted: (data.exalted || 0) + (data.greater_exalted || 0) + (data.perfect_exalted || 0),
-      divine: data.divine || 0,
-      mirror: data.mirror || 0,
-      verisium: data.verisium || 0,
-      runic_alloy: data.runic_alloy || 0,
-      aldurs_legacy: data.aldurs_legacy || 0,
-      iron_rune: data.iron_rune || 0,
-      gold_rune: data.gold_rune || 0,
-      stone_rune: data.stone_rune || 0,
-      uncut_gem: data.uncut_gem || 0
-    };
+    const matchedTab = findMatchedTab(rawTab);
     
-    const rates = {
-      mirror: 40000.0, divine: 150.0, exalted: 15.0, annulment: 5.0, vaal: 2.0,
-      chaos: 1.0, regal: 0.8, alchemy: 0.5, transmute: 0.2, augmentation: 0.15, scroll: 0.05
-    };
-    let total_chaos = 0.0;
-    Object.keys(core_data).forEach(k => {
-      total_chaos += (core_data[k] || 0) * (rates[k] || 0.0);
-    });
-    
-    const core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
-    const pipe_str = core_keys.map(k => core_data[k]).join("|") + "|1.0";
-    
-    const total_score = Math.floor(total_chaos * 10);
-    log("Syncing live scan results to your serverless Supabase vault...");
-    
-    const currencyPayload = {
-      ...core_data,
-      sync_version: "1.0"
-    };
-
-    const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
-      method: "POST",
-      headers: {
-        "apikey": supabaseAnonKey,
-        "Authorization": `Bearer ${supabaseAnonKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        p_name: "__GUILD_VAULT__",
-        p_data: currencyPayload,
-        p_write_key: guildWriteKey
-      })
-    });
-    
-    if (!pushRes.ok) {
-      const errTxt = await pushRes.text();
-      throw new Error(`Supabase push failed: ${errTxt}`);
+    if (!matchedTab) {
+      log(`⚠️ Unrecognized active tab name: "${rawTab}". Sync aborted to protect database.`, "error");
+      return;
     }
     
-    log(`✅ Guild Vault successfully updated globally! Net Worth: ${total_chaos.toFixed(0)}c (~${(total_chaos/150).toFixed(1)} EX)`, "success");
+    if (matchedTab.isIgnored) {
+      log(`⚠️ Ignored specialty tab detected: "${matchedTab.name}". Sync aborted as requested.`, "success");
+      return;
+    }
+    
+    log(`Routing ingestion sequence for "${matchedTab.name}" (Stash Index: ${matchedTab.tabIndex}, Type: ${matchedTab.type})...`);
+    
+    if (matchedTab.type === "currency") {
+      log("Extracting currency quantities...");
+      const cData = data.currency_data || {};
+      
+      const core_data = {
+        scroll: cData.scroll || 0,
+        transmute: (cData.transmute || 0) + (cData.greater_transmute || 0) + (cData.perfect_transmute || 0),
+        augmentation: (cData.augmentation || 0) + (cData.greater_augmentation || 0) + (cData.perfect_augmentation || 0),
+        alchemy: cData.alchemy || 0,
+        regal: (cData.regal || 0) + (cData.greater_regal || 0) + (cData.perfect_regal || 0),
+        chaos: (cData.chaos || 0) + (cData.greater_chaos || 0) + (cData.perfect_chaos || 0),
+        vaal: cData.vaal || 0,
+        annulment: cData.annulment || 0,
+        exalted: (cData.exalted || 0) + (cData.greater_exalted || 0) + (cData.perfect_exalted || 0),
+        divine: cData.divine || 0,
+        mirror: cData.mirror || 0,
+        verisium: cData.verisium || 0,
+        runic_alloy: cData.runic_alloy || 0,
+        aldurs_legacy: cData.aldurs_legacy || 0,
+        iron_rune: cData.iron_rune || 0,
+        gold_rune: cData.gold_rune || 0,
+        stone_rune: cData.stone_rune || 0,
+        uncut_gem: cData.uncut_gem || 0
+      };
+      
+      const rates = {
+        mirror: 40000.0, divine: 150.0, exalted: 15.0, annulment: 5.0, vaal: 2.0,
+        chaos: 1.0, regal: 0.8, alchemy: 0.5, transmute: 0.2, augmentation: 0.15, scroll: 0.05
+      };
+      let total_chaos = 0.0;
+      Object.keys(core_data).forEach(k => {
+        total_chaos += (core_data[k] || 0) * (rates[k] || 0.0);
+      });
+      
+      log("Syncing Currency counts directly to __GUILD_VAULT__ entry...");
+      const currencyPayload = {
+        ...core_data,
+        sync_version: "1.0"
+      };
+  
+      const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseAnonKey,
+          "Authorization": `Bearer ${supabaseAnonKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          p_name: "__GUILD_VAULT__",
+          p_data: currencyPayload,
+          p_write_key: guildWriteKey
+        })
+      });
+      
+      if (!pushRes.ok) {
+        throw new Error(`Supabase push failed: ${await pushRes.text()}`);
+      }
+      
+      log(`✅ Guild Vault Currency synced successfully! Net Worth: ${total_chaos.toFixed(0)}c (~${(total_chaos/150).toFixed(1)} EX)`, "success");
+      
+    } else {
+      // Standard / Quad / Specialty Gear Stash tabs culling & reconciliation
+      const gearItems = data.gear_items || [];
+      log(`Scanned ${gearItems.length} items. Ditching coordinates and appraising via fingerprints...`);
+      
+      const deletePrefix = `ITEM_GUILD_T${matchedTab.tabIndex}_`;
+      
+      // 1. Fetch existing entries inside this specific tab
+      log(`Fetching current database listings for Tab Index ${matchedTab.tabIndex} (${matchedTab.name})...`);
+      const existRes = await fetch(`${supabaseUrl}/rest/v1/poe2_guild_vault?name=like.${deletePrefix}*&select=*`, {
+        headers: {
+          "apikey": supabaseAnonKey,
+          "Authorization": `Bearer ${supabaseAnonKey}`
+        }
+      });
+      
+      if (!existRes.ok) {
+        throw new Error(`Failed to fetch existing database listings: ${await existRes.text()}`);
+      }
+      
+      const existingEntries = await existRes.json();
+      log(`Database currently has ${existingEntries.length} items in this tab.`);
+      
+      // 2. Count new items grouped by visual signature match key
+      function getMatchKey(item) {
+        const rarity = (item.rarity || "Rare").toLowerCase();
+        const base = (item.base || "Gear").toLowerCase();
+        const name = (item.name || "").toLowerCase();
+        return `${rarity}|${base}|${name}`;
+      }
+      
+      const newCounts = {};
+      gearItems.forEach(item => {
+        const key = getMatchKey(item);
+        newCounts[key] = (newCounts[key] || 0) + 1;
+      });
+      
+      // 3. Group existing database items by signature key
+      const existingGrouped = {};
+      existingEntries.forEach(entry => {
+        const item = entry.data;
+        if (!item) return;
+        const key = getMatchKey(item);
+        if (!existingGrouped[key]) existingGrouped[key] = [];
+        existingGrouped[key].push(entry);
+      });
+      
+      // Sort to prioritize keeping manually appraised items first
+      Object.keys(existingGrouped).forEach(key => {
+        existingGrouped[key].sort((a, b) => {
+          const aIsAppraised = a.name.includes("_FINGERPRINT_") || a.name.includes("_APPRAISED_") || (a.data && a.data.logs && a.data.logs.includes("Clipboard"));
+          const bIsAppraised = b.name.includes("_FINGERPRINT_") || b.name.includes("_APPRAISED_") || (b.data && b.data.logs && b.data.logs.includes("Clipboard"));
+          if (aIsAppraised && !bIsAppraised) return -1;
+          if (!aIsAppraised && bIsAppraised) return 1;
+          return 0;
+        });
+      });
+      
+      const entriesToDelete = [];
+      const itemsToUpload = [];
+      const matchedCounts = {};
+      
+      // Process existing database entries to decide which ones to deprecate (withdrawn)
+      Object.keys(existingGrouped).forEach(key => {
+        const list = existingGrouped[key];
+        const limit = newCounts[key] || 0;
+        
+        for (let i = 0; i < list.length; i++) {
+          if (i < limit) {
+            matchedCounts[key] = (matchedCounts[key] || 0) + 1;
+          } else {
+            entriesToDelete.push(list[i].name);
+          }
+        }
+      });
+      
+      // Process newly scanned items to identify what to upload
+      for (let index = 0; index < gearItems.length; index++) {
+        const item = gearItems[index];
+        const key = getMatchKey(item);
+        const matched = matchedCounts[key] || 0;
+        const totalNeeded = newCounts[key] || 0;
+        
+        if (matched < totalNeeded) {
+          const fingerprint = await getFingerprint(
+            item.rarity,
+            item.base,
+            item.name,
+            item.affixes
+          );
+          
+          itemsToUpload.push({
+            item: item,
+            name: `${deletePrefix}FINGERPRINT_${fingerprint}`
+          });
+          matchedCounts[key] = matched + 1;
+        }
+      }
+      
+      log(`Diff Engine audit: ${entriesToDelete.length} culls (withdrawn), ${itemsToUpload.length} uploads (new).`);
+      
+      // Execute Deletions (Culling withdrawn items)
+      if (entriesToDelete.length > 0) {
+        log(`Purging ${entriesToDelete.length} withdrawn items from database...`);
+        for (const entryName of entriesToDelete) {
+          const delRes = await fetch(`${supabaseUrl}/rest/v1/rpc/purge_vault_items`, {
+            method: "POST",
+            headers: {
+              "apikey": supabaseAnonKey,
+              "Authorization": `Bearer ${supabaseAnonKey}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              p_prefix: entryName,
+              p_write_key: guildWriteKey
+            })
+          });
+          if (!delRes.ok) {
+            console.warn(`Failed to purge stale item: ${entryName}`, await delRes.text());
+          }
+        }
+      }
+      
+      // Execute Uploads (Ingesting newly seen items)
+      if (itemsToUpload.length > 0) {
+        log(`Uploading ${itemsToUpload.length} new items to vault...`);
+        for (const uploadObj of itemsToUpload) {
+          const item = uploadObj.item;
+          const entryName = uploadObj.name;
+          
+          const itemPayload = {
+            rarity: item.rarity,
+            name: item.name,
+            base: item.base,
+            level: item.level || 0,
+            ilvl: item.ilvl || 0,
+            affixes: item.affixes,
+            price: item.price,
+            flavor: item.flavor || "",
+            logs: item.logs || "Visual OCR Scan",
+            url: getIconUrl(item.name, item.base),
+            owner: "Shared Guild Vault"
+          };
+          
+          const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
+            method: "POST",
+            headers: {
+              "apikey": supabaseAnonKey,
+              "Authorization": `Bearer ${supabaseAnonKey}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              p_name: entryName,
+              p_data: itemPayload,
+              p_write_key: guildWriteKey
+            })
+          });
+          
+          if (!pushRes.ok) {
+            console.warn(`Failed to push new gear item: ${entryName}`, await pushRes.text());
+          }
+        }
+      }
+      
+      log(`✅ Zero-Click Auto-Reconciliation Complete! Tab "${matchedTab.name}" is now perfectly synced!`, "success");
+    }
     
   } catch (err) {
     log(`API Sync failed: ${err.message}`, "error");
