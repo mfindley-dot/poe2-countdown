@@ -903,17 +903,7 @@ async function bulkSyncStashTab() {
   logBox.innerHTML = `Status: Initiating bulk stash fetch from GGG API...`;
   
   try {
-    // 1. Build GGG API Stash URL (realm must be 'pc' for PoE2 on PC, 'poe2' is not a valid endpoint realm value)
-    let gggUrl = `https://pathofexile.com/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}&realm=pc`;
-    if (stashType === "guild") {
-      gggUrl += "&guild=true";
-    } else {
-      gggUrl += `&accountName=${encodeURIComponent(accountName)}`;
-    }
-    
-    log(`Forwarding stash fetch request same-origin through browser content script...`);
-    
-    // Query active tab in the current window
+    // Query active tab in the current window to determine the same-origin base URL
     const activeTabs = await new Promise(resolve => {
       chrome.tabs.query({ active: true, currentWindow: true }, resolve);
     });
@@ -927,6 +917,17 @@ async function bulkSyncStashTab() {
     
     if (!activeUrl.includes("pathofexile.com") && !activeUrl.includes("pathofexile2.com")) {
       throw new Error("Please select your active pathofexile.com or pathofexile2.com tab in Chrome first!");
+    }
+    
+    // Extract the exact origin to ensure 100% same-origin calls with zero CORS blocks
+    const targetOrigin = new URL(activeUrl).origin;
+    
+    // 1. Build GGG API Stash URL (realm must be 'pc' for PoE2 on PC, 'poe2' is not a valid endpoint realm value)
+    let gggUrl = `${targetOrigin}/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}&realm=pc`;
+    if (stashType === "guild") {
+      gggUrl += "&guild=true";
+    } else {
+      gggUrl += `&accountName=${encodeURIComponent(accountName)}`;
     }
     
     // Send message to the active tab's content script to execute the fetch same-origin
