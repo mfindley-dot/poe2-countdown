@@ -333,14 +333,62 @@ class GLGOverlayApp:
             print("Gemini API appraisal failed:", err)
 
     def capture_and_sync_stash(self):
-        print("Alt+U Pressed! Capturing screen for Currency Stash Tab OCR...")
-        try:
-            from PIL import ImageGrab
-            # Capture primary screen
-            img = ImageGrab.grab()
-        except Exception as e:
-            print("Failed to capture screen:", e)
-            return
+        print("Alt+U Pressed! Capturing PoE2 game client window...")
+        
+        # Aspect Ratio / Bounding Box Multiplier (0.5 for 16:9. Tweak to 0.35 for 21:9 or 0.25 for 32:9)
+        CROP_PERCENT = 0.5
+        
+        user32 = ctypes.windll.user32
+        hwnd = user32.FindWindowW(None, "Path of Exile 2")
+        if not hwnd:
+            hwnd = user32.FindWindowW(None, "Path of Exile")
+            
+        if not hwnd:
+            print("Path of Exile 2 client window not found! Falling back to full primary screen capture...")
+            try:
+                from PIL import ImageGrab
+                img = ImageGrab.grab()
+            except Exception as e:
+                print("Failed to capture screen:", e)
+                return
+        else:
+            # Restore window if minimized
+            if user32.IsIconic(hwnd):
+                user32.ShowWindow(hwnd, 9) # SW_RESTORE
+                time.sleep(0.2)
+                
+            # Bring window to foreground
+            user32.SetForegroundWindow(hwnd)
+            time.sleep(0.2)
+            
+            # Get window bounds
+            class RECT(ctypes.Structure):
+                _fields_ = [("left", ctypes.c_int),
+                            ("top", ctypes.c_int),
+                            ("right", ctypes.c_int),
+                            ("bottom", ctypes.c_int)]
+            rect = RECT()
+            user32.GetWindowRect(hwnd, ctypes.byref(rect))
+            
+            left, top, right, bottom = rect.left, rect.top, rect.right, rect.bottom
+            width = right - left
+            height = bottom - top
+            
+            # Crop the left stash panel width
+            crop_right = left + int(width * CROP_PERCENT)
+            print(f"Detected game window: ({left}, {top}, {right}, {bottom}) at {width}x{height} resolution.")
+            print(f"Grabbing left {CROP_PERCENT * 100}% width aspect-crop: ({left}, {top}, {crop_right}, {bottom})")
+            
+            try:
+                from PIL import ImageGrab
+                img = ImageGrab.grab(bbox=(left, top, crop_right, bottom))
+            except Exception as e:
+                print("Failed to grab cropped window rect, falling back to full screen:", e)
+                try:
+                    img = ImageGrab.grab()
+                except Exception as e2:
+                    print("Grab fallback failed:", e2)
+                    return
 
         print("Scanning Currency Stash Tab via Gemini Vision OCR...")
 
@@ -365,6 +413,15 @@ class GLGOverlayApp:
            - lesser_jeweller (Left, plain loop) | greater_jeweller (Middle) | perfect_jeweller (Right, with gem)
         4. SCROLL OF WISDOM:
            - scroll (Red-tied blue scroll icon on the right side)
+        5. BOTTOM DUMP/LEAGUE SLOTS (located at the very bottom of the Currency Stash tab, there is a grid of slots under the main grids):
+           - Identify active items from the Runes of Aldur League:
+             * verisium: Verisium Ore (stacks of blue crystals/shards)
+             * runic_alloy: Runic Alloy (stacks of blue metallic bars)
+             * aldurs_legacy: Aldur's Legacy Rune (rare golden rune with intricate glyph)
+             * iron_rune: Iron Rune (round dark grey rune with an iron symbol)
+             * gold_rune: Gold Rune (round gold rune with a gold symbol)
+             * stone_rune: Stone Rune (round grey stone rune with a stone symbol)
+             * uncut_gem: Uncut Skill Gem (blue/green/red glowing crystal gems)
 
         Return a standard JSON matching this schema:
         {
@@ -373,7 +430,8 @@ class GLGOverlayApp:
           "alchemy": 0, "regal": 0, "greater_regal": 0, "perfect_regal": 0,
           "chaos": 0, "greater_chaos": 0, "perfect_chaos": 0, "vaal": 0,
           "annulment": 0, "exalted": 0, "greater_exalted": 0, "perfect_exalted": 0,
-          "divine": 0, "mirror": 0, "chance": 0, "fracturing": 0, "artificer": 0, "hinekoras_lock": 0
+          "divine": 0, "mirror": 0, "chance": 0, "fracturing": 0, "artificer": 0, "hinekoras_lock": 0,
+          "verisium": 0, "runic_alloy": 0, "aldurs_legacy": 0, "iron_rune": 0, "gold_rune": 0, "stone_rune": 0, "uncut_gem": 0
         }
         For any completely empty slot, return 0. Extra attention to double/triple digit counts!
         """
@@ -413,7 +471,7 @@ class GLGOverlayApp:
                 launch_overlay_process(fail_data)
                 return
             
-            # Map values down to the 11 core currencies (exactly like stash_scanner.py!)
+            # Map values down to the 18 core and league currencies
             core_data = {
                 "scroll": data.get("scroll", 0),
                 "transmute": data.get("transmute", 0) + data.get("greater_transmute", 0) + data.get("perfect_transmute", 0),
@@ -425,7 +483,14 @@ class GLGOverlayApp:
                 "annulment": data.get("annulment", 0),
                 "exalted": data.get("exalted", 0) + data.get("greater_exalted", 0) + data.get("perfect_exalted", 0),
                 "divine": data.get("divine", 0),
-                "mirror": data.get("mirror", 0)
+                "mirror": data.get("mirror", 0),
+                "verisium": data.get("verisium", 0),
+                "runic_alloy": data.get("runic_alloy", 0),
+                "aldurs_legacy": data.get("aldurs_legacy", 0),
+                "iron_rune": data.get("iron_rune", 0),
+                "gold_rune": data.get("gold_rune", 0),
+                "stone_rune": data.get("stone_rune", 0),
+                "uncut_gem": data.get("uncut_gem", 0)
             }
             
             # Calculate total net worth in Chaos
@@ -434,7 +499,7 @@ class GLGOverlayApp:
                 "regal": 0.8, "vaal": 2.0, "alchemy": 0.5, "annulment": 5.0,
                 "transmute": 0.2, "augmentation": 0.15, "scroll": 0.05
             }
-            total_chaos = sum([qty * rates.get(k, 0.0) for k, qty in core_data.items()])
+            total_chaos = sum([qty * rates.get(k, 0.0) for k, qty in core_data.items() if k in rates])
             
             # Squeeze into a pipe-separated string
             core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"]
@@ -500,7 +565,8 @@ class GLGOverlayApp:
                         f"Divine Orb: {core_data['divine']}x",
                         f"Exalted Orb: {core_data['exalted']}x",
                         f"Chaos Orb: {core_data['chaos']}x",
-                        f"Orb of Alchemy: {core_data['alchemy']}x"
+                        f"Verisium Ore: {core_data['verisium']}x",
+                        f"Runic Alloy: {core_data['runic_alloy']}x"
                     ],
                     "flavor": "The coffers are full, the ledger is balanced.",
                     "price": f"{total_chaos:.1f} Chaos Orbs",
@@ -568,6 +634,18 @@ def listen_for_hotkey(app):
 if __name__ == "__main__":
     import multiprocessing
     multiprocessing.freeze_support()
+    
+    # Initialize process-level DPI awareness for High-DPI / 4K monitor compatibility
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(2) # PROCESS_PER_MONITOR_DPI_AWARE
+        print("DPI Awareness set: PROCESS_PER_MONITOR_DPI_AWARE")
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+            print("DPI Awareness set: PROCESS_DPI_AWARE")
+        except Exception:
+            print("Failed to initialize process DPI awareness. Bounding boxes may be logical only.")
+            pass
     
     print("==================================================")
     print("🔮 GLG PoE2 STANDALONE WINDOWS OVERLAY INITIATED")

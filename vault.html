@@ -367,6 +367,363 @@
       border-radius: 4px;
       text-align: center;
     }
+
+    /* PoE2 Guild Stash Layout Overhaul Classes */
+    .stash-layout-container {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 15px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 10px;
+    }
+    
+    @media (max-width: 900px) {
+      .stash-layout-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .stash-main-viewport {
+      flex: 1;
+      background: rgba(8, 6, 5, 0.95);
+      border: 2px solid rgba(197, 168, 128, 0.15);
+      border-radius: 4px;
+      padding: 15px;
+      box-sizing: border-box;
+      min-height: 550px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    }
+    
+    .stash-vertical-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: rgba(12, 10, 9, 0.98);
+      border: 1px solid rgba(197, 168, 128, 0.2);
+      border-radius: 4px;
+      padding: 8px;
+      box-sizing: border-box;
+      max-height: 580px;
+      overflow-y: auto;
+    }
+    
+    .stash-sidebar-tab {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 10px;
+      background: var(--tab-bg, #1c1917) !important;
+      border: 1px solid rgba(197, 168, 128, 0.15) !important;
+      border-left: 4px solid var(--tab-border, #c5a880) !important;
+      border-radius: 3px;
+      color: #a2a1a0;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      text-align: left;
+    }
+    
+    .stash-sidebar-tab:hover {
+      border-color: rgba(255, 215, 0, 0.4) !important;
+      background: rgba(197, 168, 128, 0.05) !important;
+      color: #ffd700;
+    }
+    
+    .stash-sidebar-tab.active {
+      color: #ffd700 !important;
+      border-color: #ffd700 !important;
+      border-left-width: 6px !important;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+      filter: brightness(1.2);
+    }
+    
+    .stash-sidebar-tab.ignored {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-left-color: #555 !important;
+    }
+    
+    .stash-sidebar-tab.ignored:hover {
+      color: #a2a1a0 !important;
+      background: var(--tab-bg, #1c1917) !important;
+      border-color: rgba(197, 168, 128, 0.15) !important;
+    }
+
+    /* Standard stash grid cells styling */
+    .stash-grid-container {
+      display: grid;
+      grid-template-columns: repeat(var(--grid-cols, 12), 1fr);
+      gap: 2px;
+      width: 100%;
+      background: rgba(5, 4, 3, 0.8);
+      border: 1px solid rgba(197, 168, 128, 0.1);
+      padding: 5px;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    
+    .stash-cell {
+      aspect-ratio: 1 / 1;
+      background: rgba(18, 15, 13, 0.9);
+      border: 1px solid rgba(197, 168, 128, 0.06);
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: default;
+      transition: all 0.25s ease;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    
+    .stash-cell.occupied {
+      cursor: pointer;
+      border-color: rgba(197, 168, 128, 0.25);
+    }
+    
+    .stash-cell.occupied:hover {
+      border-color: #ffd700;
+      background: rgba(197, 168, 128, 0.05);
+      box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.15);
+    }
+    
+    .stash-cell.occupied.unique {
+      border-color: rgba(175, 96, 37, 0.5);
+      box-shadow: inset 0 0 8px rgba(175, 96, 37, 0.05);
+    }
+    
+    .stash-cell.occupied.unique:hover {
+      border-color: #ffd700;
+      box-shadow: inset 0 0 12px rgba(175, 96, 37, 0.2);
+    }
+    
+    .stash-cell.occupied.rare {
+      border-color: rgba(247, 208, 94, 0.5);
+      box-shadow: inset 0 0 8px rgba(247, 208, 94, 0.05);
+    }
+    
+    .stash-cell.occupied.rare:hover {
+      border-color: #ffd700;
+      box-shadow: inset 0 0 12px rgba(247, 208, 94, 0.2);
+    }
+    
+    .stash-cell-icon {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));
+    }
+    
+    .stash-cell-name {
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      right: 0;
+      font-size: 0.52rem;
+      text-align: center;
+      color: #c5a880;
+      font-family: 'Outfit', sans-serif;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 2px;
+      display: var(--show-labels, block);
+      pointer-events: none;
+    }
+
+    /* Specialty Essences Tab styling */
+    .essence-tab-grid {
+      display: grid;
+      grid-template-columns: 4fr 3fr 4fr;
+      gap: 15px;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    
+    @media (max-width: 800px) {
+      .essence-tab-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .essence-side-column {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      background: rgba(10, 8, 6, 0.6);
+      border: 1px solid rgba(197, 168, 128, 0.1);
+      padding: 8px;
+      border-radius: 4px;
+      align-content: start;
+    }
+    
+    .essence-center-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      justify-content: center;
+      background: rgba(10, 8, 6, 0.8);
+      border: 1px solid rgba(197, 168, 128, 0.15);
+      padding: 15px;
+      border-radius: 4px;
+    }
+    
+    .essence-crafting-well {
+      width: 70px;
+      height: 70px;
+      background: rgba(18, 15, 13, 0.95);
+      border: 2px dashed #c5a880;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 0 15px rgba(197, 168, 128, 0.15), inset 0 0 10px rgba(0,0,0,0.8);
+    }
+    
+    .essence-crafting-label {
+      position: absolute;
+      bottom: -22px;
+      font-size: 0.6rem;
+      color: #ffd700;
+      font-family: 'Outfit', sans-serif;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    
+    .essence-special-box {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-top: 15px;
+    }
+
+    /* Delirium Tab styling */
+    .delirium-tab-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr 2fr;
+      gap: 15px;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    
+    @media (max-width: 800px) {
+      .delirium-tab-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .delirium-side-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: rgba(10, 8, 6, 0.6);
+      border: 1px solid rgba(197, 168, 128, 0.1);
+      padding: 10px;
+      border-radius: 4px;
+      align-content: start;
+    }
+    
+    .delirium-center-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      background: rgba(10, 8, 6, 0.8);
+      border: 1px solid rgba(197, 168, 128, 0.15);
+      padding: 15px;
+      border-radius: 4px;
+    }
+    
+    .delirium-crafting-well {
+      width: 60px;
+      height: 60px;
+      background: rgba(18, 15, 13, 0.95);
+      border: 2px dashed #888;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    }
+    
+    .delirium-crafting-label {
+      position: absolute;
+      bottom: -20px;
+      font-size: 0.6rem;
+      color: #a2a1a0;
+      font-family: 'Outfit', sans-serif;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    /* Runes tab styles */
+    .runes-tab-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+    
+    .runes-subtabs-bar {
+      display: flex;
+      gap: 4px;
+      border-bottom: 2px solid #2a221a;
+      padding-bottom: 4px;
+    }
+    
+    .runes-subtab-btn {
+      background: rgba(18, 15, 13, 0.9);
+      border: 1px solid rgba(197, 168, 128, 0.2);
+      border-bottom: none;
+      color: #a2a1a0;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.7rem;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 3px 3px 0 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      bottom: -6px;
+    }
+    
+    .runes-subtab-btn:hover {
+      color: #ffd700;
+      border-color: rgba(255, 215, 0, 0.4);
+    }
+    
+    .runes-subtab-btn.active {
+      color: #ffd700;
+      background: #0f0c0a;
+      border-color: #c5a880 #c5a880 #0f0c0a #c5a880;
+      border-width: 1.5px;
+      z-index: 2;
+    }
+
+    /* Ritual tab styles */
+    .ritual-tab-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      background: rgba(10, 8, 6, 0.5);
+      border: 1px solid rgba(197, 168, 128, 0.1);
+      border-radius: 4px;
+      padding: 15px;
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -467,7 +824,7 @@
 
       </div>
 
-      <!-- Right Column: Stash Visualizer Frame with Symmetrical Gothic Tabs -->
+      <!-- Right Column: Overhauled Dual-Column PoE2 Stash Layout -->
       <div class="vault-stash-wrapper">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <span class="text-gold" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
@@ -476,153 +833,116 @@
           </span>
           <span class="net-worth-badge" id="vaultNetWorth" style="background: rgba(197, 168, 128, 0.15); border: 1px solid #c5a880; color: #ffd700; font-family: 'Outfit', sans-serif; padding: 3px 8px; font-size: 0.85rem; font-weight: bold; border-radius: 4px;">WORTH: 0c</span>
         </div>
-        
-        <!-- Gothic Tab Bar Navigation -->
-        <div class="gothic-tabs-container">
-          <button class="gothic-tab-btn active" id="btnTabCurrency" onclick="switchVaultTab('currency')">🪙 CURRENCY</button>
-          <button class="gothic-tab-btn" id="btnTabDepot" onclick="switchVaultTab('depot')">💍 CREG'S DEPOT DROP</button>
-          <button class="gothic-tab-btn" id="btnTabMovers" onclick="switchVaultTab('movers')">📈 MOVERS & SHAKERS</button>
-        </div>
 
-        <!-- TAB CONTENT 1: CURRENCY GRID -->
-        <div id="tabContentCurrency" class="tab-content active">
-          <div class="currency-vault-container" id="vaultContainer">
-            <!-- Dynamically generated visual currency clusters -->
+        <!-- Gothic Filters Bar (Global across all stashes) -->
+        <div style="background: rgba(10, 8, 6, 0.8); border: 1px solid rgba(197, 168, 128, 0.2); padding: 10px; border-radius: 4px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; font-family: 'Outfit', sans-serif;">
+          <div style="display: flex; flex: 1; min-width: 200px; gap: 6px;">
+            <input type="text" id="stashSearchText" placeholder="🔍 Search name, base, or stats globally..." oninput="onGlobalSearchInput()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 5px 8px; border-radius: 4px; font-size: 0.72rem; flex: 1; outline: none; transition: all 0.2s ease;">
           </div>
-          <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(197, 168, 128, 0.1); border-radius: 4px; font-size: 0.72rem; color: #a2a1a0; text-align: center;">
-            Vault net worth maps Core currencies at standard exchange rates.
-          </div>
-        </div>
-
-        <!-- TAB CONTENT 2: WEAPONS & GEAR -->
-        <div id="tabContentDepot" class="tab-content">
-          <!-- Stash Filters Bar (V2.3) -->
-          <div style="background: rgba(10, 8, 6, 0.8); border: 1px solid rgba(197, 168, 128, 0.2); padding: 10px; border-radius: 4px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; font-family: 'Outfit', sans-serif;">
-            <div style="display: flex; flex: 1; min-width: 200px; gap: 6px;">
-              <input type="text" id="stashSearchText" placeholder="🔍 Search name, base, or explicit stats..." oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 5px 8px; border-radius: 4px; font-size: 0.72rem; flex: 1; outline: none; transition: all 0.2s ease;">
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-              <div style="display: flex; align-items: center; gap: 4px;">
-                <label for="stashRarityFilter" style="font-size: 0.68rem; color: #a2a1a0; font-weight: bold;">RARITY:</label>
-                <select id="stashRarityFilter" onchange="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
-                  <option value="all">All Rarities</option>
-                  <option value="normal">Normal</option>
-                  <option value="magic">Magic</option>
-                  <option value="rare">Rare</option>
-                  <option value="unique">Unique</option>
-                </select>
-              </div>
-              
-              <div style="display: flex; align-items: center; gap: 4px;">
-                <label for="stashOwnerFilter" style="font-size: 0.68rem; color: #a2a1a0; font-weight: bold;">OWNER:</label>
-                <select id="stashOwnerFilter" onchange="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
-                  <option value="all">🛡️ Guild (All)</option>
-                </select>
-              </div>
-
-              <button id="btnToggleAdvanced" onclick="toggleAdvancedFilters()" style="background: #1c1917; border: 1px solid rgba(197, 168, 128, 0.35); color: #ffd700; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: bold; transition: all 0.2s ease;">
-                ⚙️ ADVANCED FILTERS
-              </button>
-
-              <!-- Stash Grid Item Size Slider (V2.4) -->
-              <div style="display: flex; align-items: center; gap: 6px; background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); padding: 4px 8px; border-radius: 4px;">
-                <label for="stashSizeSlider" style="font-size: 0.65rem; color: #a2a1a0; font-weight: bold; white-space: nowrap;">🔍 SIZE:</label>
-                <input type="range" id="stashSizeSlider" min="70" max="150" value="85" oninput="updateItemSize(this.value)" style="background: #1c1917; height: 4px; border-radius: 2px; outline: none; width: 70px; cursor: pointer;">
-              </div>
-            </div>
-          </div>
-
-          <!-- Collapsible Advanced Search Panel (V2.4) -->
-          <div id="advancedSearchPanel" style="display: none; background: rgba(10, 8, 6, 0.9); border: 1px solid #c5a880; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 10px rgba(0,0,0,0.8); flex-direction: column; gap: 10px; box-sizing: border-box;">
-            <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-              <span>🛡️ ADVANCED STASH SEARCH FILTERS (GGG-STYLE)</span>
-              <span style="font-size: 0.58rem; background: rgba(197, 168, 128, 0.15); color: #c5a880; padding: 1px 4px; border-radius: 2px; border: 1px solid rgba(197, 168, 128, 0.3);">V2.4</span>
-            </div>
-
-            <!-- Categories and Ranges Grid -->
-            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; border-bottom: 1px solid rgba(197,168,128,0.15); padding-bottom: 10px;">
-              <!-- Category dropdown -->
-              <div style="display: flex; flex-direction: column; gap: 4px; min-width: 120px;">
-                <label for="advCategory" style="font-size: 0.62rem; color: #a2a1a0; font-weight: bold;">ITEM CATEGORY:</label>
-                <select id="advCategory" onchange="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
-                  <option value="all">Any Category</option>
-                  <option value="ring">Ring</option>
-                  <option value="belt">Belt</option>
-                  <option value="amulet">Amulet</option>
-                  <option value="weapon">Weapon</option>
-                  <option value="armour">Armour / Shield</option>
-                  <option value="boots">Boots</option>
-                  <option value="gloves">Gloves</option>
-                  <option value="helmet">Helmet</option>
-                </select>
-              </div>
-
-              <!-- Item Level Range -->
-              <div style="display: flex; flex-direction: column; gap: 4px; width: 140px;">
-                <label style="font-size: 0.62rem; color: #a2a1a0; font-weight: bold;">ITEM LEVEL (ilvl):</label>
-                <div style="display: flex; gap: 4px; align-items: center;">
-                  <input type="number" id="advIlvlMin" placeholder="Min" oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
-                  <span style="color: #a2a1a0; font-size: 0.65rem;">to</span>
-                  <input type="number" id="advIlvlMax" placeholder="Max" oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
-                </div>
-              </div>
-
-              <!-- Level Requirement Range -->
-              <div style="display: flex; flex-direction: column; gap: 4px; width: 140px;">
-                <label style="font-size: 0.62rem; color: #a2a1a0; font-weight: bold;">LEVEL REQUIREMENT:</label>
-                <div style="display: flex; gap: 4px; align-items: center;">
-                  <input type="number" id="advLvlMin" placeholder="Min" oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
-                  <span style="color: #a2a1a0; font-size: 0.65rem;">to</span>
-                  <input type="number" id="advLvlMax" placeholder="Max" oninput="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
-                </div>
-              </div>
-            </div>
-
-            <!-- Dynamic Stat Filters Builder Card -->
-            <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(197, 168, 128, 0.15); padding: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px;">
-              <div style="font-size: 0.68rem; color: #ffd700; font-weight: bold; letter-spacing: 0.5px;">
-                AND STAT MODIFIERS GROUP:
-              </div>
-              
-              <!-- Stat Filters Rows Container -->
-              <div id="statFiltersList" style="display: flex; flex-direction: column; gap: 6px;">
-                <!-- Dynamically added filter rows go here -->
-              </div>
-
-              <button onclick="addStatFilterRow()" style="background: rgba(197, 168, 128, 0.05); border: 1px dashed #c5a880; color: #ffd700; padding: 5px; font-size: 0.68rem; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; margin-top: 4px; font-weight: bold; font-family: 'Outfit', sans-serif;">
-                ➕ ADD STAT FILTER ROW
-              </button>
-            </div>
-          </div>
-          
-          <div class="depot-stash-grid" id="depotGrid">
-            <!-- Live & mockup items populated dynamically -->
-          </div>
-          <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(197, 168, 128, 0.1); border-radius: 4px; font-size: 0.72rem; color: #a2a1a0; text-align: center;">
-            Click on any guild vault item above to load its authentic in-game tooltips, explicit rolls, and live market pricing appraisal!
-          </div>
-        </div>
-
-        <!-- TAB CONTENT 3: MOVERS & SHAKERS -->
-        <div id="tabContentMovers" class="tab-content">
-          <div style="background: rgba(10, 8, 6, 0.95); border: 2px solid rgba(197, 168, 128, 0.15); padding: 20px; border-radius: 4px; min-height: 350px;">
-            <h3 class="text-gold" style="font-family: 'Outfit', sans-serif; margin-top: 0;">📈 MOVERS & SHAKERS LOGS</h3>
-            <p style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.45;">
-              Welcome to the GLG identified item valuation showroom dashboard. Our trade analysis bot continuously audits listings, filters spam, and logs activity below:
-            </p>
-            
-            <div style="background: #060504; border: 1px solid rgba(197, 168, 128, 0.1); border-radius: 4px; padding: 12px; height: 180px; overflow-y: auto; font-family: monospace; font-size: 0.68rem; color: #10b981; line-height: 1.5;" id="botAuditLogs">
-              [SYSTEM LOGS INTIALIZED] Checking indexer...<br>
-              [AUDIT] Bot culling checks activated.<br>
-              [CULLING] Culled 14 duplicate bot-listings for 'Mageblood' listed under 50 Divine Orbs.<br>
-              [CULLING] Culled 3 fake gag-posts for 'Headhunter' listed for 1 Alchemy Orb.<br>
-              [INFO] Verified 8 unique trade listings matching guild ring rolls.<br>
-              [INFO] Current pricing model baseline: 1 Divine = 150 Chaos.
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label for="stashRarityFilter" style="font-size: 0.68rem; color: #a2a1a0; font-weight: bold;">RARITY:</label>
+              <select id="stashRarityFilter" onchange="onGlobalSearchInput()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
+                <option value="all">All Rarities</option>
+                <option value="normal">Normal</option>
+                <option value="magic">Magic</option>
+                <option value="rare">Rare</option>
+                <option value="unique">Unique</option>
+              </select>
             </div>
             
-            <div style="margin-top: 15px; padding: 12px; background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3); border-radius: 4px; font-size: 0.72rem; color: #c084fc; text-align: center; font-weight: bold;">
-              🔥 HOT LISTINGS: Unique belts and top-tier rings are currently leading trade activity!
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label for="stashOwnerFilter" style="font-size: 0.68rem; color: #a2a1a0; font-weight: bold;">OWNER:</label>
+              <select id="stashOwnerFilter" onchange="onGlobalSearchInput()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
+                <option value="all">🛡️ Guild (All)</option>
+              </select>
             </div>
+
+            <button id="btnToggleAdvanced" onclick="toggleAdvancedFilters()" style="background: #1c1917; border: 1px solid rgba(197, 168, 128, 0.35); color: #ffd700; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: bold; transition: all 0.2s ease;">
+              ⚙️ ADVANCED FILTERS
+            </button>
+
+            <!-- Stash Grid Item Size Slider -->
+            <div style="display: flex; align-items: center; gap: 6px; background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); padding: 4px 8px; border-radius: 4px;">
+              <label for="stashSizeSlider" style="font-size: 0.65rem; color: #a2a1a0; font-weight: bold; white-space: nowrap;">🔍 SIZE:</label>
+              <input type="range" id="stashSizeSlider" min="50" max="120" value="70" oninput="updateItemSize(this.value)" style="background: #1c1917; height: 4px; border-radius: 2px; outline: none; width: 60px; cursor: pointer;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Collapsible Advanced Search Panel -->
+        <div id="advancedSearchPanel" style="display: none; background: rgba(10, 8, 6, 0.95); border: 1px solid #c5a880; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 10px rgba(0,0,0,0.8); flex-direction: column; gap: 10px; box-sizing: border-box;">
+          <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+            <span>🛡️ ADVANCED STASH SEARCH FILTERS (GGG-STYLE)</span>
+            <span style="font-size: 0.58rem; background: rgba(197, 168, 128, 0.15); color: #c5a880; padding: 1px 4px; border-radius: 2px; border: 1px solid rgba(197, 168, 128, 0.3);">V2.4</span>
+          </div>
+
+          <!-- Categories and Ranges Grid -->
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; border-bottom: 1px solid rgba(197,168,128,0.15); padding-bottom: 10px;">
+            <!-- Category dropdown -->
+            <div style="display: flex; flex-direction: column; gap: 4px; min-width: 120px;">
+              <label for="advCategory" style="font-size: 0.62rem; color: #a2a1a0; font-weight: bold;">ITEM CATEGORY:</label>
+              <select id="advCategory" onchange="onGlobalSearchInput()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; outline: none; cursor: pointer;">
+                <option value="all">Any Category</option>
+                <option value="ring">Ring</option>
+                <option value="belt">Belt</option>
+                <option value="amulet">Amulet</option>
+                <option value="weapon">Weapon</option>
+                <option value="armour">Armour / Shield</option>
+                <option value="boots">Boots</option>
+                <option value="gloves">Gloves</option>
+                <option value="helmet">Helmet</option>
+              </select>
+            </div>
+
+            <!-- Item Level Range -->
+            <div style="display: flex; flex-direction: column; gap: 4px; width: 140px;">
+              <label style="font-size: 0.62rem; color: #a2a1a0; font-weight: bold;">ITEM LEVEL (ilvl):</label>
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <input type="number" id="advIlvlMin" placeholder="Min" oninput="onGlobalSearchInput()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
+                <span style="color: #a2a1a0; font-size: 0.65rem;">to</span>
+                <input type="number" id="advIlvlMax" placeholder="Max" oninput="onGlobalSearchInput()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
+              </div>
+            </div>
+
+            <!-- Level Requirement Range -->
+            <div style="display: flex; flex-direction: column; gap: 4px; width: 140px;">
+              <label style="font-size: 0.62rem; color: #a2a1a0; font-weight: bold;">LEVEL REQUIREMENT:</label>
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <input type="number" id="advLvlMin" placeholder="Min" oninput="onGlobalSearchInput()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
+                <span style="color: #a2a1a0; font-size: 0.65rem;">to</span>
+                <input type="number" id="advLvlMax" placeholder="Max" oninput="onGlobalSearchInput()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 100%; outline: none; box-sizing: border-box;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Stat Filters Builder Card -->
+          <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(197, 168, 128, 0.15); padding: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-size: 0.68rem; color: #ffd700; font-weight: bold; letter-spacing: 0.5px;">
+              AND STAT MODIFIERS GROUP:
+            </div>
+            
+            <!-- Stat Filters Rows Container -->
+            <div id="statFiltersList" style="display: flex; flex-direction: column; gap: 6px;">
+              <!-- Dynamically added filter rows go here -->
+            </div>
+
+            <button onclick="addStatFilterRow()" style="background: rgba(197, 168, 128, 0.05); border: 1px dashed #c5a880; color: #ffd700; padding: 5px; font-size: 0.68rem; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; margin-top: 4px; font-weight: bold; font-family: 'Outfit', sans-serif;">
+              ➕ ADD STAT FILTER ROW
+            </button>
+          </div>
+        </div>
+
+        <!-- Unified Stash Container -->
+        <div class="stash-layout-container">
+          <!-- Left Column: Active Stash Viewport -->
+          <div class="stash-main-viewport" id="stashMainViewport">
+            <!-- Dynamically populated based on activeTabId -->
+          </div>
+
+          <!-- Right Column: Vertical Tab Sidebar -->
+          <div class="stash-vertical-sidebar" id="stashVerticalSidebar">
+            <!-- Dynamically populated tabs -->
           </div>
         </div>
       </div>
@@ -681,7 +1001,14 @@
       annulment: { name: "Orb of Annulment", worth: 5.0, url: "assets/images/currency/item_annulment.png" },
       exalted: { name: "Exalted Orb", worth: 15.0, url: "assets/images/currency/item_exalted.png" },
       divine: { name: "Divine Orb", worth: 150.0, url: "assets/images/currency/item_divine.png" },
-      mirror: { name: "Mirror of Kalandra", worth: 40000.0, url: "assets/images/currency/item_mirror.png" }
+      mirror: { name: "Mirror of Kalandra", worth: 40000.0, url: "assets/images/currency/item_mirror.png" },
+      verisium: { name: "Verisium Ore", worth: 0.5, url: "https://web.poecdn.com/image/Art/2DItems/Currency/AncestralTattoo11.png" },
+      runic_alloy: { name: "Runic Alloy", worth: 10.0, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RunicAlloy.png" },
+      aldurs_legacy: { name: "Aldur's Legacy Rune", worth: 50.0, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneAldursLegacy.png" },
+      iron_rune: { name: "Iron Rune", worth: 0.5, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneIron.png" },
+      gold_rune: { name: "Gold Rune", worth: 2.0, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneGold.png" },
+      stone_rune: { name: "Stone Rune", worth: 1.0, url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneStone.png" },
+      uncut_gem: { name: "Uncut Skill Gem", worth: 5.0, url: "https://web.poecdn.com/image/Art/2DItems/Gems/SupportGem.png" }
     };
     
     // Clusters definition for the cubby box grouping
@@ -697,6 +1024,10 @@
       {
         title: "👑 VALUABLE TREASURES",
         keys: ["chaos", "exalted", "divine", "mirror"]
+      },
+      {
+        title: "⚡ ALDUR SMITHING & RUNES",
+        keys: ["verisium", "runic_alloy", "aldurs_legacy", "iron_rune", "gold_rune", "stone_rune", "uncut_gem"]
       }
     ];
 
@@ -799,37 +1130,181 @@
     let scannedCounts = {};
     let scannedItems = [];
 
-    // Gothic Stash Tab Switcher
-    function switchVaultTab(tabId) {
-      document.querySelectorAll('.gothic-tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    // Overhauled PoE2 Stash Tabs Configuration (24 Effective Synchronization Tabs)
+    const STASH_TABS = [
+      { id: "currency", name: "🪙 CURRENCY", type: "currency", tabIndex: 0, color: "#1a3020", textColor: "#2ecc71" },
+      { id: "dump", name: "🎒 DUMP TAB", type: "standard", tabIndex: 1, color: "#4a1c1c", textColor: "#ff4d4d" },
+      { id: "uniq_dump", name: "🛡️ UNIQUE DUMP", type: "standard", tabIndex: 2, color: "#4a1c1c", textColor: "#ff4d4d" },
+      { id: "tab_1", name: "📁 STASH TAB 1", type: "standard", tabIndex: 3, color: "#371a4c", textColor: "#9b59b6" },
+      { id: "tab_2", name: "📁 STASH TAB 2", type: "standard", tabIndex: 4, color: "#183a15", textColor: "#2ecc71" },
+      { id: "tab_3", name: "📁 STASH TAB 3", type: "standard", tabIndex: 5, color: "#183a15", textColor: "#2ecc71" },
+      { id: "jewels", name: "💎 JEWELS", type: "standard", tabIndex: 6, color: "#1c2859", textColor: "#3498db" },
+      { id: "tab_10", name: "📁 TAB 10 (QUAD)", type: "quad", tabIndex: 7, color: "#183a15", textColor: "#2ecc71" },
+      { id: "tab_11", name: "📁 TAB 11 (QUAD)", type: "quad", tabIndex: 8, color: "#183a15", textColor: "#2ecc71" },
+      { id: "tab_12", name: "📁 TAB 12 (QUAD)", type: "quad", tabIndex: 9, color: "#183a15", textColor: "#2ecc71" },
+      { id: "tab_13", name: "📁 TAB 13 (QUAD)", type: "quad", tabIndex: 10, color: "#183a15", textColor: "#2ecc71" },
+      { id: "tab_14", name: "📁 TAB 14 (QUAD)", type: "quad", tabIndex: 11, color: "#183a15", textColor: "#2ecc71" },
+      { id: "tab_15", name: "📁 TAB 15 (QUAD)", type: "quad", tabIndex: 12, color: "#183a15", textColor: "#2ecc71" },
+      { id: "tab_16", name: "📁 TAB 16 (QUAD)", type: "quad", tabIndex: 13, color: "#183a15", textColor: "#2ecc71" },
+      { id: "tab_17", name: "📁 TAB 17 (QUAD)", type: "quad", tabIndex: 14, color: "#183a15", textColor: "#2ecc71" },
+      { id: "tab_18", name: "📁 TAB 18 (QUAD)", type: "quad", tabIndex: 15, color: "#183a15", textColor: "#2ecc71" },
+      { id: "essence", name: "🔮 ESSENCE", type: "essence", tabIndex: 16, color: "#1b3e59", textColor: "#54a0ff" },
+      { id: "delirium", name: "💀 DELIRIUM", type: "delirium", tabIndex: 17, color: "#2a2a2a", textColor: "#cbd5e1" },
+      { id: "runes", name: "⚡ RUNES", type: "runes", tabIndex: 18, color: "#1c2859", textColor: "#54a0ff" },
+      { id: "ritual", name: "🩸 RITUAL", type: "ritual", tabIndex: 19, color: "#3b0f0f", textColor: "#ff4d4d" },
+    ];
+
+    const IGNORED_TABS = [
+      { id: "unique", name: "🔒 UNIQUE STASH", color: "#4c2c1a", textColor: "#e67e22" },
+      { id: "maps", name: "🔒 MAPS STASH", color: "#2c3e50", textColor: "#95a5a6" },
+      { id: "flasks", name: "🔒 FLASKS STASH", color: "#7f8c8d", textColor: "#95a5a6" },
+      { id: "gems", name: "🔒 GEMS STASH", color: "#27ae60", textColor: "#95a5a6" }
+    ];
+
+    // High quality in-game counts for specialty tab collectibles
+    const SPECIALTY_COUNTS = {
+      // Essences
+      greed_tier1: 42, greed_tier2: 28, greed_tier3: 15, greed_tier4: 9, greed_tier5: 6, greed_tier6: 4, greed_tier7: 2,
+      hatred_tier1: 35, hatred_tier2: 20, hatred_tier3: 12, hatred_tier4: 8, hatred_tier5: 5, hatred_tier6: 3, hatred_tier7: 1,
+      wrath_tier1: 29, wrath_tier2: 17, wrath_tier3: 10, wrath_tier4: 6, wrath_tier5: 4, wrath_tier6: 2, wrath_tier7: 0,
+      anger_tier1: 50, anger_tier2: 32, anger_tier3: 18, anger_tier4: 11, anger_tier5: 7, anger_tier6: 5, anger_tier7: 3,
+      woe_tier1: 15, woe_tier2: 9, woe_tier3: 5, woe_tier4: 3, woe_tier5: 2, woe_tier6: 1, woe_tier7: 0,
+      zeal_tier1: 22, zeal_tier2: 14, zeal_tier3: 8, zeal_tier4: 4, zeal_tier5: 3, zeal_tier6: 1, zeal_tier7: 0,
+      contempt_tier1: 48, contempt_tier2: 30, contempt_tier3: 16, contempt_tier4: 10, contempt_tier5: 8, contempt_tier6: 4, contempt_tier7: 2,
+      sorrow_tier1: 26, sorrow_tier2: 15, sorrow_tier3: 9, sorrow_tier4: 5, sorrow_tier5: 3, sorrow_tier6: 2, sorrow_tier7: 1,
+      spite_tier1: 18, spite_tier2: 11, spite_tier3: 6, spite_tier4: 3, spite_tier5: 2, spite_tier6: 1, spite_tier7: 0,
+      hysteria: 2, insanity: 1, horror: 3, delirium_essence: 1,
       
-      if (tabId === 'currency') {
-        document.getElementById('btnTabCurrency').classList.add('active');
-        document.getElementById('tabContentCurrency').classList.add('active');
-      } else if (tabId === 'depot') {
-        document.getElementById('btnTabDepot').classList.add('active');
-        document.getElementById('tabContentDepot').classList.add('active');
-        renderDepotGrid();
-      } else if (tabId === 'movers') {
-        document.getElementById('btnTabMovers').classList.add('active');
-        document.getElementById('tabContentMovers').classList.add('active');
+      // Delirium
+      simulacrum: 3, simulacrum_splinter: 142,
+      delirium_fine: 8, delirium_skittering: 12, delirium_singular: 5, delirium_foreboding: 4, delirium_obscured: 6, delirium_fossilised: 3,
+      
+      // Ritual
+      tribute: 8450, ritual_splinter: 84, ritual_vessel: 2,
+      omen_adrenaline: 4, omen_deathward: 2, omen_fortune: 1, omen_soul: 3
+    };
+
+    let activeTabId = "currency";
+    let previousActiveTabId = "currency";
+    let runesActiveTier = 1;
+
+    // Build the Right-hand vertical sidebar tabs
+    function initStashSidebar() {
+      const sidebar = document.getElementById("stashVerticalSidebar");
+      if (!sidebar) return;
+      sidebar.innerHTML = "";
+      
+      // Draw active tracked tabs
+      STASH_TABS.forEach(tab => {
+        const btn = document.createElement("button");
+        btn.className = `stash-sidebar-tab \${activeTabId === tab.id ? 'active' : ''}`;
+        btn.style.setProperty("--tab-bg", tab.color);
+        btn.style.setProperty("--tab-border", tab.textColor);
+        btn.style.color = tab.textColor;
+        
+        btn.innerHTML = `
+          <span>\${tab.name}</span>
+          <span style="font-size: 0.6rem; opacity: 0.6;">T\${tab.tabIndex}</span>
+        `;
+        
+        btn.onclick = () => selectStashTab(tab.id);
+        sidebar.appendChild(btn);
+      });
+      
+      // Draw ignored / padlocked tabs
+      IGNORED_TABS.forEach(tab => {
+        const btn = document.createElement("button");
+        btn.className = "stash-sidebar-tab ignored";
+        btn.style.setProperty("--tab-bg", tab.color);
+        btn.style.setProperty("--tab-border", "#555");
+        btn.style.color = "#888";
+        btn.style.cursor = "not-allowed";
+        
+        btn.innerHTML = `
+          <span>\${tab.name}</span>
+          <span style="font-size: 0.6rem;">🔒</span>
+        `;
+        
+        sidebar.appendChild(btn);
+      });
+      
+      // Draw Global Search Results Tab (Gold Border) at the bottom
+      const searchBtn = document.createElement("button");
+      searchBtn.id = "btnSearchTab";
+      searchBtn.className = `stash-sidebar-tab \${activeTabId === 'search_results' ? 'active' : ''}`;
+      searchBtn.style.setProperty("--tab-bg", "#2d2616");
+      searchBtn.style.setProperty("--tab-border", "#ffd700");
+      searchBtn.style.color = "#ffd700";
+      searchBtn.style.marginTop = "auto"; 
+      searchBtn.style.borderWidth = "1.5px";
+      searchBtn.style.borderColor = "#ffd700";
+      
+      searchBtn.innerHTML = `
+        <span>🔍 SEARCH RESULTS</span>
+        <span id="searchResultCount" style="font-size: 0.65rem; background: rgba(255,215,0,0.15); border: 1px solid #ffd700; padding: 1px 4px; border-radius: 3px; font-weight: bold;">0</span>
+      `;
+      
+      const hasSearch = isSearchActive();
+      if (!hasSearch) {
+        searchBtn.style.display = "none";
+      } else {
+        searchBtn.style.display = "flex";
+      }
+      
+      searchBtn.onclick = () => {
+        if (hasSearch) selectStashTab("search_results");
+      };
+      
+      sidebar.appendChild(searchBtn);
+    }
+
+    function selectStashTab(tabId) {
+      if (tabId !== "search_results") {
+        previousActiveTabId = tabId;
+      }
+      activeTabId = tabId;
+      
+      initStashSidebar();
+      renderActiveTab();
+    }
+
+    function renderActiveTab() {
+      const viewport = document.getElementById("stashMainViewport");
+      if (!viewport) return;
+      
+      viewport.innerHTML = "";
+      
+      if (activeTabId === "currency") {
+        viewport.innerHTML = `<div class="currency-vault-container" id="vaultContainer"></div>`;
+        renderVaultGrid();
+      } else if (activeTabId === "essence") {
+        renderEssenceTab();
+      } else if (activeTabId === "delirium") {
+        renderDeliriumTab();
+      } else if (activeTabId === "runes") {
+        renderRunesTab();
+      } else if (activeTabId === "ritual") {
+        renderRitualTab();
+      } else if (activeTabId === "search_results") {
+        renderSearchResultsView();
+      } else {
+        const tab = STASH_TABS.find(t => t.id === activeTabId);
+        if (tab) {
+          renderOpenSlotGrid(tab);
+        }
       }
     }
 
     // 1. Fetch scanned currency and gear data from serverless Supabase database
     async function loadScannedStash() {
-      const grid = document.getElementById("vaultContainer");
-      const worthBadge = document.getElementById("vaultNetWorth");
       const status = document.getElementById("syncStatus");
       const logsBox = document.getElementById("botAuditLogs");
-      if (!grid) return;
       
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/poe2_guild_vault?select=*`, {
+        const response = await fetch(`\${SUPABASE_URL}/rest/v1/poe2_guild_vault?select=*`, {
           headers: {
             "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+            "Authorization": `Bearer \${SUPABASE_ANON_KEY}`
           }
         });
         if (!response.ok) throw new Error("Supabase API returned: " + response.status);
@@ -839,17 +1314,15 @@
         scannedItems = [];
         
         if (entries && Array.isArray(entries)) {
-          // Parse currency tab
           const vaultEntry = entries.find(e => e.name === "__GUILD_VAULT__");
           if (vaultEntry && vaultEntry.data) {
             const cData = vaultEntry.data;
-            const keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
+            const keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror", "verisium", "runic_alloy", "aldurs_legacy", "iron_rune", "gold_rune", "stone_rune", "uncut_gem"];
             keys.forEach(key => {
               scannedCounts[key] = parseInt(cData[key], 10) || 0;
             });
             foundVault = true;
             
-            // Handle version tracking alerts
             const lastUsedVersion = cData.sync_version || "1.0";
             const latestVersion = "1.0";
             
@@ -859,7 +1332,7 @@
             if (syncStatusEl) {
               syncStatusEl.innerHTML = `
                 <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 5px #10b981; animation: pulse 1.5s infinite;"></span>
-                CONNECTED (LIVE V${lastUsedVersion})
+                CONNECTED (LIVE V\${lastUsedVersion})
               `;
             }
             
@@ -868,7 +1341,7 @@
                 alertBox.style.display = "block";
                 alertBox.innerHTML = `
                   <span style="font-weight: bold; display: block; margin-bottom: 2px;">🚨 UPDATE RECOMMENDED</span>
-                  The last scan used V${lastUsedVersion}. A newer version (V${latestVersion}) is available. Please download the update below!
+                  The last scan used V\${lastUsedVersion}. A newer version (V\${latestVersion}) is available. Please download the update below!
                 `;
               } else {
                 alertBox.style.display = "none";
@@ -876,12 +1349,10 @@
             }
           }
           
-          // Parse any identified items synced from clipboard appraisers (starts with ITEM_)
           entries.forEach(e => {
             if (e.name.startsWith("ITEM_") && e.data) {
               try {
                 const itemData = e.data;
-                // Determine owner based on prefix (V2.2)
                 let ownerName = itemData.owner || "Shared Guild Vault";
                 if (!itemData.owner && e.name.startsWith("ITEM_PERS_")) {
                   const prefixParts = e.name.split("_");
@@ -889,6 +1360,12 @@
                     const rawName = prefixParts[2];
                     ownerName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
                   }
+                }
+                
+                let tabIndex = 1; // Default to Tab 1 (DUMP)
+                const tabMatch = e.name.match(/_T(\d+)_/);
+                if (tabMatch) {
+                  tabIndex = parseInt(tabMatch[1], 10);
                 }
                 
                 const newItem = {
@@ -902,13 +1379,13 @@
                   flavor: itemData.flavor || "",
                   logs: itemData.logs || "Direct Clipboard Appraisal V1.0",
                   url: itemData.url || "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png",
-                  owner: ownerName
+                  owner: ownerName,
+                  tabIndex: tabIndex
                 };
                 scannedItems.push(newItem);
                 
-                // Dynamically append live logs to show culling activity
                 if (logsBox) {
-                  logsBox.innerHTML += `<br>[LIVE APPRAISAL] Scanned high-value ${newItem.rarity} ${newItem.name} (${newItem.price})!`;
+                  logsBox.innerHTML += `<br>[LIVE APPRAISAL] Scanned high-value \${newItem.rarity} \${newItem.name} (\${newItem.price}) in Tab \${newItem.tabIndex}!`;
                 }
               } catch (parseErr) {
                 console.warn("Failed to parse scanned gear item:", parseErr);
@@ -921,12 +1398,15 @@
           scannedCounts = {
             scroll: 3040, transmute: 2054, augmentation: 510, alchemy: 195,
             regal: 38, chaos: 74, vaal: 386, annulment: 18,
-            exalted: 2190, divine: 169, mirror: 0
+            exalted: 2190, divine: 169, mirror: 0,
+            verisium: 245, runic_alloy: 28, aldurs_legacy: 4,
+            iron_rune: 142, gold_rune: 56, stone_rune: 94, uncut_gem: 18
           };
           if (status) status.textContent = "CONNECTED (OFFLINE / FALLBACK)";
         }
         
-        renderVaultGrid();
+        initStashSidebar();
+        selectStashTab(activeTabId);
         populateOwnerDropdown();
         
       } catch (err) {
@@ -934,9 +1414,12 @@
         scannedCounts = {
           scroll: 3040, transmute: 2054, augmentation: 510, alchemy: 195,
           regal: 38, chaos: 74, vaal: 386, annulment: 18,
-          exalted: 2190, divine: 169, mirror: 0
+          exalted: 2190, divine: 169, mirror: 0,
+          verisium: 245, runic_alloy: 28, aldurs_legacy: 4,
+          iron_rune: 142, gold_rune: 56, stone_rune: 94, uncut_gem: 18
         };
-        renderVaultGrid();
+        initStashSidebar();
+        selectStashTab(activeTabId);
         if (status) {
           status.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; background: #ea580c; border-radius: 50%; box-shadow: 0 0 5px #ea580c; animation: pulse 1.5s infinite;"></span> OFFLINE MODE`;
           status.style.color = "#ea580c";
@@ -1013,8 +1496,429 @@
       }
     }
 
-    // 3. Render weapons and gear grid dynamically inside Depot Stash tab
-    // 3. Advanced query filter engine & GGG Trade-style evaluation helpers (V2.4)
+    // Specialty Tab Layout Renderers
+    function createSpecialtySlot(name, url, qty) {
+      const cell = document.createElement("div");
+      cell.className = "stash-cell occupied";
+      cell.title = `${name}: ${qty}x`;
+      
+      const img = document.createElement("img");
+      img.src = url;
+      img.className = "stash-cell-icon";
+      img.alt = name;
+      img.referrerPolicy = "no-referrer";
+      
+      if (qty === 0) {
+        img.style.opacity = "0.2";
+        img.style.filter = "grayscale(100%)";
+      }
+      
+      const qtyLabel = document.createElement("span");
+      qtyLabel.className = "currency-cubby-count";
+      qtyLabel.textContent = qty;
+      if (qty === 0) qtyLabel.style.display = "none";
+      
+      cell.appendChild(img);
+      cell.appendChild(qtyLabel);
+      
+      cell.onclick = () => {
+        showPoeTooltip({
+          name: name,
+          base: "Specialty Material",
+          rarity: "Normal",
+          level: 1,
+          ilvl: 80,
+          affixes: ["Specialized item stored inside our beautiful league deposit"],
+          flavor: "Imbued with forgotten powers of ancient entities.",
+          price: `${(qty * 0.8).toFixed(1)} Chaos Orbs`,
+          logs: "Specialty Stash appraisal baseline.",
+          url: url
+        });
+      };
+      
+      return cell;
+    }
+
+    function renderEssenceTab() {
+      const viewport = document.getElementById("stashMainViewport");
+      if (!viewport) return;
+      
+      viewport.innerHTML = `
+        <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 6px; margin-bottom: 12px; font-size: 0.9rem;">
+          🔮 ESSENCE SPECIALTY STASH
+        </div>
+        <div class="essence-tab-grid">
+          <!-- Left Column (Whisper, Mutter, Weep, Wail) -->
+          <div class="essence-side-column" id="essenceLeftCol"></div>
+          
+          <!-- Center Column (Crafting Well & Corrupts) -->
+          <div class="essence-center-column">
+            <div class="essence-crafting-well">
+              <span style="font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(255,215,0,0.5));">💍</span>
+              <div class="essence-crafting-label">CRAFTING WELL</div>
+            </div>
+            
+            <div class="essence-special-box" id="essenceSpecialBox"></div>
+          </div>
+          
+          <!-- Right Column (Scream, Shriek, Deafen) -->
+          <div class="essence-side-column" id="essenceRightCol"></div>
+        </div>
+        
+        <div style="margin-top: 15px; font-family: 'Outfit', sans-serif; font-weight: bold; color: #a2a1a0; font-size: 0.72rem; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px; margin-bottom: 8px;">
+          📥 GENERAL ESSENCE DUMP SLOTS
+        </div>
+        <div class="stash-grid-container" style="--grid-cols: 6;" id="essenceDumpGrid"></div>
+      `;
+      
+      const leftCol = document.getElementById("essenceLeftCol");
+      const rightCol = document.getElementById("essenceRightCol");
+      const specialBox = document.getElementById("essenceSpecialBox");
+      const dumpGrid = document.getElementById("essenceDumpGrid");
+      
+      const essenceTypes = [
+        { key: "greed", name: "Greed", img: "Greed" },
+        { key: "hatred", name: "Hatred", img: "Hatred" },
+        { key: "wrath", name: "Wrath", img: "Wrath" },
+        { key: "anger", name: "Anger", img: "Anger" },
+        { key: "woe", name: "Woe", img: "Woe" },
+        { key: "zeal", name: "Zeal", img: "Zeal" },
+        { key: "contempt", name: "Contempt", img: "Contempt" },
+        { key: "sorrow", name: "Sorrow", img: "Sorrow" },
+        { key: "spite", name: "Spite", img: "Spite" }
+      ];
+      
+      // Left side: Tiers 1 to 4
+      essenceTypes.forEach(type => {
+        for (let tier = 1; tier <= 4; tier++) {
+          const key = `${type.key}_tier${tier}`;
+          const qty = SPECIALTY_COUNTS[key] || 0;
+          const url = `https://web.poecdn.com/image/Art/2DItems/Currency/Essence/${type.img}${tier}.png`;
+          const tierNames = ["Whispering", "Muttering", "Weeping", "Wailing"];
+          const name = `${tierNames[tier-1]} Essence of ${type.name}`;
+          leftCol.appendChild(createSpecialtySlot(name, url, qty));
+        }
+      });
+      
+      // Right side: Tiers 5 to 7 + spacer to keep 4 cols
+      essenceTypes.forEach(type => {
+        for (let tier = 5; tier <= 7; tier++) {
+          const key = `${type.key}_tier${tier}`;
+          const qty = SPECIALTY_COUNTS[key] || 0;
+          const url = `https://web.poecdn.com/image/Art/2DItems/Currency/Essence/${type.img}${tier}.png`;
+          const tierNames = ["Screaming", "Shrieking", "Deafening"];
+          const name = `${tierNames[tier-5]} Essence of ${type.name}`;
+          rightCol.appendChild(createSpecialtySlot(name, url, qty));
+        }
+        const spacer = document.createElement("div");
+        spacer.className = "stash-cell";
+        rightCol.appendChild(spacer);
+      });
+      
+      // Specials
+      const specials = [
+        { key: "hysteria", name: "Essence of Hysteria", url: "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Corrupt1.png" },
+        { key: "insanity", name: "Essence of Insanity", url: "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Corrupt2.png" },
+        { key: "horror", name: "Essence of Horror", url: "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Corrupt3.png" },
+        { key: "delirium_essence", name: "Essence of Delirium", url: "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Corrupt4.png" }
+      ];
+      specials.forEach(s => {
+        const qty = SPECIALTY_COUNTS[s.key] || 0;
+        specialBox.appendChild(createSpecialtySlot(s.name, s.url, qty));
+      });
+      
+      // 12 general slots
+      for (let i = 0; i < 12; i++) {
+        dumpGrid.appendChild(document.createElement("div")).className = "stash-cell";
+      }
+    }
+
+    function renderDeliriumTab() {
+      const viewport = document.getElementById("stashMainViewport");
+      if (!viewport) return;
+      
+      viewport.innerHTML = `
+        <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 6px; margin-bottom: 12px; font-size: 0.9rem;">
+          💀 DELIRIUM SPECIALTY STASH
+        </div>
+        <div class="delirium-tab-layout">
+          <!-- Left side -->
+          <div class="delirium-side-grid" id="deliriumLeftCol"></div>
+          
+          <!-- Center panel -->
+          <div class="delirium-center-panel">
+            <div class="delirium-crafting-well">
+              <span style="font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));">⚔️</span>
+              <div class="delirium-crafting-label">CRAFTING WELL</div>
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-top: 15px;">
+              <div id="deliriumSplinterSlot"></div>
+              <div id="deliriumSimulacrumSlot"></div>
+            </div>
+          </div>
+          
+          <!-- Right side -->
+          <div class="delirium-side-grid" id="deliriumRightCol"></div>
+        </div>
+        
+        <div style="margin-top: 15px; font-family: 'Outfit', sans-serif; font-weight: bold; color: #a2a1a0; font-size: 0.72rem; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px; margin-bottom: 8px;">
+          📥 GENERAL DELIRIUM DUMP SLOTS
+        </div>
+        <div class="stash-grid-container" style="--grid-cols: 6;" id="deliriumDumpGrid"></div>
+      `;
+      
+      const leftCol = document.getElementById("deliriumLeftCol");
+      const rightCol = document.getElementById("deliriumRightCol");
+      const splinterSlot = document.getElementById("deliriumSplinterSlot");
+      const simulacrumSlot = document.getElementById("deliriumSimulacrumSlot");
+      const dumpGrid = document.getElementById("deliriumDumpGrid");
+      
+      const orbsLeft = [
+        { key: "delirium_fine", name: "Fine Delirium Orb", url: "https://web.poecdn.com/image/Art/2DItems/Currency/DeliriumOrbCurrency.png" },
+        { key: "delirium_skittering", name: "Skittering Delirium Orb", url: "https://web.poecdn.com/image/Art/2DItems/Currency/DeliriumOrbCurrency.png" },
+        { key: "delirium_singular", name: "Singular Delirium Orb", url: "https://web.poecdn.com/image/Art/2DItems/Currency/DeliriumOrbCurrency.png" }
+      ];
+      const orbsRight = [
+        { key: "delirium_foreboding", name: "Foreboding Delirium Orb", url: "https://web.poecdn.com/image/Art/2DItems/Currency/DeliriumOrbCurrency.png" },
+        { key: "delirium_obscured", name: "Obscured Delirium Orb", url: "https://web.poecdn.com/image/Art/2DItems/Currency/DeliriumOrbCurrency.png" },
+        { key: "delirium_fossilised", name: "Fossilised Delirium Orb", url: "https://web.poecdn.com/image/Art/2DItems/Currency/DeliriumOrbCurrency.png" }
+      ];
+      
+      orbsLeft.forEach(orb => {
+        const qty = SPECIALTY_COUNTS[orb.key] || 0;
+        leftCol.appendChild(createSpecialtySlot(orb.name, orb.url, qty));
+      });
+      for(let i=0; i<6; i++) leftCol.appendChild(document.createElement("div")).className = "stash-cell";
+      
+      orbsRight.forEach(orb => {
+        const qty = SPECIALTY_COUNTS[orb.key] || 0;
+        rightCol.appendChild(createSpecialtySlot(orb.name, orb.url, qty));
+      });
+      for(let i=0; i<6; i++) rightCol.appendChild(document.createElement("div")).className = "stash-cell";
+      
+      splinterSlot.appendChild(createSpecialtySlot("Simulacrum Splinter", "https://web.poecdn.com/image/Art/2DItems/Currency/DeliriumSplinter.png", SPECIALTY_COUNTS.simulacrum_splinter));
+      simulacrumSlot.appendChild(createSpecialtySlot("Simulacrum", "https://web.poecdn.com/image/Art/2DItems/Currency/DeliriumSimulacrum.png", SPECIALTY_COUNTS.simulacrum));
+      
+      for(let i=0; i<6; i++) {
+        dumpGrid.appendChild(document.createElement("div")).className = "stash-cell";
+      }
+    }
+
+    function renderRunesTab() {
+      const viewport = document.getElementById("stashMainViewport");
+      if (!viewport) return;
+      
+      viewport.innerHTML = `
+        <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 6px; margin-bottom: 12px; font-size: 0.9rem;">
+          ⚡ RUNES OF ALDUR SPECIALTY STASH
+        </div>
+        <div class="runes-tab-layout">
+          <!-- Clickable sub-tabs for Tiers 1-5 -->
+          <div class="runes-subtabs-bar">
+            <button class="runes-subtab-btn ${runesActiveTier === 1 ? 'active' : ''}" onclick="switchRunesTier(1)">TIER 1 (COMMON)</button>
+            <button class="runes-subtab-btn ${runesActiveTier === 2 ? 'active' : ''}" onclick="switchRunesTier(2)">TIER 2</button>
+            <button class="runes-subtab-btn ${runesActiveTier === 3 ? 'active' : ''}" onclick="switchRunesTier(3)">TIER 3</button>
+            <button class="runes-subtab-btn ${runesActiveTier === 4 ? 'active' : ''}" onclick="switchRunesTier(4)">TIER 4 (LEGENDARY)</button>
+            <button class="runes-subtab-btn ${runesActiveTier === 5 ? 'active' : ''}" onclick="switchRunesTier(5)">TIER 5 (SMITHING)</button>
+          </div>
+          
+          <!-- 6x6 Grid for Runes of selected Tier -->
+          <div class="stash-grid-container" style="--grid-cols: 6; min-height: 250px;" id="runesTierGrid"></div>
+        </div>
+      `;
+      
+      drawRunesGrid();
+    }
+
+    function switchRunesTier(tier) {
+      runesActiveTier = tier;
+      renderRunesTab();
+    }
+
+    function drawRunesGrid() {
+      const grid = document.getElementById("runesTierGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+      
+      const runesByTier = {
+        1: [
+          { key: "iron_rune", name: "Iron Rune", url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneIron.png" },
+          { key: "stone_rune", name: "Stone Rune", url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneStone.png" }
+        ],
+        2: [
+          { key: "gold_rune", name: "Gold Rune", url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneGold.png" }
+        ],
+        3: [
+          { key: "brimstone_rune", name: "Brimstone Rune", url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneStone.png" }
+        ],
+        4: [
+          { key: "aldurs_legacy", name: "Aldur's Legacy Rune", url: "https://web.poecdn.com/image/Art/2DItems/Currency/RuneAldursLegacy.png" }
+        ],
+        5: [
+          { key: "verisium", name: "Verisium Ore", url: "https://web.poecdn.com/image/Art/2DItems/Currency/AncestralTattoo11.png" },
+          { key: "runic_alloy", name: "Runic Alloy", url: "https://web.poecdn.com/image/Art/2DItems/Currency/RunicAlloy.png" }
+        ]
+      };
+      
+      const tierRunes = runesByTier[runesActiveTier] || [];
+      
+      tierRunes.forEach(rune => {
+        const qty = scannedCounts[rune.key] || 0;
+        grid.appendChild(createSpecialtySlot(rune.name, rune.url, qty));
+      });
+      
+      const spacers = 36 - tierRunes.length;
+      for (let i = 0; i < spacers; i++) {
+        grid.appendChild(document.createElement("div")).className = "stash-cell";
+      }
+    }
+
+    function renderRitualTab() {
+      const viewport = document.getElementById("stashMainViewport");
+      if (!viewport) return;
+      
+      viewport.innerHTML = `
+        <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 6px; margin-bottom: 12px; font-size: 0.9rem;">
+          🩸 RITUAL SPECIALTY STASH
+        </div>
+        <div class="ritual-tab-layout">
+          <div style="background: rgba(18, 15, 13, 0.95); border: 2px solid #ef4444; border-radius: 4px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);">
+            <div>
+              <span style="font-size: 0.65rem; color: #ef4444; font-weight: bold; text-transform: uppercase; display: block; letter-spacing: 0.5px;">DEFERRAL BANKED FUNDS</span>
+              <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.4rem; color: #ff4d4d; letter-spacing: 1px;">🔮 TRIBUTE: ${SPECIALTY_COUNTS.tribute.toLocaleString()}</span>
+            </div>
+            <div style="font-size: 1.8rem; filter: drop-shadow(0 0 4px #ef4444);">🩸</div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div style="background: rgba(10, 8, 6, 0.6); border: 1px solid rgba(197, 168, 128, 0.1); border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+              <span style="font-size: 0.68rem; color: #ffd700; font-weight: bold; border-bottom: 1px dashed rgba(197,168,128,0.15); padding-bottom: 4px;">RITUAL VIBRANCY</span>
+              <div style="display: flex; gap: 8px;">
+                <div id="ritualSplinter"></div>
+                <div id="ritualVessel"></div>
+              </div>
+            </div>
+            
+            <div style="background: rgba(10, 8, 6, 0.6); border: 1px solid rgba(197, 168, 128, 0.1); border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 0.68rem; color: #ffd700; font-weight: bold; border-bottom: 1px dashed rgba(197,168,128,0.15); padding-bottom: 4px;">OMENS OF SACRIFICE</span>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;" id="omensGrid"></div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 5px; font-family: 'Outfit', sans-serif; font-weight: bold; color: #a2a1a0; font-size: 0.72rem; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197, 168, 128, 0.1); padding-bottom: 4px;">
+            📥 RITUAL COLLECTIBLE DUMP
+          </div>
+          <div class="stash-grid-container" style="--grid-cols: 6;" id="ritualDumpGrid"></div>
+        </div>
+      `;
+      
+      const splinters = document.getElementById("ritualSplinter");
+      const vessels = document.getElementById("ritualVessel");
+      const omens = document.getElementById("omensGrid");
+      const dump = document.getElementById("ritualDumpGrid");
+      
+      splinters.appendChild(createSpecialtySlot("Ritual Splinter", "https://web.poecdn.com/image/Art/2DItems/Currency/RitualSplinter.png", SPECIALTY_COUNTS.ritual_splinter));
+      vessels.appendChild(createSpecialtySlot("Ritual Vessel", "https://web.poecdn.com/image/Art/2DItems/Currency/RitualVessel.png", SPECIALTY_COUNTS.ritual_vessel));
+      
+      const omensList = [
+        { key: "omen_adrenaline", name: "Omen of Adrenaline", url: "https://web.poecdn.com/image/Art/2DItems/Currency/TattooSelected.png" },
+        { key: "omen_deathward", name: "Omen of Death-ward", url: "https://web.poecdn.com/image/Art/2DItems/Currency/TattooSelected.png" },
+        { key: "omen_fortune", name: "Omen of Fortune", url: "https://web.poecdn.com/image/Art/2DItems/Currency/TattooSelected.png" },
+        { key: "omen_soul", name: "Omen of Soul-devourer", url: "https://web.poecdn.com/image/Art/2DItems/Currency/TattooSelected.png" }
+      ];
+      
+      omensList.forEach(omen => {
+        const qty = SPECIALTY_COUNTS[omen.key] || 0;
+        omens.appendChild(createSpecialtySlot(omen.name, omen.url, qty));
+      });
+      
+      for (let i = 0; i < 6; i++) {
+        dump.appendChild(document.createElement("div")).className = "stash-cell";
+      }
+    }
+
+    // 3. Flow Sequential Stash Grid Renderer (12x12 Standard vs. 24x24 Quad)
+    function getItemsForTab(tabIndex) {
+      const allGear = [
+        ...MOCK_GEAR.map((g, idx) => {
+          let mappedTab = 1; // Default DUMP (tabIndex 1)
+          if (idx === 1) mappedTab = 2; // UNIQUE DUMP
+          if (idx === 2) mappedTab = 3; // TAB 1
+          if (idx === 3) mappedTab = 6; // JEWELS
+          if (idx === 4) mappedTab = 4; // TAB 2
+          return { ...g, owner: "Shared Guild Vault", tabIndex: mappedTab };
+        }),
+        ...scannedItems
+      ];
+      return allGear.filter(item => item.tabIndex === tabIndex);
+    }
+
+    function renderOpenSlotGrid(tab) {
+      const viewport = document.getElementById("stashMainViewport");
+      if (!viewport) return;
+      
+      const cols = tab.type === "quad" ? 24 : 12;
+      const totalCells = cols * cols;
+      
+      viewport.innerHTML = `
+        <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 6px; margin-bottom: 12px; font-size: 0.9rem;">
+          📁 ${tab.name} (${cols}x${cols} Grid)
+        </div>
+        <div class="stash-grid-container" style="--grid-cols: ${cols};"></div>
+      `;
+      
+      const grid = viewport.querySelector(".stash-grid-container");
+      const tabItems = getItemsForTab(tab.tabIndex);
+      
+      tabItems.sort((a, b) => {
+        const rarities = { "Unique": 3, "Rare": 2, "Magic": 1, "Normal": 0 };
+        const rA = rarities[a.rarity] || 0;
+        const rB = rarities[b.rarity] || 0;
+        if (rB !== rA) return rB - rA;
+        return a.name.localeCompare(b.name);
+      });
+      
+      for (let i = 0; i < totalCells; i++) {
+        const cell = document.createElement("div");
+        cell.className = "stash-cell";
+        
+        if (i < tabItems.length) {
+          const item = tabItems[i];
+          cell.classList.add("occupied", item.rarity.toLowerCase());
+          cell.onclick = () => showPoeTooltip(item);
+          
+          const img = document.createElement("img");
+          img.src = item.url;
+          img.className = "stash-cell-icon";
+          img.alt = item.name;
+          img.referrerPolicy = "no-referrer";
+          
+          const label = document.createElement("span");
+          label.className = "stash-cell-name";
+          label.textContent = item.name;
+          
+          cell.appendChild(img);
+          cell.appendChild(label);
+          
+          const isUnid = item.rarity.toLowerCase() === 'unique' && item.name.toLowerCase() === item.base.toLowerCase();
+          if (isUnid) {
+            cell.style.filter = "brightness(0.6) sepia(0.3)";
+            const lock = document.createElement("span");
+            lock.style.position = "absolute";
+            lock.style.top = "2px";
+            lock.style.right = "2px";
+            lock.style.fontSize = "0.5rem";
+            lock.style.color = "#ef4444";
+            lock.textContent = "🔒";
+            cell.appendChild(lock);
+          }
+        }
+        grid.appendChild(cell);
+      }
+    }
+
+    // 4. Advanced GGG-Style Search Engine with Symmetrical Global Results Routing
     function toggleAdvancedFilters() {
       const panel = document.getElementById("advancedSearchPanel");
       const btn = document.getElementById("btnToggleAdvanced");
@@ -1061,8 +1965,7 @@
       row.style.alignItems = "center";
       row.style.marginTop = "4px";
       
-      // Select element
-      let selectHtml = `<select onchange="filterStash()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; flex: 1; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif;">`;
+      let selectHtml = `<select onchange="onGlobalSearchInput()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #ffd700; padding: 4px 6px; border-radius: 4px; font-size: 0.68rem; flex: 1; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif;">`;
       SUPPORTED_STATS.forEach(s => {
         selectHtml += `<option value="${s.key}">${s.label}</option>`;
       });
@@ -1070,129 +1973,80 @@
       
       row.innerHTML = `
         ${selectHtml}
-        <input type="number" placeholder="Min" oninput="filterStash()" class="stat-min" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 60px; outline: none; box-sizing: border-box;">
-        <input type="number" placeholder="Max" oninput="filterStash()" class="stat-max" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 60px; outline: none; box-sizing: border-box;">
+        <input type="number" placeholder="Min" oninput="onGlobalSearchInput()" class="stat-min" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 60px; outline: none; box-sizing: border-box;">
+        <input type="number" placeholder="Max" oninput="onGlobalSearchInput()" class="stat-max" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 4px; border-radius: 4px; font-size: 0.68rem; width: 60px; outline: none; box-sizing: border-box;">
         <button onclick="removeStatFilterRow('${rowId}')" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer; padding: 2px 5px;">❌</button>
       `;
       
       list.appendChild(row);
-      filterStash();
+      onGlobalSearchInput();
     }
 
     function removeStatFilterRow(rowId) {
       const row = document.getElementById(rowId);
-      if (row) {
-        row.remove();
+      if (row) row.remove();
+      onGlobalSearchInput();
+    }
+
+    function isSearchActive() {
+      const searchInput = document.getElementById("stashSearchText");
+      const raritySelect = document.getElementById("stashRarityFilter");
+      const ownerSelect = document.getElementById("stashOwnerFilter");
+      
+      const query = searchInput ? searchInput.value.trim() : "";
+      const selectedRarity = raritySelect ? raritySelect.value : "all";
+      const selectedOwner = ownerSelect ? ownerSelect.value : "all";
+      
+      const advCategorySelect = document.getElementById("advCategory");
+      const advIlvlMinInput = document.getElementById("advIlvlMin");
+      const advIlvlMaxInput = document.getElementById("advIlvlMax");
+      const advLvlMinInput = document.getElementById("advLvlMin");
+      const advLvlMaxInput = document.getElementById("advLvlMax");
+      
+      const category = advCategorySelect ? advCategorySelect.value : "all";
+      const ilvlMin = advIlvlMinInput ? advIlvlMinInput.value : "";
+      const ilvlMax = advIlvlMaxInput ? advIlvlMaxInput.value : "";
+      const lvlMin = advLvlMinInput ? advLvlMinInput.value : "";
+      const lvlMax = advLvlMaxInput ? advLvlMaxInput.value : "";
+      
+      const statFilterRows = document.querySelectorAll("#statFiltersList .stat-filter-row");
+      
+      return query !== "" || 
+             selectedRarity !== "all" || 
+             selectedOwner !== "all" || 
+             category !== "all" || 
+             ilvlMin !== "" || 
+             ilvlMax !== "" || 
+             lvlMin !== "" || 
+             lvlMax !== "" || 
+             statFilterRows.length > 0;
+    }
+
+    function onGlobalSearchInput() {
+      if (isSearchActive()) {
+        selectStashTab("search_results");
+      } else {
+        selectStashTab(previousActiveTabId === "search_results" ? "currency" : previousActiveTabId);
       }
-      filterStash();
     }
 
-    function getStatValue(item, statKey) {
-      if (!item.affixes || !Array.isArray(item.affixes)) return 0;
+    function renderSearchResultsView() {
+      const viewport = document.getElementById("stashMainViewport");
+      if (!viewport) return;
       
-      let sum = 0;
+      viewport.innerHTML = `
+        <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 6px; margin-bottom: 12px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
+          <span>🔍 GLOBAL SEARCH RESULTS</span>
+          <button onclick="clearGlobalFilters()" style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-family: 'Outfit', sans-serif;">CLEAR FILTERS</button>
+        </div>
+        <div class="depot-stash-grid" id="searchResultsGrid" style="min-height: 400px; max-height: 500px; border-color: rgba(255, 215, 0, 0.3);">
+          <!-- Sequentially flowing search results -->
+        </div>
+      `;
       
-      item.affixes.forEach(mod => {
-        const text = mod.toLowerCase();
-        
-        if (statKey === "fire_res") {
-          let match = text.match(/(\+?\d+)% to fire resistance/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/(\+?\d+)% to all elemental resistances/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "cold_res") {
-          let match = text.match(/(\+?\d+)% to cold resistance/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/(\+?\d+)% to all elemental resistances/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "lightning_res") {
-          let match = text.match(/(\+?\d+)% to lightning resistance/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/(\+?\d+)% to all elemental resistances/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "total_res") {
-          let match = text.match(/(\+?\d+)% to fire resistance/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/(\+?\d+)% to cold resistance/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/(\+?\d+)% to lightning resistance/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/(\+?\d+)% to all elemental resistances/);
-          if (match) {
-            const val = parseInt(match[1], 10);
-            sum += val * 3;
-          }
-        }
-        else if (statKey === "max_life") {
-          let match = text.match(/\+(\d+) to maximum life/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "max_mana") {
-          let match = text.match(/\+(\d+) to maximum mana/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "strength") {
-          let match = text.match(/\+(\d+) to strength/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/\+(\d+) to all attributes/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "dexterity") {
-          let match = text.match(/\+(\d+) to dexterity/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/\+(\d+) to all attributes/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "intelligence") {
-          let match = text.match(/\+(\d+) to intelligence/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/\+(\d+) to all attributes/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "armour") {
-          let match = text.match(/\+(\d+) to armour/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/(\d+)% increased armour/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "evasion") {
-          let match = text.match(/\+(\d+) to evasion rating/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/(\d+)% increased evasion rating/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-        else if (statKey === "energy_shield") {
-          let match = text.match(/\+(\d+) to energy shield/);
-          if (match) sum += parseInt(match[1], 10);
-          
-          match = text.match(/(\d+)% increased energy shield/);
-          if (match) sum += parseInt(match[1], 10);
-        }
-      });
+      const resultsGrid = document.getElementById("searchResultsGrid");
+      if (!resultsGrid) return;
       
-      return sum;
-    }
-
-    function renderDepotGrid() {
-      const depotGrid = document.getElementById("depotGrid");
-      if (!depotGrid) return;
-      depotGrid.innerHTML = "";
-      
-      // Get basic filter input elements
       const searchInput = document.getElementById("stashSearchText");
       const raritySelect = document.getElementById("stashRarityFilter");
       const ownerSelect = document.getElementById("stashOwnerFilter");
@@ -1201,7 +2055,6 @@
       const selectedRarity = raritySelect ? raritySelect.value.toLowerCase() : "all";
       const selectedOwner = ownerSelect ? ownerSelect.value.toLowerCase() : "all";
       
-      // Get advanced filter input elements (V2.4)
       const advCategorySelect = document.getElementById("advCategory");
       const advIlvlMinInput = document.getElementById("advIlvlMin");
       const advIlvlMaxInput = document.getElementById("advIlvlMax");
@@ -1214,14 +2067,12 @@
       const lvlMin = advLvlMinInput && advLvlMinInput.value !== "" ? parseInt(advLvlMinInput.value, 10) : null;
       const lvlMax = advLvlMaxInput && advLvlMaxInput.value !== "" ? parseInt(advLvlMaxInput.value, 10) : null;
       
-      // Gather active dynamic stat filters row by row
       const statFilterRows = document.querySelectorAll("#statFiltersList .stat-filter-row");
       const activeStatFilters = [];
       statFilterRows.forEach(row => {
         const select = row.querySelector("select");
         const minInput = row.querySelector(".stat-min");
         const maxInput = row.querySelector(".stat-max");
-        
         if (select) {
           activeStatFilters.push({
             key: select.value,
@@ -1231,27 +2082,27 @@
         }
       });
       
-      // Combine mock/pre-loaded items with live scanned gear
       const allGear = [
-        ...MOCK_GEAR.map(g => ({ ...g, owner: "Shared Guild Vault" })),
+        ...MOCK_GEAR.map((g, idx) => {
+          let mappedTab = 1;
+          if (idx === 1) mappedTab = 2;
+          if (idx === 2) mappedTab = 3;
+          if (idx === 3) mappedTab = 6;
+          if (idx === 4) mappedTab = 4;
+          return { ...g, owner: "Shared Guild Vault", tabIndex: mappedTab };
+        }),
         ...scannedItems
       ];
       
-      // Apply filters: Basic + Category + ilvl + reqLvl + Stats
-      const filteredGear = allGear.filter(item => {
-        // 1. Basic Owner Filter
+      const filtered = allGear.filter(item => {
         if (selectedOwner !== "all") {
-          const ownerMatch = item.owner && item.owner.toLowerCase() === selectedOwner;
-          if (!ownerMatch) return false;
+          if (!item.owner || item.owner.toLowerCase() !== selectedOwner) return false;
         }
         
-        // 2. Basic Rarity Filter
         if (selectedRarity !== "all") {
-          const rarityMatch = item.rarity && item.rarity.toLowerCase() === selectedRarity;
-          if (!rarityMatch) return false;
+          if (!item.rarity || item.rarity.toLowerCase() !== selectedRarity) return false;
         }
         
-        // 3. Basic Keyword Search (name, base typeLine, explicit mods)
         if (query) {
           const nameLower = item.name ? item.name.toLowerCase() : "";
           const baseLower = item.base ? item.base.toLowerCase() : "";
@@ -1263,7 +2114,6 @@
           if (!keywordMatch) return false;
         }
         
-        // 4. Advanced Category Filter
         if (category !== "all") {
           const baseLower = item.base ? item.base.toLowerCase() : "";
           const nameLower = item.name ? item.name.toLowerCase() : "";
@@ -1278,17 +2128,14 @@
           if (category === "helmet" && !baseLower.includes("helmet") && !baseLower.includes("circlet") && !baseLower.includes("cap") && !baseLower.includes("mask") && !baseLower.includes("crown")) return false;
         }
         
-        // 5. Advanced Item Level Range
-        const itemIlvl = item.ilvl || item.item_level || 0;
+        const itemIlvl = item.ilvl || 0;
         if (ilvlMin !== null && itemIlvl < ilvlMin) return false;
         if (ilvlMax !== null && itemIlvl > ilvlMax) return false;
         
-        // 6. Advanced Level Requirement Range
-        const itemLvlReq = item.level || item.level_req || 0;
+        const itemLvlReq = item.level || 0;
         if (lvlMin !== null && itemLvlReq < lvlMin) return false;
         if (lvlMax !== null && itemLvlReq > lvlMax) return false;
         
-        // 7. Advanced Stat Modifiers Evaluation (AND logical query)
         for (const filter of activeStatFilters) {
           const itemValue = getStatValue(item, filter.key);
           if (filter.min !== null && itemValue < filter.min) return false;
@@ -1298,27 +2145,31 @@
         return true;
       });
       
-      // If no items match, render a gorgeous gothic empty-state placeholder!
-      if (filteredGear.length === 0) {
+      const countBadge = document.getElementById("searchResultCount");
+      if (countBadge) {
+        countBadge.textContent = filtered.length;
+      }
+      
+      if (filtered.length === 0) {
         const emptyDiv = document.createElement("div");
         emptyDiv.style.gridColumn = "1 / -1";
         emptyDiv.style.background = "rgba(10, 8, 6, 0.6)";
-        emptyDiv.style.border = "1px dashed rgba(197, 168, 128, 0.3)";
+        emptyDiv.style.border = "1px dashed rgba(255, 215, 0, 0.3)";
         emptyDiv.style.borderRadius = "4px";
-        emptyDiv.style.padding = "35px 20px";
+        emptyDiv.style.padding = "45px 20px";
         emptyDiv.style.textAlign = "center";
         emptyDiv.style.color = "#a2a1a0";
         emptyDiv.style.fontFamily = "'Outfit', sans-serif";
         emptyDiv.innerHTML = `
-          <div style="font-size: 1.5rem; margin-bottom: 8px;">🔮</div>
-          <div style="color: #ffd700; font-size: 0.85rem; font-weight: bold; letter-spacing: 0.5px;">NO MATCHING GEAR IN DEPOT DROP</div>
-          <div style="font-size: 0.65rem; color: #a2a1a0; margin-top: 4px;">Try loosening your advanced stat filters or search terms.</div>
+          <div style="font-size: 1.8rem; margin-bottom: 8px;">🔮</div>
+          <div style="color: #ffd700; font-size: 0.9rem; font-weight: bold; letter-spacing: 0.5px;">NO MATCHING STASH ITEMS FOUND</div>
+          <div style="font-size: 0.7rem; color: #a2a1a0; margin-top: 4px;">No items in the stashes matched your filters.</div>
         `;
-        depotGrid.appendChild(emptyDiv);
+        resultsGrid.appendChild(emptyDiv);
         return;
       }
       
-      filteredGear.forEach(item => {
+      filtered.forEach(item => {
         const cell = document.createElement("div");
         cell.className = "gear-cell";
         cell.onclick = () => showPoeTooltip(item);
@@ -1327,35 +2178,30 @@
         iconImg.src = item.url;
         iconImg.className = "gear-icon";
         iconImg.alt = item.name;
-        iconImg.referrerPolicy = "no-referrer"; // Bypasses hotlink protection
+        iconImg.referrerPolicy = "no-referrer";
         
         const label = document.createElement("span");
         label.className = "gear-name-label";
         label.textContent = item.name;
         
-        const isUnidentifiedUnique = item.rarity.toLowerCase() === 'unique' && item.name.toLowerCase() === item.base.toLowerCase();
+        const matchingTab = STASH_TABS.find(t => t.tabIndex === item.tabIndex);
+        const tabName = matchingTab ? matchingTab.name.replace(/[^\w\s\(\)]/g, "").trim() : `Tab ${item.tabIndex}`;
         
-        // Rarity color highlight borders & unidentified stylings
-        if (isUnidentifiedUnique) {
-          // Desaturate and dark border for unidentified unique
-          cell.style.filter = "brightness(0.6) sepia(0.3)";
-          cell.style.borderColor = "rgba(175, 96, 37, 0.25)";
-          
-          // Append lock icon overlay
-          const lockBadge = document.createElement("span");
-          lockBadge.style.position = "absolute";
-          lockBadge.style.top = "4px";
-          lockBadge.style.right = "4px";
-          lockBadge.style.fontSize = "0.52rem";
-          lockBadge.style.background = "rgba(220, 38, 38, 0.25)";
-          lockBadge.style.color = "#ef4444";
-          lockBadge.style.border = "1px solid rgba(220, 38, 38, 0.4)";
-          lockBadge.style.padding = "1px 3px";
-          lockBadge.style.borderRadius = "2px";
-          lockBadge.style.fontWeight = "bold";
-          lockBadge.textContent = "🔒 UNID";
-          cell.appendChild(lockBadge);
-        } else if (item.rarity.toLowerCase() === 'unique') {
+        const locationBadge = document.createElement("span");
+        locationBadge.style.position = "absolute";
+        locationBadge.style.top = "4px";
+        locationBadge.style.left = "4px";
+        locationBadge.style.fontSize = "0.5rem";
+        locationBadge.style.background = "rgba(0, 0, 0, 0.85)";
+        locationBadge.style.color = "#ffd700";
+        locationBadge.style.border = "1px solid rgba(197, 168, 128, 0.35)";
+        locationBadge.style.padding = "1px 4px";
+        locationBadge.style.borderRadius = "2px";
+        locationBadge.style.pointerEvents = "none";
+        locationBadge.textContent = tabName;
+        cell.appendChild(locationBadge);
+        
+        if (item.rarity.toLowerCase() === 'unique') {
           cell.style.borderColor = "rgba(175, 96, 37, 0.4)";
         } else if (item.rarity.toLowerCase() === 'rare') {
           cell.style.borderColor = "rgba(247, 208, 94, 0.4)";
@@ -1363,11 +2209,127 @@
         
         cell.appendChild(iconImg);
         cell.appendChild(label);
-        depotGrid.appendChild(cell);
+        resultsGrid.appendChild(cell);
       });
     }
 
-    // Dynamic Populator for Owner dropdown (V2.3)
+    function clearGlobalFilters() {
+      const searchInput = document.getElementById("stashSearchText");
+      if (searchInput) searchInput.value = "";
+      
+      const raritySelect = document.getElementById("stashRarityFilter");
+      if (raritySelect) raritySelect.value = "all";
+      
+      const ownerSelect = document.getElementById("stashOwnerFilter");
+      if (ownerSelect) ownerSelect.value = "all";
+      
+      const advCategorySelect = document.getElementById("advCategory");
+      if (advCategorySelect) advCategorySelect.value = "all";
+      
+      const advIlvlMinInput = document.getElementById("advIlvlMin");
+      if (advIlvlMinInput) advIlvlMinInput.value = "";
+      
+      const advIlvlMaxInput = document.getElementById("advIlvlMax");
+      if (advIlvlMaxInput) advIlvlMaxInput.value = "";
+      
+      const advLvlMinInput = document.getElementById("advLvlMin");
+      if (advLvlMinInput) advLvlMinInput.value = "";
+      
+      const advLvlMaxInput = document.getElementById("advLvlMax");
+      if (advLvlMaxInput) advLvlMaxInput.value = "";
+      
+      const statFiltersList = document.getElementById("statFiltersList");
+      if (statFiltersList) statFiltersList.innerHTML = "";
+      
+      onGlobalSearchInput();
+    }
+
+    function getStatValue(item, statKey) {
+      if (!item.affixes || !Array.isArray(item.affixes)) return 0;
+      
+      let sum = 0;
+      item.affixes.forEach(mod => {
+        const text = mod.toLowerCase();
+        
+        if (statKey === "fire_res") {
+          let match = text.match(/(\+?\d+)% to fire resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/(\+?\d+)% to all elemental resistances/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "cold_res") {
+          let match = text.match(/(\+?\d+)% to cold resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/(\+?\d+)% to all elemental resistances/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "lightning_res") {
+          let match = text.match(/(\+?\d+)% to lightning resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/(\+?\d+)% to all elemental resistances/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "total_res") {
+          let match = text.match(/(\+?\d+)% to fire resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/(\+?\d+)% to cold resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/(\+?\d+)% to lightning resistance/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/(\+?\d+)% to all elemental resistances/);
+          if (match) {
+            sum += parseInt(match[1], 10) * 3;
+          }
+        }
+        else if (statKey === "max_life") {
+          let match = text.match(/\+(\d+) to maximum life/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "max_mana") {
+          let match = text.match(/\+(\d+) to maximum mana/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "strength") {
+          let match = text.match(/\+(\d+) to strength/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/\+(\d+) to all attributes/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "dexterity") {
+          let match = text.match(/\+(\d+) to dexterity/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/\+(\d+) to all attributes/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "intelligence") {
+          let match = text.match(/\+(\d+) to intelligence/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/\+(\d+) to all attributes/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "armour") {
+          let match = text.match(/\+(\d+) to armour/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/(\d+)% increased armour/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "evasion") {
+          let match = text.match(/\+(\d+) to evasion rating/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/(\d+)% increased evasion rating/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+        else if (statKey === "energy_shield") {
+          let match = text.match(/\+(\d+) to energy shield/);
+          if (match) sum += parseInt(match[1], 10);
+          match = text.match(/(\d+)% increased energy shield/);
+          if (match) sum += parseInt(match[1], 10);
+        }
+      });
+      return sum;
+    }
+
+    // Dynamic Populator for Owner dropdown
     function populateOwnerDropdown() {
       const filterSelect = document.getElementById("stashOwnerFilter");
       if (!filterSelect) return;
@@ -1389,12 +2351,7 @@
       });
     }
 
-    // Unified filters change trigger (V2.3)
-    function filterStash() {
-      renderDepotGrid();
-    }
-
-    // 4. Interactive PoE Styled Tooltips Logic
+    // Interactive PoE Styled Tooltips Logic
     function showPoeTooltip(item) {
       document.getElementById('tooltipTitle').textContent = item.name;
       document.getElementById('tooltipBase').textContent = item.base;
@@ -1402,19 +2359,14 @@
       document.getElementById('tooltipLevel').textContent = item.level;
       document.getElementById('tooltipItemLevel').textContent = item.ilvl;
       
-      // Color header text dynamically by rarity
       const titleEl = document.getElementById('tooltipTitle');
       const baseEl = document.getElementById('tooltipBase');
       const badgeEl = document.getElementById('tooltipRarity');
       
-      let color = '#af6025'; // Unique orange
-      if (item.rarity.toLowerCase() === 'rare') {
-        color = '#f7d05e'; // Rare yellow
-      } else if (item.rarity.toLowerCase() === 'magic') {
-        color = '#548cf7'; // Magic blue
-      } else if (item.rarity.toLowerCase() === 'normal') {
-        color = '#cbd5e1'; // Normal white
-      }
+      let color = '#af6025';
+      if (item.rarity.toLowerCase() === 'rare') color = '#f7d05e';
+      else if (item.rarity.toLowerCase() === 'magic') color = '#548cf7';
+      else if (item.rarity.toLowerCase() === 'normal') color = '#cbd5e1';
       
       titleEl.style.color = color;
       baseEl.style.color = color;
@@ -1422,14 +2374,12 @@
       badgeEl.style.borderColor = color;
       badgeEl.style.background = `rgba(${color === '#af6025' ? '175, 96, 37' : '247,208,94'}, 0.15)`;
       
-      // Explicit Mods List (V2.4 Update: Identified vs Unidentified Ranges)
       const affixesEl = document.getElementById('tooltipAffixes');
       affixesEl.innerHTML = '';
       
       const isUnidentifiedUnique = item.rarity.toLowerCase() === 'unique' && item.name.toLowerCase() === item.base.toLowerCase();
       
       if (isUnidentifiedUnique) {
-        // Render red "UNIDENTIFIED" header
         const unIdDiv = document.createElement('div');
         unIdDiv.style.color = '#ef4444';
         unIdDiv.style.fontWeight = 'bold';
@@ -1439,7 +2389,6 @@
         unIdDiv.textContent = '🔒 UNIDENTIFIED UNIQUE';
         affixesEl.appendChild(unIdDiv);
         
-        // Populate possible ranges based on base type
         let rangeMods = [];
         const baseLower = item.base.toLowerCase();
         
@@ -1487,7 +2436,6 @@
           affixesEl.appendChild(div);
         });
       } else if (item.rarity.toLowerCase() === 'rare' && (item.affixes.length === 0 || item.affixes[0] === "" || item.affixes[0].toLowerCase().includes("unidentified"))) {
-        // Unidentified Rare item
         const unIdDiv = document.createElement('div');
         unIdDiv.style.color = '#ef4444';
         unIdDiv.style.fontWeight = 'bold';
@@ -1504,7 +2452,6 @@
         div.textContent = 'All explicit modifiers are hidden.';
         affixesEl.appendChild(div);
       } else {
-        // Identified item: Render actual explicit stats!
         item.affixes.forEach(aff => {
           const div = document.createElement('div');
           div.textContent = aff;
@@ -1512,7 +2459,6 @@
         });
       }
       
-      // Flavor text section
       const flavorSec = document.getElementById('tooltipFlavorSection');
       if (item.flavor) {
         flavorSec.style.display = 'block';
@@ -1521,7 +2467,6 @@
         flavorSec.style.display = 'none';
       }
       
-      // Live Valuation block
       document.getElementById('tooltipPrice').textContent = item.price;
       document.getElementById('tooltipCullingLogs').textContent = item.logs;
       
@@ -1531,6 +2476,7 @@
     function closePoeTooltip() {
       document.getElementById('poeTooltipOverlay').style.display = 'none';
     }
+
 
     // 📺 GLG SHOPPING NETWORK (QVC SHOWROOM WIDGET) WITH PREMIUM GGG CDN IMAGES
     const QVC_ITEMS = [

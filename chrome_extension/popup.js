@@ -113,6 +113,16 @@ Analyze the Currency Stash Tab screenshot and match numbers/quantities carefully
 4. SCROLL OF WISDOM:
    - scroll: Red-ribbon tied blue scroll icon, located on the right side under general/popular/secondary stacks (count 91).
 
+5. BOTTOM DUMP/LEAGUE SLOTS (located at the very bottom of the Currency Stash tab, there is a grid of slots under the main grids):
+   - Identify active items from the Runes of Aldur League:
+     * verisium: Verisium Ore (stacks of blue crystals/shards)
+     * runic_alloy: Runic Alloy (stacks of blue metallic bars)
+     * aldurs_legacy: Aldur's Legacy Rune (rare golden rune with intricate glyph)
+     * iron_rune: Iron Rune (round dark grey rune with an iron symbol)
+     * gold_rune: Gold Rune (round gold rune with a gold symbol)
+     * stone_rune: Stone Rune (round grey stone rune with a stone symbol)
+     * uncut_gem: Uncut Skill Gem (blue/green/red glowing crystal gems)
+
 RULES:
  - For any slot that is completely empty or has no quantity, return 0.
  - Output numbers exactly as read. Pay extra attention to double-digit and triple-digit numbers. Do not miss the leading digit near slot borders (e.g. read '349' instead of '49').`;
@@ -144,9 +154,16 @@ const RESPONSE_SCHEMA = {
     mirror: { type: "INTEGER" },
     lesser_jeweller: { type: "INTEGER" },
     greater_jeweller: { type: "INTEGER" },
-    perfect_jeweller: { type: "INTEGER" }
+    perfect_jeweller: { type: "INTEGER" },
+    verisium: { type: "INTEGER" },
+    runic_alloy: { type: "INTEGER" },
+    aldurs_legacy: { type: "INTEGER" },
+    iron_rune: { type: "INTEGER" },
+    gold_rune: { type: "INTEGER" },
+    stone_rune: { type: "INTEGER" },
+    uncut_gem: { type: "INTEGER" }
   },
-  required: ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror", "lesser_jeweller", "greater_jeweller", "perfect_jeweller"]
+  required: ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror", "lesser_jeweller", "greater_jeweller", "perfect_jeweller", "verisium", "runic_alloy", "aldurs_legacy", "iron_rune", "gold_rune", "stone_rune", "uncut_gem"]
 };
 
 // Item Appraiser Prompt coordination V2.0
@@ -239,11 +256,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (data.bulkTabIndex !== undefined) bulkTabIndexInput.value = data.bulkTabIndex;
     if (data.bulkStashType) {
       bulkStashTypeSelect.value = data.bulkStashType;
-      if (data.bulkStashType === "personal") {
-        groupBulkAccountName.style.display = "flex";
-      } else {
-        groupBulkAccountName.style.display = "none";
-      }
     }
     if (data.bulkAccountName) bulkAccountNameInput.value = data.bulkAccountName;
 
@@ -366,14 +378,21 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
     const videoWidth = tempVideo.videoWidth;
     const videoHeight = tempVideo.videoHeight;
     
+    // Aspect Ratio / Bounding Box Multiplier (0.5 for 16:9, can be tweaked to 0.35 for 21:9 or 0.25 for 32:9)
+    const CROP_PERCENT = 0.5; 
+    const cropWidth = Math.floor(videoWidth * CROP_PERCENT);
+    
+    log(`Capturing with aspect-crop: ${CROP_PERCENT * 100}% width (${cropWidth}x${videoHeight})...`);
+    
     const ctx = previewCanvas.getContext("2d");
-    previewCanvas.width = videoWidth;
+    previewCanvas.width = cropWidth;
     previewCanvas.height = videoHeight;
     
-    ctx.drawImage(tempVideo, 0, 0, videoWidth, videoHeight);
+    // Crop and draw only the left-side stash panel
+    ctx.drawImage(tempVideo, 0, 0, cropWidth, videoHeight, 0, 0, cropWidth, videoHeight);
     
     stream.getTracks().forEach(track => track.stop());
-    log("Captured screen frame successfully.");
+    log("Captured and cropped screen frame successfully.");
     
     const dataUrl = previewCanvas.toDataURL("image/png");
     const base64Data = dataUrl.split(",")[1];
@@ -432,7 +451,14 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
       annulment: data.annulment || 0,
       exalted: (data.exalted || 0) + (data.greater_exalted || 0) + (data.perfect_exalted || 0),
       divine: data.divine || 0,
-      mirror: data.mirror || 0
+      mirror: data.mirror || 0,
+      verisium: data.verisium || 0,
+      runic_alloy: data.runic_alloy || 0,
+      aldurs_legacy: data.aldurs_legacy || 0,
+      iron_rune: data.iron_rune || 0,
+      gold_rune: data.gold_rune || 0,
+      stone_rune: data.stone_rune || 0,
+      uncut_gem: data.uncut_gem || 0
     };
     
     const rates = {
@@ -441,7 +467,7 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
     };
     let total_chaos = 0.0;
     Object.keys(core_data).forEach(k => {
-      total_chaos += core_data[k] * rates[k];
+      total_chaos += (core_data[k] || 0) * (rates[k] || 0.0);
     });
     
     const core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
@@ -584,6 +610,22 @@ async function appraiseItemText(itemText, autoSync = false) {
   }
 }
 
+// Generate compact deterministic item fingerprint hash
+async function getFingerprint(rarity, base, name, affixes) {
+  const sortedMods = (affixes || [])
+    .map(mod => mod.trim().toLowerCase())
+    .filter(mod => mod !== "")
+    .sort();
+  const modsStr = sortedMods.join(";");
+  const rawStr = `${rarity.toLowerCase()}|${base.toLowerCase()}|${name.toLowerCase()}|${modsStr}`;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(rawStr);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return hashHex.substring(0, 16);
+}
+
 // Refactored modular sync function
 async function syncAppraisedItemDirectly(supabaseUrl, supabaseAnonKey, guildWriteKey) {
   if (!appraisedItem) return;
@@ -591,7 +633,23 @@ async function syncAppraisedItemDirectly(supabaseUrl, supabaseAnonKey, guildWrit
   logBox.innerHTML = "Status: Syncing appraised gear to visual stash online...";
   
   try {
-    const entryName = `ITEM_${Date.now()}`;
+    const tabIndex = bulkTabIndexInput ? parseInt(bulkTabIndexInput.value.trim(), 10) || 1 : 1;
+    const stashType = bulkStashTypeSelect ? bulkStashTypeSelect.value : "guild";
+    const accountName = bulkAccountNameInput ? bulkAccountNameInput.value.trim() : "Radiocommander";
+    const safeAccount = accountName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    
+    const prefix = stashType === "guild"
+      ? `ITEM_GUILD_T${tabIndex}_`
+      : `ITEM_PERS_${safeAccount}_T${tabIndex}_`;
+      
+    const fingerprint = await getFingerprint(
+      appraisedItem.rarity,
+      appraisedItem.base_type,
+      appraisedItem.name,
+      appraisedItem.explicit_mods
+    );
+    
+    const entryName = `${prefix}FINGERPRINT_${fingerprint}`;
     const itemPayload = {
       rarity: appraisedItem.rarity,
       name: appraisedItem.name,
@@ -603,7 +661,7 @@ async function syncAppraisedItemDirectly(supabaseUrl, supabaseAnonKey, guildWrit
       flavor: appraisedItem.flavor_text || "",
       logs: appraisedItem.bot_culling_logs,
       url: getIconUrl(appraisedItem.name, appraisedItem.base_type),
-      owner: "Shared Guild Vault"
+      owner: stashType === "guild" ? "Shared Guild Vault" : accountName
     };
     
     const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
@@ -884,8 +942,8 @@ async function bulkSyncStashTab() {
     log("Error: League Name required.", "error");
     return;
   }
-  if (stashType === "personal" && !accountName) {
-    log("Error: Account Name is required for Personal Stash Sync.", "error");
+  if (!accountName) {
+    log("Error: GGG Account Name is required for Stash Sync.", "error");
     return;
   }
   
@@ -926,7 +984,8 @@ async function bulkSyncStashTab() {
     let gggUrl = `${targetOrigin}/character-window/get-stash-items?league=${encodeURIComponent(league)}&tabs=1&tabIndex=${tabIndex}&realm=pc`;
     if (stashType === "guild") {
       gggUrl += "&guild=true";
-    } else {
+    }
+    if (accountName) {
       gggUrl += `&accountName=${encodeURIComponent(accountName)}`;
     }
     
@@ -1034,66 +1093,164 @@ async function bulkSyncStashTab() {
       ? `ITEM_GUILD_T${tabIndex}_`
       : `ITEM_PERS_${safeAccount}_T${tabIndex}_`;
       
-    // 2. Fetch current database entries to purge old items (atomic in Supabase!)
-    log("Purging old visual items for this tab online...");
-    const purgeRes = await fetch(`${supabaseUrl}/rest/v1/rpc/purge_vault_items`, {
-      method: "POST",
+    // 2. Fetch existing items in this tab from Supabase
+    log("Fetching existing items for this tab from online vault...");
+    const existRes = await fetch(`${supabaseUrl}/rest/v1/poe2_guild_vault?name=like.${deletePrefix}*&select=*`, {
       headers: {
         "apikey": supabaseAnonKey,
-        "Authorization": `Bearer ${supabaseAnonKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        p_prefix: deletePrefix,
-        p_write_key: guildWriteKey
-      })
+        "Authorization": `Bearer ${supabaseAnonKey}`
+      }
     });
-    if (!purgeRes.ok) {
-      throw new Error(`Failed to purge old items: ${await purgeRes.text()}`);
-    }
-    const deleteCount = await purgeRes.json();
-    if (deleteCount > 0) {
-      log(`Database cleared: Purged ${deleteCount} stale items.`, "success");
+    const existingEntries = existRes.ok ? await existRes.json() : [];
+    
+    // Parse new GGG items
+    const newParsedItems = items.map(parsePoEItem);
+    
+    // Helper to generate a match key
+    function getMatchKey(item) {
+      const rarity = (item.rarity || "Rare").toLowerCase();
+      const base = (item.base || "Gear").toLowerCase();
+      const name = (item.name || "").toLowerCase();
+      return `${rarity}|${base}|${name}`;
     }
     
-    // 3. Sequential uploads
-    log(`Syncing ${items.length} new items to Creg's Depot Drop...`);
-    let successCount = 0;
+    // Count new items grouped by match key
+    const newCounts = {};
+    newParsedItems.forEach(item => {
+      const key = getMatchKey(item);
+      newCounts[key] = (newCounts[key] || 0) + 1;
+    });
     
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const parsedItem = parsePoEItem(item);
-      const entryName = `${deletePrefix}${i}`;
+    // Group existing entries in this tab by match key
+    const existingGrouped = {};
+    existingEntries.forEach(entry => {
+      const item = entry.data;
+      if (!item) return;
+      const key = getMatchKey(item);
+      if (!existingGrouped[key]) existingGrouped[key] = [];
+      existingGrouped[key].push(entry);
+    });
+    
+    // Prioritize keeping appraised items
+    Object.keys(existingGrouped).forEach(key => {
+      existingGrouped[key].sort((a, b) => {
+        const aIsAppraised = a.name.includes("_FINGERPRINT_") || a.name.includes("_APPRAISED_") || (a.data && a.data.logs && a.data.logs.includes("Clipboard"));
+        const bIsAppraised = b.name.includes("_FINGERPRINT_") || b.name.includes("_APPRAISED_") || (b.data && b.data.logs && b.data.logs.includes("Clipboard"));
+        if (aIsAppraised && !bIsAppraised) return -1;
+        if (!aIsAppraised && bIsAppraised) return 1;
+        return 0;
+      });
+    });
+    
+    const entriesToDelete = [];
+    const itemsToUpload = [];
+    const matchedCounts = {};
+    
+    // Process existing entries to determine which ones to delete
+    Object.keys(existingGrouped).forEach(key => {
+      const list = existingGrouped[key];
+      const limit = newCounts[key] || 0;
       
-      try {
-        const itemPayload = {
-          ...parsedItem,
-          owner: stashType === "guild" ? "Shared Guild Vault" : accountName
-        };
-
-        const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
-          method: "POST",
-          headers: {
-            "apikey": supabaseAnonKey,
-            "Authorization": `Bearer ${supabaseAnonKey}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            p_name: entryName,
-            p_data: itemPayload,
-            p_write_key: guildWriteKey
-          })
-        });
-        if (pushRes.ok) {
-          successCount++;
+      for (let i = 0; i < list.length; i++) {
+        if (i < limit) {
+          // Keep this entry
+          matchedCounts[key] = (matchedCounts[key] || 0) + 1;
+        } else {
+          // Delete this entry (it has been removed/taken from the tab in-game!)
+          entriesToDelete.push(list[i].name);
         }
-        await new Promise(r => setTimeout(r, 60)); // Rate limit protection
-      } catch (pushErr) {
-        console.warn("Item upload failed:", item.typeLine, pushErr);
+      }
+    });
+    
+    // Process new scanned items to determine which ones to upload
+    for (let index = 0; index < newParsedItems.length; index++) {
+      const item = newParsedItems[index];
+      const key = getMatchKey(item);
+      const matched = matchedCounts[key] || 0;
+      const totalNeeded = newCounts[key] || 0;
+      
+      if (matched < totalNeeded) {
+        // Generate deterministic fingerprint for upload name
+        const fingerprint = await getFingerprint(
+          item.rarity,
+          item.base,
+          item.name,
+          item.affixes
+        );
+        // We need to upload this item as a new basic entry
+        itemsToUpload.push({
+          item: item,
+          name: `${deletePrefix}FINGERPRINT_${fingerprint}`
+        });
+        matchedCounts[key] = matched + 1;
       }
     }
     
-    log(`✅ Bulk Sync Complete! Successfully uploaded ${successCount}/${items.length} items online!`, "success");
+    // Perform deletions
+    let deleteCount = 0;
+    if (entriesToDelete.length > 0) {
+      log(`Deprecating ${entriesToDelete.length} stale/taken items from database...`);
+      for (const entryName of entriesToDelete) {
+        try {
+          const delRes = await fetch(`${supabaseUrl}/rest/v1/rpc/purge_vault_items`, {
+            method: "POST",
+            headers: {
+              "apikey": supabaseAnonKey,
+              "Authorization": `Bearer ${supabaseAnonKey}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              p_prefix: entryName,
+              p_write_key: guildWriteKey
+            })
+          });
+          if (delRes.ok) {
+            deleteCount++;
+          }
+          await new Promise(r => setTimeout(r, 60)); // Rate limit protection
+        } catch (delErr) {
+          console.warn("Item deletion failed:", entryName, delErr);
+        }
+      }
+      log(`Deprecated ${deleteCount}/${entriesToDelete.length} items.`, "success");
+    }
+    
+    // Perform uploads
+    let successCount = 0;
+    if (itemsToUpload.length > 0) {
+      log(`Uploading ${itemsToUpload.length} new items to Creg's Depot Drop...`);
+      for (const upload of itemsToUpload) {
+        try {
+          const itemPayload = {
+            ...upload.item,
+            owner: stashType === "guild" ? "Shared Guild Vault" : accountName
+          };
+          
+          const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
+            method: "POST",
+            headers: {
+              "apikey": supabaseAnonKey,
+              "Authorization": `Bearer ${supabaseAnonKey}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              p_name: upload.name,
+              p_data: itemPayload,
+              p_write_key: guildWriteKey
+            })
+          });
+          if (pushRes.ok) {
+            successCount++;
+          }
+          await new Promise(r => setTimeout(r, 60)); // Rate limit protection
+        } catch (pushErr) {
+          console.warn("Item upload failed:", upload.name, pushErr);
+        }
+      }
+      log(`Synced ${successCount}/${itemsToUpload.length} new items.`, "success");
+    }
+    
+    log(`✅ Sync Complete! Kept ${existingEntries.length - entriesToDelete.length} appraised items, deprecated ${deleteCount} taken items, and added ${successCount} new items online!`, "success");
     
   } catch (err) {
     log(`Bulk Sync failed: ${err.message}`, "error");
@@ -1103,11 +1260,7 @@ async function bulkSyncStashTab() {
 // Bind Syncer trigger button
 btnBulkSync.addEventListener("click", bulkSyncStashTab);
 
-// Toggle Account Name field depending on Stash Type select
-bulkStashTypeSelect.addEventListener("change", () => {
-  const isPersonal = bulkStashTypeSelect.value === "personal";
-  groupBulkAccountName.style.display = isPersonal ? "flex" : "none";
-});
+
 
 // ==========================================
 // V2.3 BUILD DEFICIENCY OPTIMIZER LOGIC (PIVOT)
@@ -1210,7 +1363,7 @@ function renderAuditResults(fire, cold, light, str, dex, int) {
     btnBuyDeficiency.textContent = worst.label;
 
     // GGG official trade query object for Ring slot with deficiency filter
-    const league = bulkLeagueInput.value.trim() || "Standard";
+    const league = bulkLeagueInput.value.trim() || "Runes of Aldur";
     const tradeQuery = {
       query: {
         status: { option: "online" },

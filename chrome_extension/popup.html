@@ -336,18 +336,25 @@
   <!-- Stash Tab Mode Section -->
   <div id="sectionStash">
     <button class="btn-sync" id="btnSync">🔮 CAPTURE & SYNC STASH (OCR)</button>
+    <div style="font-size: 0.58rem; color: #a2a1a0; text-align: center; margin-top: 4px; line-height: 1.35; padding: 4px; background: rgba(197, 168, 128, 0.05); border: 1px solid rgba(197, 168, 128, 0.15); border-radius: 4px; margin-bottom: 5px;">
+      💡 <strong>4K / High-DPI Tip:</strong> Click above and choose the <strong>"Path of Exile 2" window</strong> (under the <strong>"Window"</strong> tab). The scanner will automatically crop the stash panel!
+    </div>
     
-    <!-- V2.2 GGG Web API Bulk Syncer Section -->
+    <!-- V2.2 GGG Web API Bulk Syncer Section (Commented out in case GGG unlocks it for PoE2 down the road)
     <div style="border-top: 1px dashed rgba(197, 168, 128, 0.25); margin-top: 15px; padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
       <div style="font-family: 'Outfit', sans-serif; font-size: 0.72rem; color: #ffd700; font-weight: bold; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between;">
         <span>🔮 GGG WEB API BULK SYNCER</span>
         <span style="font-size: 0.58rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 1px 4px; border-radius: 2px; border: 1px solid rgba(16, 185, 129, 0.3);">V2.2</span>
       </div>
       
+      <div style="font-size: 0.58rem; color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 4px; padding: 4px 6px; line-height: 1.35; margin-bottom: 2px;">
+        ⚠️ <strong>GGG API Locked for PoE2:</strong> GGG has not yet enabled legacy API access for PoE2 characters/stashes. If you get 403 errors, please use the gold <strong>CAPTURE & SYNC STASH (OCR)</strong> button above instead!
+      </div>
+      
       <div style="display: flex; gap: 8px;">
         <div class="field-group" style="flex: 1; margin-bottom: 0;">
           <label for="bulkLeague">LEAGUE:</label>
-          <input type="text" id="bulkLeague" placeholder="Settlers" value="Standard" style="padding: 4px 6px; font-size: 0.68rem;">
+          <input type="text" id="bulkLeague" placeholder="Runes of Aldur" value="Runes of Aldur" style="padding: 4px 6px; font-size: 0.68rem;">
         </div>
         <div class="field-group" style="flex: 1; margin-bottom: 0;">
           <label for="bulkTabIndex">TAB INDEX:</label>
@@ -363,9 +370,9 @@
         </select>
       </div>
       
-      <div class="field-group" id="groupBulkAccountName" style="display: none; margin-bottom: 0;">
+      <div class="field-group" id="groupBulkAccountName" style="display: flex; margin-bottom: 0;">
         <label for="bulkAccountName">GGG ACCOUNT NAME:</label>
-        <input type="text" id="bulkAccountName" placeholder="e.g. Mike" style="padding: 4px 6px; font-size: 0.68rem;">
+        <input type="text" id="bulkAccountName" placeholder="e.g. Radiocommander" style="padding: 4px 6px; font-size: 0.68rem;">
       </div>
       
       <button class="btn-sync" id="btnBulkSync" style="background: linear-gradient(180deg, #10b981 0%, #059669 100%); border-color: #10b981; color: white; padding: 6px; font-size: 0.72rem; margin-top: 4px;">
@@ -376,6 +383,7 @@
         Make sure you are logged into <a href="https://www.pathofexile.com" target="_blank" style="color: #ffd700; text-decoration: underline;">pathofexile.com</a> in this browser.
       </div>
     </div>
+    -->
   </div>
 
   <!-- Item Appraiser Mode Section -->

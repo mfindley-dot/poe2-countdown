@@ -26,7 +26,8 @@ To load the extension into Google Chrome (or any Chromium browser like Edge, Ope
 3.  Both the **Gemini API Key** and **Dreamlo Private Key** are pre-filled with your guild's shared keys by default! Less tech-savvy guildmates can run it instantly with zero configuration! *(Power users can paste their own keys to override them).*
 4.  Click **🔮 CAPTURE & SYNC STASH**.
 5.  A standard browser sharing window will prompt: **"Choose what to share"**.
-    -   Select the **"Window"** tab and choose **Path of Exile 2**, or select **"Entire Screen"**.
+    -   Select the **"Window"** tab and choose **Path of Exile 2** for perfect crop alignment.
     -   Click **Share**.
-6.  The extension will instantly grab the frame, crop, run the Gemini Multimodal Vision analysis, and sync the data online in 5 seconds!
+6.  The extension will instantly grab the frame, crop the left 50% stash panel, run the Gemini Multimodal Vision analysis, and sync the data online in 5 seconds!
+    -   *Aspect Ratio / Ultrawide Note*: If playing on an Ultrawide screen (e.g., 21:9 or 32:9), the stash tab panel spans a smaller percentage of the window. You can open `chrome_extension/popup.js` and change the `CROP_PERCENT` constant (e.g. `0.35` for 21:9 or `0.25` for 32:9) so that the cropped screenshot frames the stash grid perfectly!
 7.  Check your guild's website **`vault.html`** page to watch your real currency counts and net worth render live!
