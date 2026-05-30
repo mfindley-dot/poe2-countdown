@@ -1150,7 +1150,7 @@
 
   <div class="app-container" style="position: relative; z-index: 10;">
     <!-- Header -->
-    <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px 20px 10px 20px; box-sizing: border-box;">
+    <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 260px 20px 10px 20px; box-sizing: border-box;">
       <div style="display: flex; align-items: center; gap: 15px;">
         <img src="assets/images/icons/glg_stash-scanner_icon.png" alt="GLG Logo" style="height: 64px; width: auto; object-fit: contain; filter: drop-shadow(0 0 6px rgba(255,215,0,0.45));">
         <div>
@@ -4767,24 +4767,13 @@ Context:
         const storedConfig = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
         if (storedConfig) {
           const parsed = JSON.parse(storedConfig);
-          likeness = parsed[lowerOwner] || likeness;
+          const activeConf = parsed[lowerOwner];
+          if (activeConf && activeConf.portrait_prompt) {
+            likeness = activeConf.portrait_prompt;
+          }
         }
       } catch(e){}
       
-      let pClass = "adventurer";
-      let weapons = "a glowing magical staff";
-      const pobProfileStr = localStorage.getItem(`pob_profile_${lowerOwner}`);
-      if (pobProfileStr) {
-        try {
-          const pob = JSON.parse(pobProfileStr);
-          pClass = pob.xmlStats.Class || "witch";
-          if (pob.items && pob.items.weapon1) {
-            weapons = `a goofy ${pob.items.weapon1.name}`;
-          }
-        } catch(e){}
-      }
-      
-      let finalPrompt = "";
       const geminiApiKey = localStorage.getItem("geminiKey") || atob("QVEuQWI4Uk42S05kWjJxTVBGbm9IamVQTjdKMlluUlpIbnRfdG9XOFk3VFJ4TUYtdlBpMHc=");
       
       let refImageBase64 = "";
@@ -4799,18 +4788,38 @@ Context:
         }
       } catch(e){}
 
+      // Build dynamic equipped gear details from window.charGearData
+      const charData = (window.charGearData && window.charGearData[lowerOwner]) || {};
+      const gearParts = [];
+      if (charData.helm) gearParts.push(`wearing helmet: ${charData.helm.base || charData.helm.name}`);
+      if (charData.body) gearParts.push(`wearing body armor: ${charData.body.base || charData.body.name}`);
+      if (charData.weapon1) gearParts.push(`wielding weapon: ${charData.weapon1.base || charData.weapon1.name}`);
+      if (charData.gloves) gearParts.push(`wearing gloves: ${charData.gloves.base || charData.gloves.name}`);
+      const gearStr = gearParts.join(", ") || "";
+
+      let pobClassStr = "";
+      const pobProfileStr = localStorage.getItem(`pob_profile_${lowerOwner}`);
+      if (pobProfileStr) {
+        try {
+          const parsed = JSON.parse(pobProfileStr);
+          if (parsed.class_name) {
+            pobClassStr = `Subject Class: ${parsed.class_name} from PoE2`;
+            if (parsed.ascend_name && parsed.ascend_name !== "None") {
+              pobClassStr += `, Ascendancy: ${parsed.ascend_name}`;
+            }
+          }
+        } catch(e) {}
+      }
+
+      const promptText = `A highly realistic gothic oil painting of a medieval RPG character.
+- Style: Rich colors, deep dramatic shadows, cinematic candlelight lighting, oil on canvas, highly detailed masterpiece.
+- Composition: Waist-up mid-shot portrait showing the head down to waist.
+- Likeness details: "${likeness}".
+- Class Context: ${pobClassStr ? pobClassStr : 'Subject Class: Adventurer from PoE2'}.
+- Equipped gear: "${gearStr || 'traditional exile robes'}".`;
+
       const partsList = [
-        { text: `You are an expert medieval/gothic RPG character portrait designer.
-Your task is to write a single, highly detailed, professional text-to-image prompt (approx 60-80 words) for a player.
-Composition & Style Requirements for the prompt:
-- Style: Highly realistic gothic oil painting, rich colors, deep dramatic shadows, medieval RPG look. Cinematic candlelight lighting, oil on canvas, highly detailed.
-- Frame: A "mid-shot portrait" (half-body shot, showing head down to waist).
-- Character details: A medieval character matching this baseline likeness: "${likeness}".
-- Player Class: ${pClass}.
-- Equipped weapons/gear details: ${weapons}.
-Important:
-- If a reference image is attached, carefully analyze their face, gender, hair style/color, glasses, and expression, ensuring a highly accurate facial match.
-- Return ONLY the raw generated image prompt string. Do NOT write any introduction, code blocks, quotes, or conversational text. Return only the prompt itself.` }
+        { text: promptText }
       ];
 
       if (refImageBase64) {
@@ -4823,25 +4832,44 @@ Important:
         });
         partsList[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
 - Carefully analyze the face in the attached photo.
-- You MUST explicitly copy their exact gender, hair style, hair color, presence of glasses (glasses must be explicitly described in the prompt!), stubble, face shape, and expression.
+- You MUST explicitly copy their exact gender, hair style, hair color, presence of glasses (glasses must be explicitly described in the portrait!), stubble, face shape, and expression.
 - The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
       }
 
       try {
-        const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+        let gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiApiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: partsList }]
+            contents: [{ parts: partsList }],
+            generationConfig: {
+              responseModalities: ["IMAGE"]
+            }
           })
         });
 
+        if (!gResponse.ok) {
+          console.log("Trying gemini-2.5-flash-image-preview fallback in vault.html...");
+          gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: partsList }],
+              generationConfig: {
+                responseModalities: ["IMAGE"]
+              }
+            })
+          });
+        }
+
         if (gResponse.ok) {
           const gJson = await gResponse.json();
-          const promptText = gJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (promptText) {
-            const seed = Math.floor(Math.random() * 1000000);
-            const dataUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText.trim())}?width=512&height=768&nologo=true&seed=${seed}`;
+          const parts = gJson?.candidates?.[0]?.content?.parts || [];
+          const imagePart = parts.find(p => p.inlineData);
+          if (imagePart && imagePart.inlineData) {
+            const mime = imagePart.inlineData.mimeType || "image/jpeg";
+            const base64Data = imagePart.inlineData.data;
+            const dataUrl = `data:${mime};base64,${base64Data}`;
 
             imgEl.src = dataUrl;
             localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, dataUrl);
@@ -4865,9 +4893,9 @@ Important:
             return;
           }
         }
-        throw new Error("Direct image generation returned non-ok or empty image");
+        throw new Error("Direct image generation in vault.html returned non-ok or empty image");
       } catch(err) {
-        console.error("Direct gemini prompt generation or image fetch in vault.html failed:", err);
+        console.error("Direct gemini image generation in vault.html failed:", err);
       }
     }
 

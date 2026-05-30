@@ -684,11 +684,11 @@
           </div>
 
           <!-- Title scroll banner passing slightly under the portrait frame -->
-          <div style="background-image: url('assets/images/rooms/scroll_placard.png'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; width: 100%; max-width: 580px; height: 180px; margin: -50px auto 25px auto; padding: 48px 45px 35px 45px; text-align: center; box-sizing: border-box; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.75)); position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <div style="background-image: url('assets/images/rooms/scroll_placard.png'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; width: 100%; max-width: 580px; height: 200px; margin: -55px auto 25px auto; padding: 55px 50px 45px 50px; text-align: center; box-sizing: border-box; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.75)); position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
             <h2 id="guildmateCharacterNameHeader" style="margin: 0; font-family: var(--font-header); font-size: 2.1rem; color: #3b2314; font-weight: 800; text-transform: uppercase; text-shadow: 0px 1px 1px rgba(255,255,255,0.3); line-height: 1.1;">
               ${capitalizedOwner}
             </h2>
-            <div id="guildmateCharacterSillyTitle" style="font-family: 'Cinzel', serif; font-size: 1.0rem; font-weight: 800; color: #694a37; margin-top: 8px; font-style: italic; letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.2;">
+            <div id="guildmateCharacterSillyTitle" style="font-family: 'Cinzel', serif; font-size: 1.25rem; font-weight: 800; color: #694a37; margin-top: 8px; font-style: italic; letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.2;">
               ⌛ Loading silly character title...
             </div>
           </div>
@@ -846,20 +846,20 @@
               </div>
             </div>
             
-            <!-- Centered Trophy Stand at the bottom of the page -->
-            <div id="trophyShelfContainer" style="width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 160px; position: relative; margin: 30px auto 10px auto;">
-              <!-- Absolutely positioned active trophies floating on the table -->
-              <div id="trophiesDisplay" style="position: absolute; bottom: 65px; display: flex; flex-direction: row; justify-content: center; align-items: flex-end; gap: 25px; z-index: 3; width: 100%;">
-                <!-- Dynamic trophy icons mapped here -->
-              </div>
-              
-              <!-- Visual side table backdrop -->
-              <div style="width: 320px; height: 55px; background: linear-gradient(180deg, #3d2f1f 0%, #1e150d 100%); border-top: 3px solid #ffd700; border-radius: 4px; box-shadow: 0 8px 16px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
-                <span style="font-size: 0.65rem; color: #c5a880; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">🏆 TROPHY STAND 🏆</span>
-              </div>
-            </div>
-
           </div> <!-- Close glass-chambers-panel -->
+
+          <!-- Centered Trophy Stand at the bottom of the page -->
+          <div id="trophyShelfContainer" style="width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 160px; position: relative; margin: 30px auto 10px auto;">
+            <!-- Absolutely positioned active trophies floating on the table -->
+            <div id="trophiesDisplay" style="position: absolute; bottom: 65px; display: flex; flex-direction: row; justify-content: center; align-items: flex-end; gap: 25px; z-index: 3; width: 100%;">
+              <!-- Dynamic trophy icons mapped here -->
+            </div>
+            
+            <!-- Visual side table backdrop -->
+            <div style="width: 320px; height: 55px; background: linear-gradient(180deg, #3d2f1f 0%, #1e150d 100%); border-top: 3px solid #ffd700; border-radius: 4px; box-shadow: 0 8px 16px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+              <span style="font-size: 0.65rem; color: #c5a880; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">🏆 TROPHY STAND 🏆</span>
+            </div>
+          </div>
         </div>
 
         <!-- Draggable Pop-out modal for Personal Stash items -->
@@ -1376,6 +1376,78 @@
         
         localStorage.setItem(`pob_profile_${owner.toLowerCase()}`, JSON.stringify(calculatedBase));
         
+        // Extract equipped items from POB slots for weapon1, helm, body, gloves
+        const itemsById = {};
+        plannedItems.forEach(node => {
+          const id = node.getAttribute("id");
+          if (id) {
+            itemsById[id] = node.textContent || "";
+          }
+        });
+        
+        const slotNodes = xmlDoc.querySelectorAll("Slot");
+        const slotsToImport = {
+          "Weapon 1": "weapon1",
+          "Helmet": "helm",
+          "Body Armour": "body",
+          "Gloves": "gloves"
+        };
+        
+        let importedGearCount = 0;
+        
+        slotNodes.forEach(slotNode => {
+          const name = slotNode.getAttribute("name");
+          const itemId = slotNode.getAttribute("itemId");
+          const slotId = slotsToImport[name];
+          if (slotId && itemId && itemsById[itemId]) {
+            const rawText = itemsById[itemId];
+            
+            // Parse item text
+            const parsedItem = parseCopiedPoEItem(rawText);
+            if (parsedItem) {
+              const stats = parseStatsFromItemText(rawText);
+              parsedItem.localStats = stats;
+              
+              if (!window.charGearData[owner.toLowerCase()]) {
+                window.charGearData[owner.toLowerCase()] = {};
+              }
+              
+              // Overwrite slotted item!
+              window.charGearData[owner.toLowerCase()][slotId] = parsedItem;
+              importedGearCount++;
+            }
+          }
+        });
+        
+        // Sync slot to Supabase row p_name: ITEM_PERS_[owner]_CHAR_GEAR
+        if (importedGearCount > 0) {
+          const rowName = `ITEM_PERS_${owner.toUpperCase()}_CHAR_GEAR`;
+          try {
+            const payload = {
+              p_name: rowName,
+              p_data: window.charGearData[owner.toLowerCase()],
+              p_write_key: GUILD_WRITE_KEY
+            };
+            
+            await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+              method: "POST",
+              headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(payload)
+            });
+            console.log(`Synced ${importedGearCount} PoB items to database!`);
+          } catch(e) {
+            console.warn("Fail to sync imported PoB items to database:", e);
+          }
+          
+          // Re-draw the inventory slots UI to reflect new gear!
+          const isMyProfile = (owner.toLowerCase() === (localStorage.getItem("loggedInUser") || "").toLowerCase());
+          populateEquippedSlotsGrid(owner, isMyProfile);
+        }
+        
         msg.textContent = "🏆 SUCCESS! PoB BUILD COMPILER IMPORTED PERFECTLY!";
         msg.style.color = "#2ecc71";
         area.value = "";
@@ -1768,23 +1840,26 @@
         } catch(e) {}
       }
 
-      // Build dynamic equipped gear details
+      // Build dynamic equipped gear details from window.charGearData
       const charData = (window.charGearData && window.charGearData[owner.toLowerCase()]) || {};
       const gearParts = [];
-      if (charData.Helm) gearParts.push(`wearing helmet: ${charData.Helm.BaseName || charData.Helm.Name}`);
-      if (charData.Body) gearParts.push(`wearing armor: ${charData.Body.BaseName || charData.Body.Name}`);
-      if (charData.Weapon) gearParts.push(`wielding main hand weapon: ${charData.Weapon.BaseName || charData.Weapon.Name}`);
-      if (charData.Offhand) gearParts.push(`wielding offhand/shield: ${charData.Offhand.BaseName || charData.Offhand.Name}`);
+      if (charData.helm) gearParts.push(`wearing helmet: ${charData.helm.base || charData.helm.name}`);
+      if (charData.body) gearParts.push(`wearing body armor: ${charData.body.base || charData.body.name}`);
+      if (charData.weapon1) gearParts.push(`wielding weapon: ${charData.weapon1.base || charData.weapon1.name}`);
+      if (charData.gloves) gearParts.push(`wearing gloves: ${charData.gloves.base || charData.gloves.name}`);
       const gearStr = gearParts.join(", ") || "";
 
-      // Extract class and ascendancy from PoB
+      // Extract class and ascendancy from PoB profile
       const savedPob = localStorage.getItem(`pob_profile_${owner.toLowerCase()}`);
       let pobClassStr = "";
       if (savedPob) {
         try {
           const parsed = JSON.parse(savedPob);
           if (parsed.class_name) {
-            pobClassStr = `Class: ${parsed.class_name}, Ascendancy: ${parsed.ascend_name || 'None'}`;
+            pobClassStr = `Subject Class: ${parsed.class_name} from PoE2`;
+            if (parsed.ascend_name && parsed.ascend_name !== "None") {
+              pobClassStr += `, Ascendancy: ${parsed.ascend_name}`;
+            }
           }
         } catch(e) {}
       }
@@ -1809,19 +1884,16 @@
             ? "CRITICAL DEFAULT: The player has NO reference face/armor image and NO equipped gear. You MUST force generate them as a pauper in rags!"
             : "";
 
+          const promptText = `A highly realistic gothic oil painting of a medieval RPG character named "${capitalized}".
+- Style: Rich colors, deep dramatic shadows, cinematic candlelight lighting, oil on canvas, highly detailed masterpiece.
+- Composition: Waist-up mid-shot portrait showing the head down to waist.
+- Likeness details: "${likenessPrompt}".
+- Class Context: ${pobClassStr ? pobClassStr : 'Subject Class: Adventurer from PoE2'}.
+- Equipped gear: "${gearStr || 'traditional exile robes'}".
+${pauperInstruction}`;
+
           const partsList = [
-            { text: `You are an expert medieval/gothic RPG character portrait designer.
-Your task is to write a single, highly detailed, professional text-to-image prompt (approx 60-80 words) for a player named "${capitalized}".
-Composition & Style Requirements for the prompt:
-- Style: Highly realistic gothic oil painting, rich colors, deep dramatic shadows, medieval RPG look. Cinematic candlelight lighting, oil on canvas, highly detailed.
-- Frame: A "mid-shot portrait" (half-body shot, showing head down to waist).
-- Character details: A medieval character matching this baseline likeness: "${likenessPrompt}".
-- Equipped Gear details: "${gearStr || 'None equipped'}".
-- Class & ascendancy context: "${pobClassStr || 'None loaded'}".
-${pauperInstruction}
-Important:
-- If a reference image is attached, carefully analyze their face, gender, hair style/color, glasses, and expression, ensuring a highly accurate facial match.
-- Return ONLY the raw generated image prompt string. Do NOT write any introduction, code blocks, quotes, or conversational text. Return only the prompt itself.` }
+            { text: promptText }
           ];
 
           // If a reference image base64 is configured, feed it directly to the model parts!
@@ -1835,27 +1907,46 @@ Important:
             });
             partsList[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
 - Carefully analyze the face in the attached photo.
-- You MUST explicitly copy their exact gender, hair style, hair color, presence of glasses (glasses must be explicitly described in the prompt!), stubble, face shape, and expression.
+- You MUST explicitly copy their exact gender, hair style, hair color, presence of glasses (glasses must be explicitly described in the portrait!), stubble, face shape, and expression.
 - The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
           }
 
-          const gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+          let gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contents: [{ parts: partsList }]
+              contents: [{ parts: partsList }],
+              generationConfig: {
+                responseModalities: ["IMAGE"]
+              }
             })
           });
           
+          if (!gResponse.ok) {
+            console.log("Trying gemini-2.5-flash-image-preview fallback...");
+            gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${GEMINI_API_KEY}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: partsList }],
+                generationConfig: {
+                  responseModalities: ["IMAGE"]
+                }
+              })
+            });
+          }
+          
           if (gResponse.ok) {
             const gJson = await gResponse.json();
-            const promptText = gJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (promptText) {
-              const seed = Math.floor(Math.random() * 1000000);
-              const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText.trim())}?width=512&height=768&nologo=true&seed=${seed}`;
+            const parts = gJson?.candidates?.[0]?.content?.parts || [];
+            const imagePart = parts.find(p => p.inlineData);
+            if (imagePart && imagePart.inlineData) {
+              const mime = imagePart.inlineData.mimeType || "image/jpeg";
+              const base64Data = imagePart.inlineData.data;
+              const dataUrl = `data:${mime};base64,${base64Data}`;
               
-              img.src = imageUrl;
-              window.__GUILD_PORTRAITS__[owner.toLowerCase()] = imageUrl;
+              img.src = dataUrl;
+              window.__GUILD_PORTRAITS__[owner.toLowerCase()] = dataUrl;
               
               // Sync portraits config back to Supabase
               try {
@@ -1879,9 +1970,9 @@ Important:
               return;
             }
           }
-          throw new Error("Gemini generation returned non-ok or empty prompt");
+          throw new Error("Gemini image generation failed or did not return inlineData image");
         } catch(err) {
-          console.error("Direct gemini prompt generation or image fetch failed:", err);
+          console.error("Direct gemini image generation failed:", err);
           resetBtn();
         }
       }
