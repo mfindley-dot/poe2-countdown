@@ -443,18 +443,60 @@ async function readClipboardText() {
   }
 }
 
-const VAULT_PASSCODE_HASHES = {
+let VAULT_PASSCODE_HASHES = {
   "baorunner": "f00bf0465d1fede533b97579707f2557931fcf992d37eacbec7f034edd50c2ec", // bao79
-  "chaz": "ddb17e4ab6b5536440cf6b6a37803cf86bfd5ee31bdbe85cc2f97c4cf9ed3406", // chz42
-  "creg": "01dcef5ee2938a16dbec8e1c31278ff56a8faef1c60b5406c1c243f779780074", // crg88
-  "huneybutta": "b04292cd4150567e95454655f8e658ec3d839217a26f049fa5ebc28cc887ab67", // hny13
-  "pseudofro": "394d29d892d19451d6cc47d9539ecb001d78cb5cf92b8d0a87a74797034cf939", // psd64
+  "chaz": "ddb17e5b8507c3a861fe23bfc9a38a3ac6462cf0ed331f2cc2ae8b8e587683de", // chz42
+  "creg": "01dcef73763a5e49774bff772269f818be1ceb86600b486668ac7a659b06463a", // crg88
+  "huneybutta": "b042927dd1b6249c78655880ab617219dcb971b5176fabdac61c626614340a42", // hny13
+  "pseudofro": "394d29b7998e3510c930746d15e2a61d5cb87a08f0fb59ad94d0b8212fae0d80", // psd64
   "radiocommander": "1bc844f5e006387edaf2de438063666b0c21c72dfd4636666d6db2b64cd6bf9b", // rad75
-  "smooth": "9741cb83bf3688b14a2a16d8e87498c4749f7e5df633b4974d6c66dbb72bc21c" // smh27
+  "smooth": "9741cb6124b4184fa4d7c24400a9d35079bdc3ea98c59590af05b15f1da3cd62", // smh27
+  "petejohn": "61cd970e71bf78349a0c6a501a3d7944a70a7ac4c2f8f3b639efc7c9bd60511d" // pet33
 };
+
+async function loadLiveExtensionHashes() {
+  const url = supabaseUrlInput.value.trim() || defaultSupabaseUrl;
+  const key = supabaseAnonKeyInput.value.trim() || defaultSupabaseAnonKey;
+  if (!url || !key) return;
+  try {
+    const res = await fetch(`${url}/rest/v1/poe2_guild_vault?name=eq.__GUILD_PASSCODES__&select=*`, {
+      headers: {
+        "apikey": key,
+        "Authorization": `Bearer ${key}`
+      }
+    });
+    if (res.ok) {
+      const rows = await res.json();
+      if (rows && rows.length > 0 && rows[0].data) {
+        const data = rows[0].data;
+        VAULT_PASSCODE_HASHES = { ...VAULT_PASSCODE_HASHES, ...data };
+        
+        const exiles = data.__EXILES_LIST__ || ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth", "Petejohn"];
+        const select = document.getElementById("vaultUsername");
+        if (select) {
+          const prev = select.value;
+          select.innerHTML = "";
+          exiles.forEach(ex => {
+            const opt = document.createElement("option");
+            opt.value = ex.toLowerCase();
+            opt.textContent = ex;
+            select.appendChild(opt);
+          });
+          if (exiles.map(e => e.toLowerCase()).includes(prev)) {
+            select.value = prev;
+          }
+        }
+      }
+    }
+  } catch(e) {
+    console.warn("Failed to load extension hashes:", e);
+  }
+}
 
 async function validateVaultProfile() {
   if (vaultStashTypeSelect.value === "guild") return true;
+  
+  await loadLiveExtensionHashes();
   
   const user = vaultUsernameSelect.value.toLowerCase();
   const pass = vaultPasswordInput.value.trim();

@@ -1771,6 +1771,19 @@
           const passcodeEntry = entries.find(e => e.name === "__GUILD_PASSCODES__");
           if (passcodeEntry && passcodeEntry.data) {
             userPasscodeHashes = { ...DEFAULT_PASSCODE_HASHES, ...passcodeEntry.data };
+            if (passcodeEntry.data.__EXILES_LIST__) {
+              PROFILES_LIST = passcodeEntry.data.__EXILES_LIST__;
+            } else {
+              const keys = Object.keys(passcodeEntry.data).filter(k => k !== "__EXILES_LIST__");
+              keys.forEach(k => {
+                const capitalized = k.charAt(0).toUpperCase() + k.slice(1);
+                if (!PROFILES_LIST.map(p => p.toLowerCase()).includes(k)) {
+                  PROFILES_LIST.push(capitalized);
+                }
+              });
+            }
+            // Dynamically refresh the Owner dropdown filters
+            populateOwnerDropdown();
           }
 
           const adminConfigEntry = entries.find(e => e.name === "__GUILD_ADMIN_CONFIG__");
@@ -2993,9 +3006,7 @@
       
       filterSelect.innerHTML = `<option value="all">🛡️ Guild (All)</option>`;
       
-      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth"];
-      
-      profiles.forEach(owner => {
+      PROFILES_LIST.forEach(owner => {
         const opt = document.createElement("option");
         opt.value = owner.toLowerCase();
         opt.textContent = `👤 ${owner}'s Stash`;
@@ -3291,8 +3302,7 @@
     }
 
     // ==========================================
-    // V2.9 PERSONAL PROFILE, PASSCODE LOGIN & PoB DECODER HELPERS
-    // ==========================================
+    let PROFILES_LIST = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth", "Petejohn"];
 
     const DEFAULT_PASSCODE_HASHES = {
       "baorunner": "f00bf0465d1fede533b97579707f2557931fcf992d37eacbec7f034edd50c2ec", // bao79
@@ -3301,7 +3311,8 @@
       "huneybutta": "b042927dd1b6249c78655880ab617219dcb971b5176fabdac61c626614340a42", // hny13
       "pseudofro": "394d29b7998e3510c930746d15e2a61d5cb87a08f0fb59ad94d0b8212fae0d80", // psd64
       "radiocommander": "1bc844f5e006387edaf2de438063666b0c21c72dfd4636666d6db2b64cd6bf9b", // rad75
-      "smooth": "9741cb6124b4184fa4d7c24400a9d35079bdc3ea98c59590af05b15f1da3cd62" // smh27
+      "smooth": "9741cb6124b4184fa4d7c24400a9d35079bdc3ea98c59590af05b15f1da3cd62", // smh27
+      "petejohn": "61cd970e71bf78349a0c6a501a3d7944a70a7ac4c2f8f3b639efc7c9bd60511d" // pet33
     };
 
     let userPasscodeHashes = { ...DEFAULT_PASSCODE_HASHES };
@@ -3340,9 +3351,7 @@
       
       select.innerHTML = "";
       
-      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth"];
-      
-      profiles.forEach(profile => {
+      PROFILES_LIST.forEach(profile => {
         const opt = document.createElement("option");
         opt.value = profile.toLowerCase();
         opt.textContent = profile;

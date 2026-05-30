@@ -638,15 +638,53 @@
 
   <!-- Login & Authentication Helpers for Countdown Lobby -->
   <script>
-    const DEFAULT_PASSCODE_HASHES = {
+    const SUPABASE_URL = "https://qqljadcpxsubawmzkecl.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_T8G6w3OtwXRG_cXd_-h9YQ_s8U9iDnx";
+
+    let PROFILES_LIST = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth", "Petejohn"];
+
+    let userPasscodeHashes = {
       "baorunner": "f00bf0465d1fede533b97579707f2557931fcf992d37eacbec7f034edd50c2ec", // bao79
       "chaz": "ddb17e5b8507c3a861fe23bfc9a38a3ac6462cf0ed331f2cc2ae8b8e587683de", // chz42
       "creg": "01dcef73763a5e49774bff772269f818be1ceb86600b486668ac7a659b06463a", // crg88
       "huneybutta": "b042927dd1b6249c78655880ab617219dcb971b5176fabdac61c626614340a42", // hny13
       "pseudofro": "394d29b7998e3510c930746d15e2a61d5cb87a08f0fb59ad94d0b8212fae0d80", // psd64
       "radiocommander": "1bc844f5e006387edaf2de438063666b0c21c72dfd4636666d6db2b64cd6bf9b", // rad75
-      "smooth": "9741cb6124b4184fa4d7c24400a9d35079bdc3ea98c59590af05b15f1da3cd62" // smh27
+      "smooth": "9741cb6124b4184fa4d7c24400a9d35079bdc3ea98c59590af05b15f1da3cd62", // smh27
+      "petejohn": "61cd970e71bf78349a0c6a501a3d7944a70a7ac4c2f8f3b639efc7c9bd60511d" // pet33
     };
+
+    async function loadLiveProfiles() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/poe2_guild_vault?name=eq.__GUILD_PASSCODES__&select=*`, {
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (response.ok) {
+          const rows = await response.json();
+          if (rows && rows.length > 0 && rows[0].data) {
+            const data = rows[0].data;
+            userPasscodeHashes = { ...userPasscodeHashes, ...data };
+            if (data.__EXILES_LIST__) {
+              PROFILES_LIST = data.__EXILES_LIST__;
+            } else {
+              const keys = Object.keys(data).filter(k => k !== "__EXILES_LIST__");
+              keys.forEach(k => {
+                const capitalized = k.charAt(0).toUpperCase() + k.slice(1);
+                if (!PROFILES_LIST.map(p => p.toLowerCase()).includes(k)) {
+                  PROFILES_LIST.push(capitalized);
+                }
+              });
+            }
+          }
+        }
+      } catch(e) {
+        console.warn("Failed to load live profiles:", e);
+      }
+      populateLoginProfiles();
+    }
 
     async function sha256(message) {
       const msgBuffer = new TextEncoder().encode(message);
@@ -682,8 +720,7 @@
       if (!select) return;
       
       select.innerHTML = "";
-      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth"];
-      profiles.forEach(profile => {
+      PROFILES_LIST.forEach(profile => {
         const opt = document.createElement("option");
         opt.value = profile.toLowerCase();
         opt.textContent = profile;
@@ -739,7 +776,7 @@
       if (!passcode) return;
       
       const hash = await sha256(passcode);
-      const expectedHash = DEFAULT_PASSCODE_HASHES[profile];
+      const expectedHash = userPasscodeHashes[profile];
       
       if (hash === expectedHash) {
         localStorage.setItem("loggedInUser", name);
@@ -760,8 +797,9 @@
     }
 
     // Initialize on page load
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       updateLoginUIState();
+      await loadLiveProfiles();
     });
   </script>
 </body>

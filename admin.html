@@ -380,6 +380,33 @@
           </div>
         </div>
 
+        <div class="admin-card">
+          <div class="admin-section-header">
+            ➕ REGISTER NEW GUILD MEMBER PROFILE
+          </div>
+          
+          <div style="font-size: 0.65rem; color: #a2a1a0; margin-bottom: 12px; font-style: italic;">
+            Register a brand-new Good Loot Gang member. This dynamically creates their private chambers room and passcode login globally.
+          </div>
+
+          <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="admin-form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+              <label>New Exile Name</label>
+              <input type="text" id="newExileName" class="admin-input" placeholder="e.g. Petejohn">
+            </div>
+            
+            <div class="admin-form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+              <label>Assign Passcode</label>
+              <input type="password" id="newExilePasscode" class="admin-input" placeholder="e.g. pet33" maxlength="15">
+            </div>
+            
+            <button onclick="registerNewExile()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.85rem; height: 36px; padding: 0 20px; cursor: pointer;">
+              ⚡ REGISTER EXILE
+            </button>
+          </div>
+          <span id="registerStatus" style="display: block; margin-top: 10px; font-size: 0.75rem; font-weight: bold;"></span>
+        </div>
+
         <div style="text-align: center; margin-top: 10px; margin-bottom: 40px;">
           <button onclick="saveExileConfigs()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-size: 1rem; font-weight: bold; padding: 12px 35px; width: 100%; max-width: 400px; cursor: pointer; box-shadow: 0 5px 15px rgba(255,215,0,0.15);">
             ⚡ SYNC & UPDATE CHAMBER CONFIGS
@@ -400,7 +427,38 @@
     const SUPABASE_ANON_KEY = "sb_publishable_T8G6w3OtwXRG_cXd_-h9YQ_s8U9iDnx";
     const GUILD_WRITE_KEY = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A";
 
-    const PROFILES_LIST = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth"];
+    let PROFILES_LIST = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth", "Petejohn"];
+    let livePasscodeData = {};
+
+    async function loadLiveExilesList() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/poe2_guild_vault?name=eq.__GUILD_PASSCODES__&select=*`, {
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (response.ok) {
+          const rows = await response.json();
+          if (rows && rows.length > 0 && rows[0].data) {
+            livePasscodeData = rows[0].data;
+            if (livePasscodeData.__EXILES_LIST__) {
+              PROFILES_LIST = livePasscodeData.__EXILES_LIST__;
+            } else {
+              const keys = Object.keys(livePasscodeData).filter(k => k !== "__EXILES_LIST__");
+              keys.forEach(k => {
+                const capitalized = k.charAt(0).toUpperCase() + k.slice(1);
+                if (!PROFILES_LIST.map(p => p.toLowerCase()).includes(k)) {
+                  PROFILES_LIST.push(capitalized);
+                }
+              });
+            }
+          }
+        }
+      } catch(e) {
+        console.warn("Failed to load live exiles:", e);
+      }
+    }
 
     const ADMIN_PASSCODE_HASHES = [
       "01dcef73763a5e49774bff772269f818be1ceb86600b486668ac7a659b06463a", // crg88 (Creg)
@@ -433,6 +491,7 @@
         document.getElementById("adminAuthShield").style.display = "none";
         document.getElementById("adminBoard").style.display = "block";
         localStorage.setItem("adminAuthenticated", "true");
+        await loadLiveExilesList();
         await loadAllConfigs();
         renderPlayerTabs();
         loadActiveExile();
@@ -449,6 +508,7 @@
       if (auth === "true") {
         document.getElementById("adminAuthShield").style.display = "none";
         document.getElementById("adminBoard").style.display = "block";
+        await loadLiveExilesList();
         await loadAllConfigs();
         renderPlayerTabs();
         loadActiveExile();
@@ -665,6 +725,116 @@
         console.warn("Configurations synchronization failed:", err);
         statusDiv.textContent = "❌ ERROR: FAIL TO COMMUNICATE CONFIGS TO WRITING INTERFACE.";
         statusDiv.style.color = "#ef4444";
+      }
+    }
+
+    // 7. Dynamic exile registration
+    async function registerNewExile() {
+      const nameField = document.getElementById("newExileName");
+      const passField = document.getElementById("newExilePasscode");
+      const status = document.getElementById("registerStatus");
+      
+      if (!nameField || !passField || !status) return;
+      
+      const name = nameField.value.trim();
+      const passcode = passField.value.trim();
+      
+      if (!name) {
+        status.style.color = "#ef4444";
+        status.textContent = "❌ ERROR: Exile Name cannot be empty!";
+        return;
+      }
+      
+      if (name.length < 2 || !/^[A-Za-z0-9]+$/.test(name)) {
+        status.style.color = "#ef4444";
+        status.textContent = "❌ ERROR: Exile Name must be alphanumeric and at least 2 characters!";
+        return;
+      }
+      
+      if (!passcode || passcode.length < 3) {
+        status.style.color = "#ef4444";
+        status.textContent = "❌ ERROR: Passcode must be at least 3 characters!";
+        return;
+      }
+      
+      const nameLower = name.toLowerCase();
+      const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+      
+      status.style.color = "#ffd700";
+      status.textContent = "⏳ Registering dynamic exile profile...";
+      
+      try {
+        const newHash = await sha256(passcode.toLowerCase());
+        
+        // Load latest
+        await loadLiveExilesList();
+        
+        // Append new name
+        if (PROFILES_LIST.map(p => p.toLowerCase()).includes(nameLower)) {
+          status.style.color = "#ef4444";
+          status.textContent = `❌ ERROR: Member "${capitalized}" already exists!`;
+          return;
+        }
+        
+        PROFILES_LIST.push(capitalized);
+        livePasscodeData[nameLower] = newHash;
+        livePasscodeData.__EXILES_LIST__ = PROFILES_LIST;
+        
+        // Sync passcodes
+        const pResponse = await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            p_name: "__GUILD_PASSCODES__",
+            p_data: livePasscodeData,
+            p_write_key: GUILD_WRITE_KEY
+          })
+        });
+        
+        if (!pResponse.ok) {
+          throw new Error("RPC passcode sync returned status: " + pResponse.status);
+        }
+        
+        // Sync default admin configs for them
+        if (!guildAdminConfigs[nameLower]) {
+          guildAdminConfigs[nameLower] = {
+            portrait_prompt: `gothic medieval PoE portrait of ${capitalized} the Exile, dark atmospheric backdrop`,
+            bard_instructions: "Keep the tone immersive, silly, and under 80 words.",
+            room_background: "assets/images/rooms/guild-room_default_bg.png",
+            trophies: []
+          };
+          
+          await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+            method: "POST",
+            headers: {
+              "apikey": SUPABASE_ANON_KEY,
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              p_name: "__GUILD_ADMIN_CONFIG__",
+              p_data: guildAdminConfigs,
+              p_write_key: GUILD_WRITE_KEY
+            })
+          });
+        }
+
+        status.style.color = "#2ecc71";
+        status.textContent = `✅ SUCCESS: "${capitalized}" HAS BEEN REGISTERED GLOBALLY!`;
+        
+        nameField.value = "";
+        passField.value = "";
+        
+        renderPlayerTabs();
+        
+      } catch(e) {
+        console.error(e);
+        status.style.color = "#ef4444";
+        status.textContent = "❌ ERROR: Failed to sync registry to Supabase.";
       }
     }
   </script>
