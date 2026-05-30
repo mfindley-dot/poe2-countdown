@@ -811,6 +811,147 @@
       padding: 15px;
       box-sizing: border-box;
     }
+
+    /* V2.9 Profile, Slots & Gauges Styling */
+    .profile-layout-container {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .profile-gear-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-sizing: border-box;
+    }
+    
+    .poe-equipped-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      box-sizing: border-box;
+    }
+    
+    .profile-gear-slot {
+      background: rgba(8, 6, 5, 0.9);
+      border: 1px solid rgba(197, 168, 128, 0.2);
+      border-radius: 4px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+      min-height: 60px;
+      box-sizing: border-box;
+    }
+    
+    .profile-gear-slot:hover {
+      border-color: #ffd700;
+      background: rgba(197, 168, 128, 0.05);
+      box-shadow: inset 0 0 15px rgba(255,215,0,0.15);
+    }
+    
+    .profile-gear-slot.active-slot {
+      border-color: #2ecc71 !important;
+      box-shadow: inset 0 0 15px rgba(46,204,113,0.15);
+    }
+    
+    .profile-slot-icon-wrapper {
+      width: 42px;
+      height: 42px;
+      background: rgba(0,0,0,0.4);
+      border: 1px dashed rgba(197,168,128,0.25);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+    
+    .profile-slot-icon {
+      width: 90%;
+      height: 90%;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+    }
+    
+    .profile-slot-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+      flex-grow: 1;
+    }
+    
+    .profile-slot-label {
+      font-size: 0.58rem;
+      color: #a2a1a0;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .profile-slot-item-name {
+      font-size: 0.75rem;
+      font-weight: bold;
+      font-family: 'Outfit', sans-serif;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .profile-slot-paste-indicator {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 0.55rem;
+      color: #2ecc71;
+      font-weight: bold;
+      display: none;
+      background: rgba(46,204,113,0.1);
+      border: 1px solid rgba(46,204,113,0.3);
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+    
+    .profile-gear-slot:hover .profile-slot-paste-indicator {
+      display: block;
+    }
+    
+    .stat-gauge-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    
+    .stat-gauge-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.72rem;
+      font-family: 'Outfit', sans-serif;
+    }
+    
+    .stat-gauge-bar-outer {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(197, 168, 128, 0.15);
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .stat-gauge-bar-inner {
+      height: 100%;
+      transition: width 0.4s cubic-bezier(0.1, 0.8, 0.25, 1);
+    }
   </style>
 </head>
 <body>
@@ -835,12 +976,63 @@
           PoE2 Guild Vault
         </h1>
       </div>
-      <div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button id="btnToggleLoginDrawer" onclick="toggleLoginDrawer()" class="gothic-btn" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
+          👤 GUILDMATE LOGIN
+        </button>
         <a href="index.html" class="gothic-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); border-radius: 4px; padding: 8px 16px; font-family: var(--font-header); font-size: 0.9rem; letter-spacing: 1px; color: #ffd700; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: all 0.2s ease;">
           🔙 BACK TO COUNTDOWN
         </a>
       </div>
     </header>
+
+    <!-- Collapsible Gothic Login Drawer -->
+    <div id="loginDrawer" class="vault-stash-wrapper" style="display: none; max-width: 1200px; margin: 0 auto 20px auto; padding: 15px; border-color: #ffd700; box-sizing: border-box; background: rgba(12, 10, 9, 0.98); box-shadow: 0 10px 20px rgba(0,0,0,0.8); position: relative; z-index: 20;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 8px; margin-bottom: 12px;">
+        <h3 class="text-gold" style="margin: 0; font-family: 'Outfit', sans-serif; letter-spacing: 1px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+          🔑 GUILDMATE PROFILE AUTHENTICATION
+        </h3>
+        <button onclick="toggleLoginDrawer(false)" style="background: none; border: none; color: #a2a1a0; font-size: 1.1rem; cursor: pointer; padding: 0 5px;">✕</button>
+      </div>
+      
+      <div id="loginForm" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.65rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">Select Profile</label>
+          <select id="loginProfileSelect" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.75rem; outline: none; font-family: 'Outfit', sans-serif; cursor: pointer; min-width: 160px;">
+            <!-- Dynamic owners populated here -->
+          </select>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.65rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">Passcode (1234 default)</label>
+          <input type="password" id="loginPasscode" placeholder="••••" maxlength="8" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.75rem; width: 120px; outline: none; box-sizing: border-box; text-align: center; font-family: monospace;">
+        </div>
+        
+        <button onclick="authenticateUser()" class="gothic-btn" style="border: 1px solid #ffd700; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 6px 16px; font-size: 0.75rem; letter-spacing: 1px; color: #ffd700; border-radius: 4px; cursor: pointer; height: 31px; box-shadow: 0 2px 4px rgba(0,0,0,0.5); align-self: flex-end;">
+          AUTHENTICATE
+        </button>
+        <span id="loginError" style="font-size: 0.7rem; color: #ef4444; font-weight: bold; align-self: flex-end; margin-bottom: 8px; display: none;">❌ INVALID PASSCODE</span>
+      </div>
+      
+      <div id="loggedInState" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.6rem;">👑</span>
+          <div>
+            <div style="font-size: 0.65rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">Active Guildmate Profile</div>
+            <div id="activeProfileLabel" style="font-size: 0.95rem; color: #2ecc71; font-weight: bold; font-family: 'Outfit', sans-serif; letter-spacing: 0.5px;">Mike</div>
+          </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="btnProfileView" onclick="selectPersonalProfileTab()" class="gothic-btn" style="border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #ffd700; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+            👤 GO TO MY PROFILE
+          </button>
+          <button onclick="logOutUser()" class="gothic-btn" style="border: 1px solid rgba(239, 68, 68, 0.4); background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 6px 12px; font-size: 0.75rem; letter-spacing: 1px; color: #f87171; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+            🚪 LOG OUT
+          </button>
+        </div>
+      </div>
+    </div>
 
     <main class="vault-layout">
       <!-- Left Column: QVC Showroom & Tally -->
@@ -1065,6 +1257,12 @@
             <span style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: bold; color: #ffd700;" id="tooltipPrice">248.0 Divine Orbs</span>
             <span style="font-size: 0.55rem; color: #a2a1a0; display: block; margin-top: 4px;" id="tooltipCullingLogs">Culled 4 bot post entries below 150 divine orbs.</span>
           </div>
+          <!-- Dynamic Action Panel for Logged-In Owner Delete -->
+          <div id="tooltipDeleteActionPanel" style="display: none; padding: 10px 0 0 0; border-top: 1px dashed rgba(197,168,128,0.2); margin-top: 10px; text-align: center;">
+            <button id="btnDeleteStashItem" class="gothic-btn" style="border: 1px solid rgba(239, 68, 68, 0.6); background: rgba(239, 68, 68, 0.1); padding: 6px 16px; font-size: 0.75rem; letter-spacing: 1px; color: #f87171; border-radius: 4px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+              🗑️ DELETE ITEM FROM SITE STASH
+            </button>
+          </div>
         </div>
       </div>
     </main>
@@ -1074,6 +1272,7 @@
     // Serverless Supabase API Config
     const SUPABASE_URL = "https://qqljadcpxsubawmzkecl.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_T8G6w3OtwXRG_cXd_-h9YQ_s8U9iDnx";
+    const GUILD_WRITE_KEY = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A"; // Secure culling sync key
     
     // Core currencies config linked to official GGG CDN high-definition assets
     // Core currencies config linked to beautiful local assets
@@ -1154,6 +1353,7 @@
 
     // Overhauled PoE2 Stash Tabs Configuration (24 Effective Synchronization Tabs)
     const STASH_TABS = [
+      { id: "profile", name: "👤 PROFILE VIEW", type: "profile", tabIndex: -1, color: "#2d2616", textColor: "#ffd700" },
       { id: "currency", name: "🪙 CURRENCY", type: "currency", tabIndex: 0, color: "#1a3020", textColor: "#2ecc71" },
       { id: "dump", name: "🎒 DUMP TAB", type: "standard", tabIndex: 1, color: "#4a1c1c", textColor: "#ff4d4d" },
       { id: "uniq_dump", name: "🛡️ UNIQUE DUMP", type: "standard", tabIndex: 2, color: "#4a1c1c", textColor: "#ff4d4d" },
@@ -1299,6 +1499,8 @@
       if (activeTabId === "currency") {
         viewport.innerHTML = `<div class="currency-vault-container" id="vaultContainer"></div>`;
         renderVaultGrid();
+      } else if (activeTabId === "profile") {
+        renderProfileTab();
       } else if (activeTabId === "essence") {
         renderEssenceTab();
       } else if (activeTabId === "delirium") {
@@ -1334,8 +1536,20 @@
         
         let foundVault = false;
         scannedItems = [];
+        window.charGearData = {}; // Clear global cache
         
         if (entries && Array.isArray(entries)) {
+          // Parse all player character gear rows
+          entries.forEach(e => {
+            if (e.name.startsWith("ITEM_PERS_") && e.name.endsWith("_CHAR_GEAR") && e.data) {
+              const parts = e.name.split("_");
+              if (parts.length >= 3) {
+                const ownerName = parts[2].toLowerCase();
+                window.charGearData[ownerName] = e.data;
+              }
+            }
+          });
+
           const vaultEntry = entries.find(e => e.name === "__GUILD_VAULT__");
           if (vaultEntry && vaultEntry.data) {
             const cData = vaultEntry.data;
@@ -1415,7 +1629,8 @@
                   logs: itemData.logs || "Direct Clipboard Appraisal V1.0",
                   url: itemData.url || "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png",
                   owner: ownerName,
-                  tabIndex: tabIndex
+                  tabIndex: tabIndex,
+                  entryName: e.name
                 };
                 scannedItems.push(newItem);
                 
@@ -2504,6 +2719,40 @@
       return sum;
     }
 
+    async function deleteVaultItem(entryName) {
+      if (!entryName) return;
+      try {
+        console.log(`Sending purge request for item: ${entryName}...`);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/purge_vault_items`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            p_prefix: entryName,
+            p_write_key: GUILD_WRITE_KEY
+          })
+        });
+        
+        if (!res.ok) {
+          throw new Error("Supabase returned: " + await res.text());
+        }
+        
+        console.log(`Purged ${entryName} from vault successfully!`);
+        alert("Item deleted successfully! Reloading stash tab...");
+        
+        // Reload stash items dynamically
+        if (typeof loadScannedStash === "function") {
+          await loadScannedStash();
+        }
+      } catch (err) {
+        console.error("Failed to delete vault item:", err);
+        alert("Failed to delete item: " + err.message);
+      }
+    }
+
     // Dynamic Populator for Owner dropdown
     function populateOwnerDropdown() {
       const filterSelect = document.getElementById("stashOwnerFilter");
@@ -2549,6 +2798,26 @@
       badgeEl.style.borderColor = color;
       badgeEl.style.background = `rgba(${color === '#af6025' ? '175, 96, 37' : '247,208,94'}, 0.15)`;
       
+      // Setup dynamic deletion panels for logged in owner
+      const loggedInUser = localStorage.getItem("loggedInUser") || "";
+      const isOwner = loggedInUser.toLowerCase() === (item.owner || "").toLowerCase();
+      const deletePanel = document.getElementById("tooltipDeleteActionPanel");
+      const deleteBtn = document.getElementById("btnDeleteStashItem");
+      
+      if (deletePanel && deleteBtn) {
+        if (loggedInUser && (isOwner || loggedInUser.toLowerCase() === "mike" || loggedInUser.toLowerCase() === "creg")) {
+          deletePanel.style.display = "block";
+          deleteBtn.onclick = async () => {
+            if (confirm(`Are you sure you want to delete ${item.name} from the database?`)) {
+              await deleteVaultItem(item.entryName || item.name);
+              closePoeTooltip();
+            }
+          };
+        } else {
+          deletePanel.style.display = "none";
+        }
+      }
+
       const affixesEl = document.getElementById('tooltipAffixes');
       affixesEl.innerHTML = '';
       
@@ -2793,10 +3062,870 @@
       localStorage.setItem("stashCellSize", val);
     }
 
+    // ==========================================
+    // V2.9 PERSONAL PROFILE, PASSCODE LOGIN & PoB DECODER HELPERS
+    // ==========================================
+
+    const USER_PASSCODE_HASHES = {
+      "mike": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4", // "1234"
+      "creg": "a7e6074214777d0137e5ec8fa08e7ff282367d3e09bd596d1945f311c19d45e5", // "5678"
+      "radiocommander": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8" // "password"
+    };
+
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function toggleLoginDrawer(show) {
+      const drawer = document.getElementById("loginDrawer");
+      if (!drawer) return;
+      
+      const isVisible = drawer.style.display === "block";
+      const targetShow = show !== undefined ? show : !isVisible;
+      
+      drawer.style.display = targetShow ? "block" : "none";
+      
+      if (targetShow) {
+        populateLoginProfiles();
+        updateLoginUIState();
+      }
+    }
+
+    function populateLoginProfiles() {
+      const select = document.getElementById("loginProfileSelect");
+      if (!select) return;
+      
+      select.innerHTML = "";
+      
+      const profiles = new Set(["Mike", "Creg", "Radiocommander"]);
+      
+      // Load all owners dynamically from database scans
+      scannedItems.forEach(item => {
+        if (item.owner && item.owner !== "Shared Guild Vault") {
+          profiles.add(item.owner);
+        }
+      });
+      
+      Array.from(profiles).sort().forEach(profile => {
+        const opt = document.createElement("option");
+        opt.value = profile.toLowerCase();
+        opt.textContent = profile;
+        select.appendChild(opt);
+      });
+    }
+
+    function updateLoginUIState() {
+      const form = document.getElementById("loginForm");
+      const state = document.getElementById("loggedInState");
+      const label = document.getElementById("activeProfileLabel");
+      const error = document.getElementById("loginError");
+      const loginBtn = document.getElementById("btnToggleLoginDrawer");
+      
+      const loggedInUser = localStorage.getItem("loggedInUser");
+      
+      if (error) error.style.display = "none";
+      
+      if (loggedInUser) {
+        if (form) form.style.display = "none";
+        if (state) state.style.display = "flex";
+        if (label) label.textContent = loggedInUser;
+        if (loginBtn) loginBtn.textContent = `👑 ${loggedInUser.toUpperCase()}`;
+      } else {
+        if (form) form.style.display = "flex";
+        if (state) state.style.display = "none";
+        if (loginBtn) loginBtn.textContent = "👤 GUILDMATE LOGIN";
+        document.getElementById("loginPasscode").value = "";
+      }
+    }
+
+    async function authenticateUser() {
+      const profileSelect = document.getElementById("loginProfileSelect");
+      const passcodeField = document.getElementById("loginPasscode");
+      const error = document.getElementById("loginError");
+      
+      if (!profileSelect || !passcodeField) return;
+      
+      const profile = profileSelect.value.toLowerCase();
+      const name = profileSelect.options[profileSelect.selectedIndex].text;
+      const passcode = passcodeField.value.trim();
+      
+      if (!passcode) return;
+      
+      const hash = await sha256(passcode);
+      const expectedHash = USER_PASSCODE_HASHES[profile] || "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // Default to "1234"
+      
+      if (hash === expectedHash) {
+        localStorage.setItem("loggedInUser", name);
+        updateLoginUIState();
+        if (activeTabId === "profile") {
+          renderActiveTab();
+        }
+      } else {
+        if (error) error.style.display = "inline";
+        passcodeField.value = "";
+        passcodeField.focus();
+      }
+    }
+
+    function logOutUser() {
+      localStorage.removeItem("loggedInUser");
+      updateLoginUIState();
+      toggleLoginDrawer(false);
+      if (activeTabId === "profile") {
+        renderActiveTab();
+      }
+    }
+
+    function selectPersonalProfileTab() {
+      const loggedInUser = localStorage.getItem("loggedInUser") || "Mike";
+      // Update owner select filter to trigger profile loading
+      const ownerSelect = document.getElementById("stashOwnerFilter");
+      if (ownerSelect) {
+        // Find option that matches
+        for (let i = 0; i < ownerSelect.options.length; i++) {
+          if (ownerSelect.options[i].text.toLowerCase().includes(loggedInUser.toLowerCase())) {
+            ownerSelect.selectedIndex = i;
+            break;
+          }
+        }
+      }
+      toggleLoginDrawer(false);
+      selectStashTab("profile");
+    }
+
+    function renderProfileTab() {
+      const viewport = document.getElementById("stashMainViewport");
+      if (!viewport) return;
+      
+      const ownerSelect = document.getElementById("stashOwnerFilter");
+      let activeOwner = ownerSelect ? ownerSelect.value : "Mike";
+      if (activeOwner === "all" || !activeOwner) {
+        activeOwner = localStorage.getItem("loggedInUser") || "Mike";
+      }
+      
+      const capitalizedOwner = activeOwner.charAt(0).toUpperCase() + activeOwner.slice(1).toLowerCase();
+      const loggedInUser = localStorage.getItem("loggedInUser") || "";
+      const isMyProfile = loggedInUser.toLowerCase() === activeOwner.toLowerCase();
+      
+      viewport.innerHTML = `
+        <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 8px; margin-bottom: 15px; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center;">
+          <span>👤 ${capitalizedOwner.toUpperCase()}'S CHARACTER PROFILE</span>
+          <span style="font-size: 0.72rem; color: #a2a1a0; background: rgba(197, 168, 128, 0.08); border: 1px solid rgba(197, 168, 128, 0.2); padding: 2px 8px; border-radius: 3px;">
+            ${isMyProfile ? '🟢 AUTHORIZED WRITER' : '👁️ READ ONLY VIEW'}
+          </span>
+        </div>
+        
+        <div class="profile-layout-container">
+          
+          <!-- Column 1: Equipped Gear Slots Grid (PoE Style) -->
+          <div class="profile-gear-column" style="flex: 1.2; min-width: 320px; background: rgba(12, 10, 9, 0.95); border: 1px solid rgba(197,168,128,0.2); padding: 15px; border-radius: 4px; box-shadow: inset 0 0 20px rgba(0,0,0,0.85);">
+            <div style="font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px; margin-bottom: 12px; text-transform: uppercase;">
+              EQUIPPED GEAR SLOTS ${isMyProfile ? '(Ctrl+C item in-game -> Click slot & Ctrl+V)' : ''}
+            </div>
+            
+            <div class="poe-equipped-grid">
+              <!-- Equipment Slots populated dynamically -->
+            </div>
+          </div>
+          
+          <!-- Column 2: Deficiency progress gauges & PoB Auditor -->
+          <div class="profile-gauges-column" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 15px;">
+            
+            <!-- Audited stats card -->
+            <div class="profile-auditor-card" style="background: rgba(12, 10, 9, 0.95); border: 1px solid rgba(197,168,128,0.2); padding: 15px; border-radius: 4px; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
+              <div style="font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase;">
+                📊 ENDGAME RESISTANCES & ATTRIBUTES
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 10px;" id="profileGaugesList">
+                <!-- Gauges drawn dynamically -->
+              </div>
+            </div>
+            
+            <!-- Path of Building & Gemini Auditor control card -->
+            <div class="profile-pob-card" style="background: rgba(12, 10, 9, 0.95); border: 1px solid #ffd700; padding: 15px; border-radius: 4px; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
+              <div style="font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: #ffd700; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,215,0,0.2); padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase;">
+                🔮 PATH OF BUILDING TARGETS
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <textarea id="pobShareCodeArea" placeholder="Paste your Path of Building Share Code (Base64 string) copied from Export..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.68rem; width: 100%; height: 80px; outline: none; box-sizing: border-box; resize: none; font-family: monospace;"></textarea>
+                
+                <div style="display: flex; gap: 8px;">
+                  <button id="btnImportPob" onclick="handlePobImport()" class="gothic-btn" style="flex: 1; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 5px; font-size: 0.7rem; color: #ffd700; border-radius: 4px; cursor: pointer;">
+                    📥 DECODE POB CODE
+                  </button>
+                  <button id="btnRunAudit" onclick="runGeminiBuildAudit()" class="gothic-btn" style="flex: 1.2; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); padding: 5px; font-size: 0.7rem; color: #ffd700; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    🔮 RUN GEMINI AUDIT
+                  </button>
+                </div>
+                <div id="pobStatusMessage" style="font-size: 0.65rem; color: #2ecc71; text-align: center; display: none; font-weight: bold; line-height: 1.2;"></div>
+              </div>
+            </div>
+            
+          </div>
+          
+        </div>
+        
+        <!-- Deep Gemini theorycrafting Audit Card (Full Width) -->
+        <div id="geminiAuditResultsBox" style="display: none; width: 100%; margin-top: 20px; background: rgba(12, 10, 9, 0.98); border: 1px solid #ffd700; padding: 15px; border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.85); box-sizing: border-box;">
+          <!-- Advice goes here -->
+        </div>
+      `;
+      
+      populateEquippedSlotsGrid(activeOwner, isMyProfile);
+      calculateAndDrawProfileGauges(activeOwner);
+    }
+
+    const POB_SLOT_MAP = {
+      "helm": "Helmet",
+      "body": "Body Armour",
+      "gloves": "Gloves",
+      "boots": "Boots",
+      "amulet": "Amulet",
+      "ring1": "Ring 1",
+      "ring2": "Ring 2",
+      "belt": "Belt",
+      "weapon1": "Weapon 1",
+      "weapon2": "Weapon 2"
+    };
+
+    const SLOT_DISPLAY_LABELS = {
+      "helm": "Helmet Slot",
+      "body": "Body Armour",
+      "gloves": "Gloves Slot",
+      "boots": "Boots Slot",
+      "amulet": "Amulet Slot",
+      "ring1": "Ring 1 (Left)",
+      "ring2": "Ring 2 (Right)",
+      "belt": "Belt Slot",
+      "weapon1": "Main Hand Weapon",
+      "weapon2": "Off Hand Weapon/Shield"
+    };
+
+    function populateEquippedSlotsGrid(owner, isWritable) {
+      const grid = document.querySelector(".poe-equipped-grid");
+      if (!grid) return;
+      grid.innerHTML = "";
+      
+      const charData = (window.charGearData && window.charGearData[owner.toLowerCase()]) || {};
+      
+      Object.keys(POB_SLOT_MAP).forEach(slotId => {
+        const item = charData[slotId];
+        const label = SLOT_DISPLAY_LABELS[slotId];
+        
+        const slotEl = document.createElement("div");
+        slotEl.className = `profile-gear-slot ${item ? 'active-slot' : ''}`;
+        slotEl.id = `slot_${slotId}`;
+        
+        const iconWrapper = document.createElement("div");
+        iconWrapper.className = "profile-slot-icon-wrapper";
+        
+        const img = document.createElement("img");
+        img.className = "profile-slot-icon";
+        img.src = item ? item.url : getIconUrlFromBase(label);
+        img.style.opacity = item ? "1" : "0.15";
+        iconWrapper.appendChild(img);
+        
+        const meta = document.createElement("div");
+        meta.className = "profile-slot-meta";
+        
+        const labelSpan = document.createElement("span");
+        labelSpan.className = "profile-slot-label";
+        labelSpan.textContent = label;
+        meta.appendChild(labelSpan);
+        
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "profile-slot-item-name";
+        nameSpan.style.color = item ? (item.rarity.toLowerCase() === 'unique' ? '#af6025' : '#f7d05e') : '#a2a1a0';
+        nameSpan.textContent = item ? item.name : "Empty Slot";
+        meta.appendChild(nameSpan);
+        
+        slotEl.appendChild(iconWrapper);
+        slotEl.appendChild(meta);
+        
+        if (isWritable) {
+          const pasteBadge = document.createElement("span");
+          pasteBadge.className = "profile-slot-paste-indicator";
+          pasteBadge.textContent = "Ctrl+V";
+          slotEl.appendChild(pasteBadge);
+          
+          slotEl.tabIndex = 0; // Focusable for paste keypress
+          slotEl.onpaste = (e) => handleSlotPaste(e, slotId, owner);
+          slotEl.onclick = () => slotEl.focus();
+        }
+        
+        if (item) {
+          slotEl.onclick = (e) => {
+            e.stopPropagation();
+            showPoeTooltip(item);
+          };
+        }
+        
+        grid.appendChild(slotEl);
+      });
+    }
+
+    function parseCopiedPoEItem(text) {
+      const lines = text.split("\n").map(l => l.trim()).filter(l => l !== "");
+      if (lines.length < 2) return null;
+      
+      let rarity = "Rare";
+      let name = "Identified Item";
+      let base = "Gear";
+      let affixes = [];
+      
+      let itemClass = "";
+      let headerOffset = 0;
+      
+      if (lines[0].startsWith("Item Class:")) {
+        itemClass = lines[0].replace("Item Class:", "").trim();
+        headerOffset = 1;
+      }
+      
+      if (lines[headerOffset] && lines[headerOffset].startsWith("Rarity:")) {
+        rarity = lines[headerOffset].replace("Rarity:", "").trim();
+        name = lines[headerOffset + 1] || "Identified Item";
+        base = lines[headerOffset + 2] || "Gear";
+      }
+      
+      name = name.replace(/<<.*?>>/g, "");
+      base = base.replace(/<<.*?>>/g, "");
+      
+      const ignoredLines = ["requirements:", "level:", "item level:", "crafted:", "implicit:", "sockets:", "item class:", "rarity:", "unique id:"];
+      
+      lines.forEach(line => {
+        const lower = line.toLowerCase();
+        const isIgnored = ignoredLines.some(ig => lower.startsWith(ig)) || lower === "--------" || lower.includes("unidentified");
+        if (!isIgnored) {
+          affixes.push(line);
+        }
+      });
+      
+      return {
+        rarity: rarity,
+        name: name,
+        base: base,
+        level: 60,
+        ilvl: 80,
+        affixes: affixes,
+        price: "Live Equipped",
+        url: getIconUrlFromBase(base)
+      };
+    }
+
+    function parseStatsFromItemText(text) {
+      const stats = { fire: 0, cold: 0, light: 0, chaos: 0, str: 0, dex: 0, int: 0, life: 0 };
+      if (!text) return stats;
+      
+      const fireMatch = text.match(/\+([0-9]+)% to Fire Resistance/i);
+      if (fireMatch) stats.fire = parseInt(fireMatch[1], 10);
+      
+      const coldMatch = text.match(/\+([0-9]+)% to Cold Resistance/i);
+      if (coldMatch) stats.cold = parseInt(coldMatch[1], 10);
+      
+      const lightMatch = text.match(/\+([0-9]+)% to Lightning Resistance/i);
+      if (lightMatch) stats.light = parseInt(lightMatch[1], 10);
+      
+      const chaosMatch = text.match(/\+([0-9]+)% to Chaos Resistance/i);
+      if (chaosMatch) stats.chaos = parseInt(chaosMatch[1], 10);
+      
+      const strMatch = text.match(/\+([0-9]+) to Strength/i);
+      if (strMatch) stats.str = parseInt(strMatch[1], 10);
+      
+      const dexMatch = text.match(/\+([0-9]+) to Dexterity/i);
+      if (dexMatch) stats.dex = parseInt(dexMatch[1], 10);
+      
+      const intMatch = text.match(/\+([0-9]+) to Intelligence/i);
+      if (intMatch) stats.int = parseInt(intMatch[1], 10);
+      
+      const lifeMatch = text.match(/\+([0-9]+) to maximum Life/i) || text.match(/\+([0-9]+) to Life/i);
+      if (lifeMatch) stats.life = parseInt(lifeMatch[1], 10);
+      
+      return stats;
+    }
+
+    async function handleSlotPaste(event, slotId, owner) {
+      event.preventDefault();
+      const pastedText = event.clipboardData.getData("text");
+      if (!pastedText) return;
+      
+      const parsedItem = parseCopiedPoEItem(pastedText);
+      if (!parsedItem) {
+        alert("Failed to parse GGG item clipboard text. Hover over your item in-game, press Ctrl+C, select the slot and paste.");
+        return;
+      }
+      
+      if (!window.charGearData) window.charGearData = {};
+      const lowerOwner = owner.toLowerCase();
+      if (!window.charGearData[lowerOwner]) window.charGearData[lowerOwner] = {};
+      
+      window.charGearData[lowerOwner][slotId] = parsedItem;
+      
+      populateEquippedSlotsGrid(owner, true);
+      calculateAndDrawProfileGauges(owner);
+      
+      try {
+        const entryName = `ITEM_PERS_${lowerOwner}_CHAR_GEAR`;
+        const pushRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            p_name: entryName,
+            p_data: window.charGearData[lowerOwner],
+            p_write_key: GUILD_WRITE_KEY
+          })
+        });
+        
+        if (!pushRes.ok) {
+          throw new Error("Supabase returned: " + await pushRes.text());
+        }
+        
+        console.log(`Successfully synced equipped slot ${slotId} for player ${owner}`);
+      } catch (err) {
+        console.warn("Failed to sync equipped slot to database:", err);
+      }
+    }
+
+    async function loadPako() {
+      if (window.pako) return window.pako;
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js";
+        script.onload = () => resolve(window.pako);
+        script.onerror = () => reject(new Error("Failed to load Pako compression libraries dynamically."));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function handlePobImport() {
+      const codeArea = document.getElementById("pobShareCodeArea");
+      const msgBox = document.getElementById("pobStatusMessage");
+      if (!codeArea || !msgBox) return;
+      
+      const code = codeArea.value.trim();
+      if (!code) return;
+      
+      msgBox.style.display = "block";
+      msgBox.style.color = "#ffd700";
+      msgBox.textContent = "⏳ Decoding Base64/Zlib XML build tree...";
+      
+      try {
+        let cleaned = code.replace(/-/g, "+").replace(/_/g, "/");
+        const binaryString = atob(cleaned);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const pako = await loadPako();
+        const decompressed = pako.inflate(bytes, { to: "string" });
+        
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(decompressed, "application/xml");
+        
+        const stats = {};
+        const statNodes = xmlDoc.querySelectorAll("Build > PlayerStat");
+        statNodes.forEach(node => {
+          stats[node.getAttribute("stat")] = parseFloat(node.getAttribute("value")) || 0;
+        });
+        
+        const slots = {};
+        xmlDoc.querySelectorAll("Items > Slot").forEach(node => {
+          slots[node.getAttribute("name")] = node.getAttribute("itemId");
+        });
+        
+        const itemsMap = {};
+        xmlDoc.querySelectorAll("Items > Item").forEach(node => {
+          itemsMap[node.getAttribute("id")] = node.textContent || "";
+        });
+        
+        const plannedSum = { fire: 0, cold: 0, light: 0, chaos: 0, str: 0, dex: 0, int: 0, life: 0 };
+        
+        Object.keys(POB_SLOT_MAP).forEach(slotId => {
+          const pobSlotName = POB_SLOT_MAP[slotId];
+          const itemId = slots[pobSlotName];
+          if (itemId && itemsMap[itemId]) {
+            const itemStats = parseStatsFromItemText(itemsMap[itemId]);
+            plannedSum.fire += itemStats.fire;
+            plannedSum.cold += itemStats.cold;
+            plannedSum.light += itemStats.light;
+            plannedSum.chaos += itemStats.chaos;
+            plannedSum.str += itemStats.str;
+            plannedSum.dex += itemStats.dex;
+            plannedSum.int += itemStats.int;
+            plannedSum.life += itemStats.life;
+          }
+        });
+        
+        const baselineGoals = {
+          fire: stats["FireResist"] || 75,
+          cold: stats["ColdResist"] || 75,
+          light: stats["LightningResist"] || 75,
+          chaos: stats["ChaosResist"] || 0,
+          str: stats["Strength"] || 100,
+          dex: stats["Dexterity"] || 100,
+          int: stats["Intelligence"] || 100,
+          life: stats["Life"] || 3500,
+          dps: stats["TotalDPS"] || 0,
+          ehp: stats["EffectiveHitPool"] || 0
+        };
+        
+        const nakedBase = {
+          fire: baselineGoals.fire - plannedSum.fire,
+          cold: baselineGoals.cold - plannedSum.cold,
+          light: baselineGoals.light - plannedSum.light,
+          chaos: baselineGoals.chaos - plannedSum.chaos,
+          str: baselineGoals.str - plannedSum.str,
+          dex: baselineGoals.dex - plannedSum.dex,
+          int: baselineGoals.int - plannedSum.int,
+          life: baselineGoals.life - plannedSum.life
+        };
+        
+        const ownerSelect = document.getElementById("stashOwnerFilter");
+        const activeOwner = (ownerSelect ? ownerSelect.value : "Mike") || "Mike";
+        
+        const pobProfile = {
+          baselineGoals,
+          plannedSum,
+          nakedBase,
+          xmlStats: stats,
+          items: {}
+        };
+        
+        Object.keys(POB_SLOT_MAP).forEach(slotId => {
+          const pobSlotName = POB_SLOT_MAP[slotId];
+          const itemId = slots[pobSlotName];
+          if (itemId && itemsMap[itemId]) {
+            pobProfile.items[slotId] = parseRawPobItemIntoStandard(itemsMap[itemId], pobSlotName);
+          }
+        });
+        
+        localStorage.setItem(`pob_profile_${activeOwner.toLowerCase()}`, JSON.stringify(pobProfile));
+        
+        msgBox.style.color = "#2ecc71";
+        msgBox.textContent = `✅ Path of Building Import Successful! Target DPS: ${(baselineGoals.dps).toLocaleString()}`;
+        codeArea.value = "";
+        
+        calculateAndDrawProfileGauges(activeOwner);
+        
+      } catch (err) {
+        msgBox.style.color = "#ef4444";
+        msgBox.textContent = `❌ Import Failed: ${err.message}`;
+      }
+    }
+
+    function parseRawPobItemIntoStandard(rawText, slotName) {
+      const lines = rawText.split("\n").map(l => l.trim()).filter(l => l !== "");
+      let rarity = "Rare";
+      let name = "Planned Target Item";
+      let base = slotName;
+      let affixes = [];
+      
+      let modifierStartIndex = 3;
+      if (lines[0] && lines[0].startsWith("Rarity:")) {
+        rarity = lines[0].replace("Rarity:", "").trim();
+        name = lines[1] || "Planned Item";
+        base = lines[2] || slotName;
+      } else {
+        modifierStartIndex = 0;
+      }
+      
+      for (let i = modifierStartIndex; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.startsWith("Unique ID:") || line.startsWith("Item Level:") || line.startsWith("LevelReq:") || line.startsWith("Implicits:") || line.startsWith("Crafted:")) {
+          continue;
+        }
+        affixes.push(line);
+      }
+      
+      return {
+        rarity: rarity,
+        name: name,
+        base: base,
+        level: 60,
+        ilvl: 80,
+        affixes: affixes,
+        price: "PoB Target",
+        url: getIconUrlFromBase(base)
+      };
+    }
+
+    function calculateAndDrawProfileGauges(owner) {
+      const list = document.getElementById("profileGaugesList");
+      if (!list) return;
+      
+      list.innerHTML = "";
+      
+      const charData = (window.charGearData && window.charGearData[owner.toLowerCase()]) || {};
+      
+      const equippedSum = { fire: 0, cold: 0, light: 0, chaos: 0, str: 0, dex: 0, int: 0, life: 0 };
+      Object.keys(charData).forEach(slotId => {
+        const item = charData[slotId];
+        if (item) {
+          const itemText = (item.affixes || []).join(" ");
+          const itemStats = parseStatsFromItemText(itemText);
+          equippedSum.fire += itemStats.fire;
+          equippedSum.cold += itemStats.cold;
+          equippedSum.light += itemStats.light;
+          equippedSum.chaos += itemStats.chaos;
+          equippedSum.str += itemStats.str;
+          equippedSum.dex += itemStats.dex;
+          equippedSum.int += itemStats.int;
+          equippedSum.life += itemStats.life;
+        }
+      });
+      
+      const pobProfileStr = localStorage.getItem(`pob_profile_${owner.toLowerCase()}`);
+      let targetGoals = { fire: 75, cold: 75, light: 75, chaos: 0, str: 100, dex: 100, int: 100, life: 3500 };
+      let nakedBase = { fire: 0, cold: 0, light: 0, chaos: 0, str: 0, dex: 0, int: 0, life: 0 };
+      
+      if (pobProfileStr) {
+        try {
+          const pob = JSON.parse(pobProfileStr);
+          targetGoals = pob.baselineGoals;
+          nakedBase = pob.nakedBase;
+        } catch (err) {
+          console.warn("Failed to load PoB profile:", err);
+        }
+      }
+      
+      const netLive = {
+        fire: (nakedBase.fire || 0) + equippedSum.fire,
+        cold: (nakedBase.cold || 0) + equippedSum.cold,
+        light: (nakedBase.light || 0) + equippedSum.light,
+        chaos: (nakedBase.chaos || 0) + equippedSum.chaos,
+        str: (nakedBase.str || 0) + equippedSum.str,
+        dex: (nakedBase.dex || 0) + equippedSum.dex,
+        int: (nakedBase.int || 0) + equippedSum.int,
+        life: (nakedBase.life || 0) + equippedSum.life
+      };
+      
+      const statsList = [
+        { label: "🔥 Fire Resistance", val: netLive.fire, max: targetGoals.fire, color: "#ef4444", resCap: 75 },
+        { label: "❄️ Cold Resistance", val: netLive.cold, max: targetGoals.cold, color: "#3b82f6", resCap: 75 },
+        { label: "⚡ Lightning Resistance", val: netLive.light, max: targetGoals.light, color: "#eab308", resCap: 75 },
+        { label: "🛡️ Chaos Resistance", val: netLive.chaos, max: targetGoals.chaos || 0, color: "#10b981", resCap: 0 },
+        { label: "💪 Strength", val: netLive.str, max: targetGoals.str, color: "#f97316", resCap: 0 },
+        { label: "🎯 Dexterity", val: netLive.dex, max: targetGoals.dex, color: "#22c55e", resCap: 0 },
+        { label: "🔮 Intelligence", val: netLive.int, max: targetGoals.int, color: "#a855f7", resCap: 0 },
+        { label: "❤️ Maximum Life", val: netLive.life, max: targetGoals.life, color: "#ef4444", resCap: 0 }
+      ];
+      
+      statsList.forEach(stat => {
+        if (stat.max <= 0 && stat.val <= 0) return;
+        
+        const row = document.createElement("div");
+        row.className = "stat-gauge-row";
+        
+        const header = document.createElement("div");
+        header.className = "stat-gauge-header";
+        
+        const nameSpan = document.createElement("span");
+        nameSpan.style.color = "#cbd5e1";
+        nameSpan.style.fontWeight = "bold";
+        nameSpan.textContent = stat.label;
+        header.appendChild(nameSpan);
+        
+        const valSpan = document.createElement("span");
+        const isCapped = stat.resCap > 0 ? stat.val >= stat.resCap : stat.val >= stat.max;
+        valSpan.style.color = isCapped ? "#2ecc71" : "#f87171";
+        valSpan.style.fontWeight = "bold";
+        valSpan.textContent = `${stat.val}${stat.resCap > 0 ? '%' : ''} / ${stat.max}${stat.resCap > 0 ? '%' : ''}`;
+        header.appendChild(valSpan);
+        
+        row.appendChild(header);
+        
+        const barOuter = document.createElement("div");
+        barOuter.className = "stat-gauge-bar-outer";
+        
+        const barInner = document.createElement("div");
+        barInner.className = "stat-gauge-bar-inner";
+        barInner.style.backgroundColor = stat.color;
+        barInner.style.boxShadow = `0 0 8px ${stat.color}`;
+        
+        const percentage = Math.max(0, Math.min(100, Math.floor((stat.val / (stat.max || 100)) * 100)));
+        barInner.style.width = `${percentage}%`;
+        barOuter.appendChild(barInner);
+        
+        row.appendChild(barOuter);
+        list.appendChild(row);
+      });
+      
+      let gaps = [];
+      if (netLive.fire < targetGoals.fire) gaps.push({ name: "Fire Res", gap: targetGoals.fire - netLive.fire, gggId: "explicit.stat_3372524274", label: "🔥 BUY FIRE RES RING" });
+      if (netLive.cold < targetGoals.cold) gaps.push({ name: "Cold Res", gap: targetGoals.cold - netLive.cold, gggId: "explicit.stat_4220027924", label: "❄️ BUY COLD RES RING" });
+      if (netLive.light < targetGoals.light) gaps.push({ name: "Lightning Res", gap: targetGoals.light - netLive.light, gggId: "explicit.stat_1676847064", label: "⚡ BUY LIGHTNING RES RING" });
+      
+      if (gaps.length > 0) {
+        gaps.sort((a,b) => b.gap - a.gap);
+        const worst = gaps[0];
+        
+        const warning = document.createElement("div");
+        warning.style.marginTop = "12px";
+        warning.style.padding = "8px";
+        warning.style.background = "rgba(245,158,11,0.1)";
+        warning.style.border = "1px solid #f59e0b";
+        warning.style.borderRadius = "4px";
+        warning.style.fontSize = "0.7rem";
+        warning.style.color = "#f59e0b";
+        warning.style.lineHeight = "1.3";
+        warning.style.display = "flex";
+        warning.style.justifyContent = "space-between";
+        warning.style.alignItems = "center";
+        
+        warning.innerHTML = `
+          <span>⚠️ Missing <b>${worst.gap}% ${worst.name}</b> compared to planned PoB!</span>
+          <button onclick="window.open('https://www.pathofexile.com/trade/search/Runes%20of%20Aldur?q=${encodeURIComponent(JSON.stringify({
+            query: {
+              status: { option: "online" },
+              type: "Ring",
+              stats: [{ type: "and", filters: [{ id: worst.gggId, value: { min: Math.min(45, worst.gap) } }] }]
+            }
+          }))}', '_blank')" class="gothic-btn" style="border-color: #f59e0b; color: #f59e0b; padding: 2px 6px; font-size: 0.58rem; cursor: pointer;">
+            ${worst.label}
+          </button>
+        `;
+        list.appendChild(warning);
+      }
+    }
+
+    async function runGeminiBuildAudit() {
+      const loggedInUser = localStorage.getItem("loggedInUser") || "Mike";
+      const key = localStorage.getItem("geminiKey") || "";
+      
+      const resultsBox = document.getElementById("geminiAuditResultsBox");
+      if (!resultsBox) return;
+      
+      if (!key) {
+        alert("Please set your Gemini API Key in the browser extension first to execute deep AI audits!");
+        return;
+      }
+      
+      resultsBox.style.display = "block";
+      resultsBox.innerHTML = `
+        <div style="font-family: 'Outfit', sans-serif; text-align: center; padding: 15px; color: #ffd700;">
+          <span style="display: inline-block; width: 12px; height: 12px; border: 2px solid #ffd700; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px;"></span>
+          🔮 Gemini AI is theorycrafting your Patch 0.5 Endgame Audits...
+        </div>
+      `;
+      
+      try {
+        const charData = (window.charGearData && window.charGearData[loggedInUser.toLowerCase()]) || {};
+        const pobProfileStr = localStorage.getItem(`pob_profile_${loggedInUser.toLowerCase()}`);
+        
+        const promptContext = {
+          player: loggedInUser,
+          equippedItems: charData,
+          pobTargets: pobProfileStr ? JSON.parse(pobProfileStr).baselineGoals : "Default Endgame 75% caps",
+          pobItems: pobProfileStr ? JSON.parse(pobProfileStr).items : "Default setups"
+        };
+        
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+        
+        const payload = {
+          contents: [{
+            parts: [{ text: `Run a deep theorycrafting audit on my equipped character gear vs. my target Path of Building details under Patch 0.5 Runes of Aldur League:\n\n${JSON.stringify(promptContext)}` }]
+          }],
+          systemInstruction: {
+            parts: [{ text: `You are an expert Path of Exile 2 Theorycrafter and Build Auditor.
+PATCH CONTEXT: Path of Exile 2 (Patch 0.5 - Runes of Aldur League).
+INSTRUCTION: Evaluate the player's equipped items against their pasted Path of Building target stats. Identify deficiencies, gear mismatch rating, and recommend prioritized gear replacements. Focus on core PoE2 fundamentals: 75% elemental resistance caps, attribute requirements for high-level skill gems, evasion/armour scaling, and rune socketing (Iron, Gold, and Stone runes). Bias advice strictly toward recent Patch 0.5 mechanics (verisium upgrades, runic alloys, gold rune buffs). Reject deprecated or nerfed legacy modifiers from earlier versions. Return a structured JSON response.` }]
+          },
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                upgrade_priorities: {
+                  type: "ARRAY",
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      slot: { type: "STRING" },
+                      reason: { type: "STRING" }
+                    },
+                    required: ["slot", "reason"]
+                  }
+                },
+                defensive_analysis: { type: "STRING" },
+                runic_alloy_suggestions: { type: "STRING" },
+                pob_alignment_rating: { type: "INTEGER" },
+                theorycrafting_notes: { type: "STRING" }
+              },
+              required: ["upgrade_priorities", "defensive_analysis", "runic_alloy_suggestions", "pob_alignment_rating", "theorycrafting_notes"]
+            }
+          }
+        };
+        
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        
+        if (!res.ok) {
+          throw new Error("Gemini returned status " + res.status);
+        }
+        
+        const resJson = await res.json();
+        const audit = JSON.parse(resJson.candidates[0].content.parts[0].text);
+        
+        resultsBox.innerHTML = `
+          <div style="font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px dashed rgba(255,215,0,0.25); padding-bottom: 6px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase;">
+            <span>🔮 DEEP GEMINI ENDGAME THEORYCRAFTING AUDIT</span>
+            <span style="font-size: 0.75rem; color: #ffd700; background: rgba(255,215,0,0.1); border: 1px solid #ffd700; padding: 2px 6px; border-radius: 3px; font-weight: bold;">
+              POB ALIGNMENT: ${audit.pob_alignment_rating}/10
+            </span>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 12px; line-height: 1.45; font-size: 0.75rem; color: #cbd5e1;">
+            <div>
+              <span style="color: #ffd700; font-weight: bold; display: block; margin-bottom: 3px; text-transform: uppercase;">🚨 HIGHEST UPGRADE PRIORITIES</span>
+              <ul style="margin: 0; padding-left: 15px; display: flex; flex-direction: column; gap: 4px;">
+                ${audit.upgrade_priorities.map(p => `<li><b>${p.slot}:</b> ${p.reason}</li>`).join("")}
+              </ul>
+            </div>
+            
+            <div style="border-top: 1px solid rgba(197,168,128,0.1); padding-top: 8px;">
+              <span style="color: #3b82f6; font-weight: bold; display: block; margin-bottom: 3px; text-transform: uppercase;">🛡️ DEFENSIVE ANALYSIS</span>
+              <span>${audit.defensive_analysis}</span>
+            </div>
+            
+            <div style="border-top: 1px solid rgba(197,168,128,0.1); padding-top: 8px;">
+              <span style="color: #eab308; font-weight: bold; display: block; margin-bottom: 3px; text-transform: uppercase;">⚡ RUNIC SMITHING & SOCKETING UPDATES</span>
+              <span>${audit.runic_alloy_suggestions}</span>
+            </div>
+            
+            <div style="border-top: 1px solid rgba(197,168,128,0.1); padding-top: 8px; font-style: italic; color: #a2a1a0;">
+              <span style="color: #2ecc71; font-weight: bold; display: block; margin-bottom: 3px; font-style: normal; text-transform: uppercase;">💬 PRO THEORYCRAFTER NOTES</span>
+              "${audit.theorycrafting_notes}"
+            </div>
+          </div>
+        `;
+        
+      } catch (err) {
+        resultsBox.innerHTML = `
+          <div style="font-family: 'Outfit', sans-serif; text-align: center; padding: 15px; color: #ef4444; font-weight: bold;">
+            ❌ AI Audit Failed: ${err.message}. Make sure your Gemini Key is saved in the browser extension!
+          </div>
+        `;
+      }
+    }
+
     // Initialize triggers
     document.addEventListener("DOMContentLoaded", () => {
       loadScannedStash();
       initQVCShowroom();
+      updateLoginUIState(); // Load session state on launch
       
       // Load saved stash item size slider state (defaults to 85px)
       const savedSize = localStorage.getItem("stashCellSize") || "85";
