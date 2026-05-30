@@ -952,6 +952,188 @@
       height: 100%;
       transition: width 0.4s cubic-bezier(0.1, 0.8, 0.25, 1);
     }
+    
+    /* V3.0 Guild Hall AI Sandbox Styles */
+    .poe-inventory-container {
+      width: 100%;
+      height: 480px;
+      background: radial-gradient(circle, rgba(20, 16, 12, 0.95) 0%, rgba(5, 4, 3, 0.99) 100%);
+      border: 2px solid rgba(197, 168, 128, 0.25);
+      border-radius: 6px;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.95), 0 10px 20px rgba(0,0,0,0.8);
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+      background-image: url('assets/images/backgrounds/GLG_vault_backdrop.png');
+      background-size: cover;
+      background-position: center;
+    }
+    
+    .poe-inventory-slot {
+      position: absolute;
+      width: 62px;
+      height: 62px;
+      background: rgba(10, 8, 7, 0.85);
+      border: 1px solid rgba(197, 168, 128, 0.25);
+      border-radius: 4px;
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.95);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.1, 0.8, 0.25, 1);
+    }
+    
+    .poe-inventory-slot:hover {
+      border-color: #ffd700;
+      background: rgba(197, 168, 128, 0.08);
+      box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.15);
+    }
+    
+    .poe-inventory-slot.active-slot {
+      border-color: #2ecc71 !important;
+      box-shadow: inset 0 0 12px rgba(46,204,113,0.15), 0 0 8px rgba(46,204,113,0.25);
+    }
+    
+    .poe-inventory-slot.weapon-slot {
+      height: 135px;
+    }
+    
+    .poe-inventory-slot-icon {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.85));
+    }
+    
+    .poe-inventory-slot-label {
+      position: absolute;
+      bottom: -15px;
+      width: 100%;
+      text-align: center;
+      font-size: 0.52rem;
+      color: #a2a1a0;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+    }
+
+    .poe-inventory-slot-paste {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      font-size: 0.45rem;
+      color: #2ecc71;
+      font-weight: bold;
+      background: rgba(46, 204, 113, 0.15);
+      border: 1px solid rgba(46, 204, 113, 0.3);
+      padding: 0 3px;
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .poe-inventory-slot:hover .poe-inventory-slot-paste {
+      opacity: 1;
+    }
+
+    /* Victorian Gold frame style */
+    .gold-portrait-frame {
+      width: 320px;
+      height: 400px;
+      background: linear-gradient(135deg, #1c150c 0%, #0d0a08 100%);
+      border: 14px solid transparent;
+      border-image: linear-gradient(to bottom, #d4af37, #aa7c11, #d4af37) 14;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.9), 0 0 25px rgba(255, 215, 0, 0.1);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    
+    .gold-portrait-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: sepia(0.12) contrast(1.05) brightness(0.95);
+      transition: all 0.5s ease;
+    }
+    
+    /* Scroll Story Parchment Wrapper */
+    .scroll-parchment {
+      background: radial-gradient(ellipse at center, #f6edd9 0%, #e0ceac 100%);
+      border: 2px solid #5a4627;
+      border-radius: 4px;
+      padding: 20px;
+      color: #3b2712;
+      font-family: 'Outfit', sans-serif;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6), inset 0 0 25px rgba(90,70,39,0.25);
+      line-height: 1.55;
+      font-size: 0.8rem;
+      border-image: linear-gradient(to right, #5a4627, #8a6c3e, #5a4627) 2;
+      max-height: 250px;
+      overflow-y: auto;
+      position: relative;
+      box-sizing: border-box;
+    }
+    
+    .scroll-parchment::-webkit-scrollbar {
+      width: 6px;
+    }
+    .scroll-parchment::-webkit-scrollbar-thumb {
+      background: #8a6c3e;
+      border-radius: 3px;
+    }
+    
+    /* Interactive Constellation passives map */
+    .constellation-map-svg {
+      width: 100%;
+      height: 380px;
+      background: radial-gradient(circle, #0e0a08 0%, #030202 100%);
+      border: 1px solid rgba(197,168,128,0.2);
+      border-radius: 4px;
+      cursor: grab;
+    }
+    
+    .constellation-map-svg:active {
+      cursor: grabbing;
+    }
+    
+    /* Draggable window modal styling */
+    .draggable-gothic-window {
+      position: fixed;
+      z-index: 1000;
+      background: rgba(12, 10, 9, 0.99);
+      border: 2px solid #ffd700;
+      border-radius: 4px;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.95), 0 0 30px rgba(255, 215, 0, 0.15);
+      min-width: 380px;
+      display: none;
+      box-sizing: border-box;
+    }
+    
+    .gothic-window-header {
+      background: linear-gradient(90deg, #2d2616 0%, #0c0a09 100%);
+      border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+      padding: 8px 12px;
+      font-family: var(--font-header);
+      color: #ffd700;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      cursor: move;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    
+    .gothic-window-body {
+      padding: 15px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
@@ -1584,6 +1766,16 @@
           const passcodeEntry = entries.find(e => e.name === "__GUILD_PASSCODES__");
           if (passcodeEntry && passcodeEntry.data) {
             userPasscodeHashes = { ...DEFAULT_PASSCODE_HASHES, ...passcodeEntry.data };
+          }
+
+          const adminConfigEntry = entries.find(e => e.name === "__GUILD_ADMIN_CONFIG__");
+          if (adminConfigEntry && adminConfigEntry.data) {
+            localStorage.setItem("__GUILD_ADMIN_CONFIG__", JSON.stringify(adminConfigEntry.data));
+          }
+
+          const portraitsEntry = entries.find(e => e.name === "__GUILD_PORTRAITS__");
+          if (portraitsEntry && portraitsEntry.data) {
+            window.__GUILD_PORTRAITS__ = portraitsEntry.data;
           }
 
           const vaultEntry = entries.find(e => e.name === "__GUILD_VAULT__");
@@ -2796,7 +2988,7 @@
       
       filterSelect.innerHTML = `<option value="all">🛡️ Guild (All)</option>`;
       
-      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "Mike", "pseudofro", "Smooth"];
+      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth"];
       
       profiles.forEach(owner => {
         const opt = document.createElement("option");
@@ -3102,8 +3294,8 @@
       "chaz": "ddb17e5b8507c3a861fe23bfc9a38a3ac6462cf0ed331f2cc2ae8b8e587683de", // chz42
       "creg": "01dcef73763a5e49774bff772269f818be1ceb86600b486668ac7a659b06463a", // crg88
       "huneybutta": "b042927dd1b6249c78655880ab617219dcb971b5176fabdac61c626614340a42", // hny13
-      "mike": "c49807536f99990640fbd85a3a5860a79a2fff0ae40dec59dddfbea5a4d99e55", // mik95
       "pseudofro": "394d29b7998e3510c930746d15e2a61d5cb87a08f0fb59ad94d0b8212fae0d80", // psd64
+      "radiocommander": "1bc844f5e006387edaf2de438063666b0c21c72dfd4636666d6db2b64cd6bf9b", // rad75
       "smooth": "9741cb6124b4184fa4d7c24400a9d35079bdc3ea98c59590af05b15f1da3cd62" // smh27
     };
 
@@ -3137,7 +3329,7 @@
       
       select.innerHTML = "";
       
-      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "Mike", "pseudofro", "Smooth"];
+      const profiles = ["baoRunner", "Chaz", "Creg", "HuneyButta", "pseudofro", "Radiocommander", "Smooth"];
       
       profiles.forEach(profile => {
         const opt = document.createElement("option");
@@ -3334,9 +3526,9 @@
       if (!viewport) return;
       
       const ownerSelect = document.getElementById("stashOwnerFilter");
-      let activeOwner = ownerSelect ? ownerSelect.value : "Mike";
+      let activeOwner = ownerSelect ? ownerSelect.value : "creg";
       if (activeOwner === "all" || !activeOwner) {
-        activeOwner = localStorage.getItem("loggedInUser") || "Mike";
+        activeOwner = localStorage.getItem("loggedInUser") || "Creg";
       }
       
       const capitalizedOwner = activeOwner.charAt(0).toUpperCase() + activeOwner.slice(1).toLowerCase();
@@ -3344,73 +3536,248 @@
       const isMyProfile = loggedInUser.toLowerCase() === activeOwner.toLowerCase();
       
       viewport.innerHTML = `
-        <div style="font-family: 'Outfit', sans-serif; font-weight: bold; color: #ffd700; border-bottom: 1px dashed rgba(197,168,128,0.25); padding-bottom: 8px; margin-bottom: 15px; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center;">
-          <span>👤 ${capitalizedOwner.toUpperCase()}'S CHARACTER PROFILE</span>
-          <span style="font-size: 0.72rem; color: #a2a1a0; background: rgba(197, 168, 128, 0.08); border: 1px solid rgba(197, 168, 128, 0.2); padding: 2px 8px; border-radius: 3px;">
-            ${isMyProfile ? '🟢 AUTHORIZED WRITER' : '👁️ READ ONLY VIEW'}
-          </span>
+        <!-- Title scroll banner matching the wireframe -->
+        <div style="background: linear-gradient(180deg, rgba(45,38,22,0.85) 0%, rgba(12,10,9,0.98) 100%); border: 2px solid #ffd700; border-radius: 4px; width: 100%; max-width: 600px; margin: 0 auto 15px auto; padding: 20px 20px; text-align: center; box-sizing: border-box; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.6));">
+          <h2 id="guildmateCharacterNameHeader" style="margin: 0; font-family: var(--font-header); font-size: 1.8rem; color: #ffd700; font-weight: 800; text-transform: uppercase;">
+            ${capitalizedOwner}
+          </h2>
+          <div id="guildmateCharacterSillyTitle" style="font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: bold; color: #cbd5e1; margin-top: 6px; font-style: italic; letter-spacing: 0.5px;">
+            ⌛ Loading silly character title...
+          </div>
         </div>
-        
-        <div class="profile-layout-container">
+
+        <div style="font-size: 0.72rem; text-align: center; color: #a2a1a0; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ${isMyProfile ? '🟢 ACTIVE PROFILE (Authorized Writer)' : '👁️ READ ONLY SIGHTSEEING'}
+        </div>
+
+        <div class="profile-layout-container" style="display: flex; flex-direction: column; gap: 20px; max-width: 1000px; margin: 0 auto;">
           
-          <!-- Column 1: Equipped Gear Slots Grid (PoE Style) -->
-          <div class="profile-gear-column" style="flex: 1.2; min-width: 320px; background: rgba(12, 10, 9, 0.95); border: 1px solid rgba(197,168,128,0.2); padding: 15px; border-radius: 4px; box-shadow: inset 0 0 20px rgba(0,0,0,0.85);">
-            <div style="font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px; margin-bottom: 12px; text-transform: uppercase;">
-              EQUIPPED GEAR SLOTS ${isMyProfile ? '(Ctrl+C item in-game -> Click slot & Ctrl+V)' : ''}
-            </div>
-            
-            <div class="poe-equipped-grid">
-              <!-- Equipment Slots populated dynamically -->
+          <!-- Ornate Gold-Framed Victorian Portrait Section -->
+          <div style="text-align: center; position: relative;">
+            <div class="gold-portrait-frame">
+              <img id="victorianPortraitImg" class="gold-portrait-image" src="" alt="Victorian Portrait Placeholder">
+              <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(12,10,9,0.9); padding: 8px; box-sizing: border-box; border-top: 1px solid rgba(197,168,128,0.3); text-align: center;">
+                <button id="btnRegenPortrait" onclick="generateVictorianPortrait(true)" class="gothic-btn" style="padding: 2px 10px; font-size: 0.6rem; border-color: #ffd700; color: #ffd700; cursor: pointer;">
+                  🎨 GENERATE / REFRESH PORTRAIT (COOLDOWN)
+                </button>
+              </div>
             </div>
           </div>
-          
-          <!-- Column 2: Deficiency progress gauges & PoB Auditor -->
-          <div class="profile-gauges-column" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 15px;">
-            
-            <!-- Audited stats card -->
-            <div class="profile-auditor-card" style="background: rgba(12, 10, 9, 0.95); border: 1px solid rgba(197,168,128,0.2); padding: 15px; border-radius: 4px; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
-              <div style="font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase;">
-                📊 ENDGAME RESISTANCES & ATTRIBUTES
-              </div>
-              
-              <div style="display: flex; flex-direction: column; gap: 10px;" id="profileGaugesList">
-                <!-- Gauges drawn dynamically -->
-              </div>
+
+          <!-- Latest Adventures Scroll story Builder widget -->
+          <div class="vault-stash-wrapper" style="border-color: rgba(197, 168, 128, 0.35); max-width: 600px; margin: 0 auto; width: 100%;">
+            <div style="text-align: center; font-family: var(--font-header); font-size: 1.1rem; color: #ffd700; border-bottom: 1px solid rgba(197,168,128,0.2); padding-bottom: 6px; margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase;">
+              📜 LATEST ADVENTURES LOG
             </div>
             
-            <!-- Path of Building & Gemini Auditor control card -->
-            <div class="profile-pob-card" style="background: rgba(12, 10, 9, 0.95); border: 1px solid #ffd700; padding: 15px; border-radius: 4px; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
-              <div style="font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: #ffd700; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,215,0,0.2); padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase;">
-                🔮 PATH OF BUILDING TARGETS
-              </div>
-              
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <textarea id="pobShareCodeArea" placeholder="Paste your Path of Building Share Code (Base64 string) copied from Export..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.68rem; width: 100%; height: 80px; outline: none; box-sizing: border-box; resize: none; font-family: monospace;"></textarea>
-                
-                <div style="display: flex; gap: 8px;">
-                  <button id="btnImportPob" onclick="handlePobImport()" class="gothic-btn" style="flex: 1; border: 1px solid #c5a880; background: linear-gradient(180deg, #1c1917 0%, #0c0a09 100%); padding: 5px; font-size: 0.7rem; color: #ffd700; border-radius: 4px; cursor: pointer;">
-                    📥 DECODE POB CODE
-                  </button>
-                  <button id="btnRunAudit" onclick="runGeminiBuildAudit()" class="gothic-btn" style="flex: 1.2; border: 1px solid #ffd700; background: linear-gradient(180deg, #2d2616 0%, #0c0a09 100%); padding: 5px; font-size: 0.7rem; color: #ffd700; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    🔮 RUN GEMINI AUDIT
-                  </button>
+            <!-- Parchment text narrative log -->
+            <div class="scroll-parchment" id="adventureScrollLog" style="margin-bottom: 15px;">
+              <i>A quiet fireplace crackles in the Guild Hall. Select your campaign location, enter a prompt, and summon the bard...</i>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px;">
+                  <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Active Campaign Act</label>
+                  <select id="adventureActSelect" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.72rem; outline: none; cursor: pointer; font-family: 'Outfit', sans-serif;">
+                    <option value="Act 1">Act 1: The Orian Forest</option>
+                    <option value="Act 2">Act 2: The Sands of Mastaba</option>
+                    <option value="Act 3">Act 3: The Sarn Depths</option>
+                    <option value="Act 4">Act 4: Mount Verisium</option>
+                    <option value="Endgame Maps">Endgame: T16 Constellation Spire</option>
+                  </select>
                 </div>
-                <div id="pobStatusMessage" style="font-size: 0.65rem; color: #2ecc71; text-align: center; display: none; font-weight: bold; line-height: 1.2;"></div>
+                
+                <div style="display: flex; flex-direction: column; gap: 4px; flex: 2; min-width: 220px;">
+                  <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">What happens? (Short narrative details)</label>
+                  <input type="text" id="adventurePromptInput" placeholder="e.g. got slammed by a massive minotaur, dropped 2 divine orbs..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.72rem; outline: none; box-sizing: border-box;">
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 8px; justify-content: center; margin-top: 5px;">
+                <button id="btnGenerateAdventure" onclick="generateBardicTale()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.7rem; padding: 6px 15px; cursor: pointer;">
+                  🎙️ HEAR MY TALE! (SUBMIT)
+                </button>
+                <button id="btnSaveMp3" onclick="downloadBardicAudio()" class="gothic-btn" style="border-color: #2ecc71; color: #2ecc71; font-size: 0.7rem; padding: 6px 15px; display: none; cursor: pointer; font-weight: bold;">
+                  💾 SAVE (AS MP3)
+                </button>
               </div>
             </div>
+          </div>
+
+          <!-- Path of Building shares importer -->
+          <div class="vault-stash-wrapper" style="border-color: rgba(197, 168, 128, 0.2); max-width: 600px; margin: 0 auto; width: 100%;">
+            <div style="font-family: 'Outfit', sans-serif; font-size: 0.7rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 8px; text-transform: uppercase; text-align: center;">
+              📥 PATH OF BUILDING SHARE CODES
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <textarea id="pobShareCodeArea" placeholder="Paste your Path of Building Share Code (Base64 string) copied from Export..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.68rem; width: 100%; height: 60px; outline: none; box-sizing: border-box; resize: none; font-family: monospace;"></textarea>
+              <div style="display: flex; gap: 8px;">
+                <button id="btnImportPob" onclick="handlePobImport()" class="gothic-btn" style="flex: 1; border-color: #c5a880; color: #ffd700; padding: 4px; font-size: 0.68rem; cursor: pointer;">
+                  📥 DECODE POB CODE
+                </button>
+              </div>
+              <div id="pobStatusMessage" style="font-size: 0.65rem; color: #2ecc71; text-align: center; display: none; font-weight: bold; line-height: 1.2;"></div>
+            </div>
+          </div>
+
+          <!-- 1:1 PoE-Style Visual Inventory Overlay Panel -->
+          <div style="max-width: 480px; width: 100%; margin: 10px auto; position: relative; box-sizing: border-box;">
+            <div style="font-family: var(--font-header); font-size: 0.8rem; color: #a2a1a0; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(197,168,128,0.1); padding-bottom: 4px; margin-bottom: 15px; text-transform: uppercase; text-align: center;">
+              🛡️ EQUIPPED CHARACTER LOADOUT ${isMyProfile ? '(Click slot -> Ctrl+V)' : ''}
+            </div>
             
+            <div class="poe-inventory-container" id="poeInventoryBoard">
+              <!-- Render slots absolutely according to PoE in-game client coordinate bounds -->
+            </div>
+          </div>
+
+          <!-- Dashboard buttons -->
+          <div style="display: flex; justify-content: center; gap: 12px; margin-top: 5px;">
+            <button onclick="togglePersonalStashModal(true)" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.72rem; padding: 8px 20px; cursor: pointer;">
+              📁 VIEW PERSONAL STASH
+            </button>
+            <button onclick="toggleBuildOptimizerModal(true)" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.72rem; padding: 8px 20px; cursor: pointer;">
+              ⚖️ OPEN BUILD OPTIMIZER
+            </button>
+          </div>
+
+          <!-- Tabbed interface for Constellation passives and resistance stats -->
+          <div class="vault-stash-wrapper" style="border-color: rgba(197,168,128,0.25); max-width: 750px; width: 100%; margin: 15px auto 0 auto; box-sizing: border-box; background: rgba(12, 10, 9, 0.98);">
+            <div style="display: flex; border-bottom: 1px solid rgba(197,168,128,0.2); margin-bottom: 15px; gap: 8px;">
+              <button id="btnProfileTabStats" onclick="switchProfileSubTab('stats')" class="gothic-tab-btn active" style="font-family: var(--font-header); font-size: 0.72rem; letter-spacing: 1px; padding: 6px 12px; background: none; border: none; color: #ffd700; border-bottom: 2px solid #ffd700; cursor: pointer;">
+                📊 ACTIVE ATTRIBUTES & DEFICIENCIES
+              </button>
+              <button id="btnProfileTabPassives" onclick="switchProfileSubTab('passives')" class="gothic-tab-btn" style="font-family: var(--font-header); font-size: 0.72rem; letter-spacing: 1px; padding: 6px 12px; background: none; border: none; color: #a2a1a0; cursor: pointer;">
+                ✨ CONSTELLATION SKILLS MAP
+              </button>
+            </div>
+
+            <!-- Profile tab content panel -->
+            <div id="profileSubTabContentStats">
+              <div style="display: flex; flex-direction: column; gap: 10px;" id="profileGaugesList">
+                <!-- Symmetrical resistances progress bar bars populated here -->
+              </div>
+            </div>
+
+            <div id="profileSubTabContentPassives" style="display: none;">
+              <div style="font-size: 0.65rem; color: #a2a1a0; margin-bottom: 8px; font-style: italic;">
+                🌠 Active Keystone and Notable constellations decoded from your imported build tree (Drag to Pan, Scroll to Zoom):
+              </div>
+              <svg id="passiveConstellationSvg" class="constellation-map-svg">
+                <!-- SVG nodes drawn here dynamically -->
+              </svg>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Draggable Pop-out modal for Personal Stash Stash items -->
+        <div id="personalStashModal" class="draggable-gothic-window" style="width: 440px; top: 180px; left: 60px;">
+          <div class="gothic-window-header" id="personalStashModalHeader">
+            <span>📁 ${capitalizedOwner.toUpperCase()}'S PERSONAL STASH</span>
+            <button onclick="togglePersonalStashModal(false)" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; padding: 0 4px;">✕</button>
+          </div>
+          <div class="gothic-window-body">
+            <div class="depot-stash-grid" id="personalStashGrid" style="grid-template-columns: repeat(4, 1fr); gap: 8px; min-height: 250px;">
+              <!-- Stash gear populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Draggable Pop-out modal for Build Optimizer audits -->
+        <div id="buildOptimizerModal" class="draggable-gothic-window" style="width: 550px; top: 220px; left: 140px;">
+          <div class="gothic-window-header" id="buildOptimizerModalHeader">
+            <span>⚖️ BUILD DEFICIENCY OPTIMIZER</span>
+            <button onclick="toggleBuildOptimizerModal(false)" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; padding: 0 4px;">✕</button>
+          </div>
+          <div class="gothic-window-body" style="background: rgba(12, 10, 9, 0.99);">
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; justify-content: center;">
+              <button onclick="runGeminiBuildAudit()" class="gothic-btn" style="border-color:#ffd700; color:#ffd700; font-weight:bold; font-size:0.75rem; padding: 6px 15px; width: 100%; cursor: pointer;">
+                🔮 RUN GEMINI BUILD AUDIT
+              </button>
+            </div>
+            
+            <div id="geminiAuditResultsBox" style="display: none; background: rgba(10, 8, 6, 0.6); border: 1px solid rgba(255, 215, 0, 0.25); padding: 12px; border-radius: 4px; box-sizing: border-box;">
+              <!-- Gemini JSON results mapped here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Collapsible Private Admin console drawer panel -->
+        <div class="vault-stash-wrapper" style="border-color: #ffd700; max-width: 600px; margin: 30px auto 10px auto; width: 100%; box-sizing: border-box; background: rgba(12, 10, 9, 0.98);">
+          <div onclick="toggleAdminLikenessSection()" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+            <span style="font-family: var(--font-header); font-size: 0.8rem; color: #ffd700; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">
+              👑 ADMINISTRATOR LIKENESS CONSOLE
+            </span>
+            <span id="adminLikenessConsoleToggleIcon" style="color: #ffd700; font-size: 0.8rem;">[+] EXPAND</span>
           </div>
           
-        </div>
-        
-        <!-- Deep Gemini theorycrafting Audit Card (Full Width) -->
-        <div id="geminiAuditResultsBox" style="display: none; width: 100%; margin-top: 20px; background: rgba(12, 10, 9, 0.98); border: 1px solid #ffd700; padding: 15px; border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.85); box-sizing: border-box;">
-          <!-- Advice goes here -->
+          <div id="adminConsolePanel" style="display: none; border-top: 1px dashed rgba(255,215,0,0.25); margin-top: 12px; padding-top: 10px;">
+            <div style="font-size: 0.65rem; color: #a2a1a0; margin-bottom: 10px; font-style: italic;">
+              Log in as a guild administrator (Creg or Radiocommander passcodes) to customize character likeness photos and teasing prompts:
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+                  <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase;">Target Member</label>
+                  <select id="adminTargetSelect" onchange="loadAdminPlayerConfig()" style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 5px; border-radius: 4px; font-size: 0.7rem; outline: none; cursor: pointer;">
+                    <option value="baorunner">baoRunner</option>
+                    <option value="chaz">Chaz</option>
+                    <option value="creg">Creg</option>
+                    <option value="huneybutta">HuneyButta</option>
+                    <option value="pseudofro">pseudofro</option>
+                    <option value="radiocommander">Radiocommander</option>
+                    <option value="smooth">Smooth</option>
+                  </select>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 4px; flex: 2; min-width: 200px;">
+                  <label style="font-size: 0.58rem; color: #a2a1a0; font-weight: bold; text-transform: uppercase;">Victorian Likeness/Teasing prompt</label>
+                  <input type="text" id="adminLikenessPromptInput" placeholder="e.g. A tall archer who always hoards portal scrolls, curly hair..." style="background: #12100e; border: 1px solid rgba(197, 168, 128, 0.25); color: #cbd5e1; padding: 5px; border-radius: 4px; font-size: 0.7rem; outline: none; box-sizing: border-box;">
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 8px; align-items: center; margin-top: 5px;">
+                <button onclick="saveAdminPlayerConfig()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-size: 0.68rem; padding: 4px 12px; height: 26px; cursor: pointer;">
+                  💾 SAVE PLAYER CONFIG
+                </button>
+                <span id="adminConsoleStatus" style="font-size: 0.65rem; font-weight: bold;"></span>
+              </div>
+            </div>
+          </div>
         </div>
       `;
       
+      // Initialize Draggable modals
+      initDraggableWindow("personalStashModal", "personalStashModalHeader");
+      initDraggableWindow("buildOptimizerModal", "buildOptimizerModalHeader");
+      
+      // Load generated portrait and titles
+      generateVictorianPortrait(false);
+      generateCharacterSillyTitle();
+      
+      // Draw grid slots absolutely on in-game grid panel
       populateEquippedSlotsGrid(activeOwner, isMyProfile);
       calculateAndDrawProfileGauges(activeOwner);
+      
+      // Pre-load active constellation skills if build is saved
+      const savedPob = localStorage.getItem(`pob_profile_${activeOwner.toLowerCase()}`);
+      if (savedPob) {
+        try {
+          const parsed = JSON.parse(savedPob);
+          if (parsed.xmlStats) {
+            // Fake or generate XML nodes to draw
+            const dummyXml = new DOMParser().parseFromString(`<Spec nodes="${Object.keys(parsed.xmlStats).filter(k => k.match(/^\d+$/)).join(',')}"></Spec>`, "application/xml");
+            drawPassiveConstellationMap(dummyXml);
+          }
+        } catch (e) {
+          console.warn("Failed constellation pre-draw:", e);
+        }
+      } else {
+        drawPassiveConstellationMap(new DOMParser().parseFromString(`<Spec></Spec>`, "application/xml"));
+      }
     }
 
     const POB_SLOT_MAP = {
@@ -3439,50 +3806,56 @@
       "weapon2": "Off Hand Weapon/Shield"
     };
 
+    const SLOT_POSITIONS = {
+      "weapon1": { left: "20px", top: "120px", width: "70px", height: "180px", class: "weapon-slot" },
+      "weapon2": { right: "20px", top: "120px", width: "70px", height: "180px", class: "weapon-slot" },
+      "helm": { left: "204px", top: "25px", width: "72px", height: "72px" },
+      "body": { left: "204px", top: "125px", width: "72px", height: "115px" },
+      "belt": { left: "204px", top: "265px", width: "72px", height: "45px" },
+      "amulet": { left: "305px", top: "45px", width: "48px", height: "48px" },
+      "ring1": { left: "120px", top: "135px", width: "48px", height: "48px" },
+      "ring2": { left: "312px", top: "135px", width: "48px", height: "48px" },
+      "gloves": { left: "115px", top: "210px", width: "62px", height: "62px" },
+      "boots": { left: "303px", top: "210px", width: "62px", height: "62px" }
+    };
+
     function populateEquippedSlotsGrid(owner, isWritable) {
-      const grid = document.querySelector(".poe-equipped-grid");
+      const grid = document.getElementById("poeInventoryBoard");
       if (!grid) return;
       grid.innerHTML = "";
       
       const charData = (window.charGearData && window.charGearData[owner.toLowerCase()]) || {};
       
-      Object.keys(POB_SLOT_MAP).forEach(slotId => {
+      Object.keys(SLOT_POSITIONS).forEach(slotId => {
         const item = charData[slotId];
         const label = SLOT_DISPLAY_LABELS[slotId];
+        const pos = SLOT_POSITIONS[slotId];
         
         const slotEl = document.createElement("div");
-        slotEl.className = `profile-gear-slot ${item ? 'active-slot' : ''}`;
+        slotEl.className = `poe-inventory-slot ${item ? 'active-slot' : ''}`;
         slotEl.id = `slot_${slotId}`;
         
-        const iconWrapper = document.createElement("div");
-        iconWrapper.className = "profile-slot-icon-wrapper";
+        // Absolute positions matching PoE grid panel exactly
+        if (pos.left) slotEl.style.left = pos.left;
+        if (pos.right) slotEl.style.right = pos.right;
+        slotEl.style.top = pos.top;
+        slotEl.style.width = pos.width;
+        slotEl.style.height = pos.height;
         
         const img = document.createElement("img");
-        img.className = "profile-slot-icon";
+        img.className = "poe-inventory-slot-icon";
         img.src = item ? item.url : getIconUrlFromBase(label);
         img.style.opacity = item ? "1" : "0.15";
-        iconWrapper.appendChild(img);
-        
-        const meta = document.createElement("div");
-        meta.className = "profile-slot-meta";
+        slotEl.appendChild(img);
         
         const labelSpan = document.createElement("span");
-        labelSpan.className = "profile-slot-label";
-        labelSpan.textContent = label;
-        meta.appendChild(labelSpan);
-        
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "profile-slot-item-name";
-        nameSpan.style.color = item ? (item.rarity.toLowerCase() === 'unique' ? '#af6025' : '#f7d05e') : '#a2a1a0';
-        nameSpan.textContent = item ? item.name : "Empty Slot";
-        meta.appendChild(nameSpan);
-        
-        slotEl.appendChild(iconWrapper);
-        slotEl.appendChild(meta);
+        labelSpan.className = "poe-inventory-slot-label";
+        labelSpan.textContent = item ? "" : label.replace(" Slot", "");
+        slotEl.appendChild(labelSpan);
         
         if (isWritable) {
           const pasteBadge = document.createElement("span");
-          pasteBadge.className = "profile-slot-paste-indicator";
+          pasteBadge.className = "poe-inventory-slot-paste";
           pasteBadge.textContent = "Ctrl+V";
           slotEl.appendChild(pasteBadge);
           
@@ -4047,10 +4420,837 @@ INSTRUCTION: Evaluate the player's equipped items against their pasted Path of B
         
       } catch (err) {
         resultsBox.innerHTML = `
+      } catch (err) {
+        resultsBox.innerHTML = `
           <div style="font-family: 'Outfit', sans-serif; text-align: center; padding: 15px; color: #ef4444; font-weight: bold;">
             ❌ AI Audit Failed: ${err.message}. Make sure your Gemini Key is saved in the browser extension!
           </div>
         `;
+      }
+    }
+
+    // ==========================================
+    // STASH SCANNER V3.0 SANDBOX ENGINE OVERHAUL
+    // ==========================================
+
+    // 1. Draggable Gothic Windows Helper
+    function initDraggableWindow(elementId, headerId) {
+      const win = document.getElementById(elementId);
+      const header = document.getElementById(headerId);
+      if (!win || !header) return;
+      
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      header.onmousedown = dragMouseDown;
+      
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+      }
+      
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        win.style.top = (win.offsetTop - pos2) + "px";
+        win.style.left = (win.offsetLeft - pos1) + "px";
+      }
+      
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+
+    // 2. Draggable Modals Triggers & Populators
+    function togglePersonalStashModal(show) {
+      const modal = document.getElementById("personalStashModal");
+      if (!modal) return;
+      if (show) {
+        modal.style.display = "block";
+        populatePersonalStashGrid();
+      } else {
+        modal.style.display = "none";
+      }
+    }
+
+    function toggleBuildOptimizerModal(show) {
+      const modal = document.getElementById("buildOptimizerModal");
+      if (!modal) return;
+      modal.style.display = show ? "block" : "none";
+      if (show) {
+        const resultsBox = document.getElementById("geminiAuditResultsBox");
+        if (resultsBox) resultsBox.style.display = "none";
+      }
+    }
+
+    function populatePersonalStashGrid() {
+      const grid = document.getElementById("personalStashGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+      
+      const ownerSelect = document.getElementById("stashOwnerFilter");
+      let activeOwner = ownerSelect ? ownerSelect.value : "creg";
+      if (activeOwner === "all" || !activeOwner) {
+        activeOwner = localStorage.getItem("loggedInUser") || "Creg";
+      }
+      
+      const myItems = scannedItems.filter(item => item.owner && item.owner.toLowerCase() === activeOwner.toLowerCase());
+      
+      if (myItems.length === 0) {
+        const empty = document.createElement("div");
+        empty.style.gridColumn = "1 / -1";
+        empty.style.textAlign = "center";
+        empty.style.color = "#a2a1a0";
+        empty.style.padding = "40px 10px";
+        empty.style.fontSize = "0.75rem";
+        empty.textContent = "No synced personal stash items found.";
+        grid.appendChild(empty);
+        return;
+      }
+      
+      myItems.forEach(item => {
+        const cell = document.createElement("div");
+        cell.className = "gear-cell";
+        cell.onclick = () => showPoeTooltip(item);
+        
+        const iconImg = document.createElement("img");
+        iconImg.src = item.url;
+        iconImg.className = "gear-icon";
+        iconImg.alt = item.name;
+        iconImg.referrerPolicy = "no-referrer";
+        
+        const label = document.createElement("span");
+        label.className = "gear-name-label";
+        label.textContent = item.name;
+        
+        if (item.rarity.toLowerCase() === 'unique') {
+          cell.style.borderColor = "rgba(175, 96, 37, 0.4)";
+        } else if (item.rarity.toLowerCase() === 'rare') {
+          cell.style.borderColor = "rgba(247, 208, 94, 0.4)";
+        }
+        
+        cell.appendChild(iconImg);
+        cell.appendChild(label);
+        
+        const loggedInUser = localStorage.getItem("loggedInUser") || "";
+        if (loggedInUser.toLowerCase() === activeOwner.toLowerCase()) {
+          const cullBtn = document.createElement("button");
+          cullBtn.className = "cull-gear-btn";
+          cullBtn.style.position = "absolute";
+          cullBtn.style.top = "4px";
+          cullBtn.style.right = "4px";
+          cullBtn.style.background = "rgba(239, 68, 68, 0.85)";
+          cullBtn.style.color = "white";
+          cullBtn.style.border = "none";
+          cullBtn.style.borderRadius = "2px";
+          cullBtn.style.cursor = "pointer";
+          cullBtn.style.fontSize = "0.55rem";
+          cullBtn.style.padding = "1px 4px";
+          cullBtn.textContent = "CULL";
+          cullBtn.onclick = async (e) => {
+            e.stopPropagation();
+            if (confirm(`Are you sure you want to cull/delete ${item.name} from your personal stash?`)) {
+              await deletePersonalStashItem(item);
+            }
+          };
+          cell.appendChild(cullBtn);
+        }
+        
+        grid.appendChild(cell);
+      });
+    }
+
+    async function deletePersonalStashItem(item) {
+      try {
+        await deleteVaultItem(item.entryName);
+        scannedItems = scannedItems.filter(x => x.entryName !== item.entryName);
+        populatePersonalStashGrid();
+        onGlobalSearchInput();
+      } catch (err) {
+        alert("Failed to cull item: " + err.message);
+      }
+    }
+
+    function switchProfileSubTab(tabName) {
+      const statsBtn = document.getElementById("btnProfileTabStats");
+      const passivesBtn = document.getElementById("btnProfileTabPassives");
+      const statsPanel = document.getElementById("profileSubTabContentStats");
+      const passivesPanel = document.getElementById("profileSubTabContentPassives");
+      
+      if (!statsBtn || !passivesBtn || !statsPanel || !passivesPanel) return;
+      
+      if (tabName === 'stats') {
+        statsBtn.classList.add("active");
+        statsBtn.style.color = "#ffd700";
+        statsBtn.style.borderBottom = "2px solid #ffd700";
+        
+        passivesBtn.classList.remove("active");
+        passivesBtn.style.color = "#a2a1a0";
+        passivesBtn.style.borderBottom = "none";
+        
+        statsPanel.style.display = "block";
+        passivesPanel.style.display = "none";
+      } else {
+        passivesBtn.classList.add("active");
+        passivesBtn.style.color = "#ffd700";
+        passivesBtn.style.borderBottom = "2px solid #ffd700";
+        
+        statsBtn.classList.remove("active");
+        statsBtn.style.color = "#a2a1a0";
+        statsBtn.style.borderBottom = "none";
+        
+        statsPanel.style.display = "none";
+        passivesPanel.style.display = "block";
+        
+        const ownerSelect = document.getElementById("stashOwnerFilter");
+        let activeOwner = ownerSelect ? ownerSelect.value : "creg";
+        if (activeOwner === "all" || !activeOwner) {
+          activeOwner = localStorage.getItem("loggedInUser") || "Creg";
+        }
+        const savedPob = localStorage.getItem(`pob_profile_${activeOwner.toLowerCase()}`);
+        if (savedPob) {
+          try {
+            const parsed = JSON.parse(savedPob);
+            if (parsed.xmlStats) {
+              const dummyXml = new DOMParser().parseFromString(`<Spec nodes="${Object.keys(parsed.xmlStats).filter(k => k.match(/^\d+$/)).join(',')}"></Spec>`, "application/xml");
+              drawPassiveConstellationMap(dummyXml);
+            }
+          } catch (e){}
+        }
+      }
+    }
+
+    // 3. Silly Generative Title Maker
+    async function generateCharacterSillyTitle() {
+      const titleEl = document.getElementById("guildmateCharacterSillyTitle");
+      if (!titleEl) return;
+      
+      const ownerSelect = document.getElementById("stashOwnerFilter");
+      let activeOwner = ownerSelect ? ownerSelect.value : "creg";
+      if (activeOwner === "all" || !activeOwner) {
+        activeOwner = localStorage.getItem("loggedInUser") || "Creg";
+      }
+      
+      const capitalizedOwner = activeOwner.charAt(0).toUpperCase() + activeOwner.slice(1).toLowerCase();
+      const key = localStorage.getItem("geminiKey") || "";
+      
+      if (!key) {
+        const classTitles = {
+          "witch": ["Queen of the Dead", "Mistress of Bone-Zone", "Accidental Minion Exploder", "Chaos Gremlin"],
+          "ranger": ["Speedy Glass Cannon", "Portal Scroll Hoarder", "Arrow Spammer Extraordinaire", "Kiting Coward"],
+          "warrior": ["Grand Slam Enthusiast", "Leap Slam Devotee", "Stun Duration Optimizer", "Heavy Armor Turtle"],
+          "monk": ["Winddancer of Panic", "Fist of Missing Targets", "Squishy Freeze Spammer", "Elusive Dodger"],
+          "mercenary": ["Dakka Dakka Specialist", "Grenade Fumble Champion", "Shotgun Shrapnel Lord", "Ammo Scavenger"],
+          "sorcerer": ["Mana-Starved Mage", "Spark Spammer in Open Spaces", "Flickering Lightbulb", "Accidental Self-Burner"]
+        };
+        
+        let pClass = "witch";
+        const pobProfileStr = localStorage.getItem(`pob_profile_${activeOwner.toLowerCase()}`);
+        if (pobProfileStr) {
+          try {
+            const pob = JSON.parse(pobProfileStr);
+            const classStr = (pob.xmlStats && pob.xmlStats["Class"]) || "";
+            if (classStr) pClass = classStr.toLowerCase();
+          } catch(e) {}
+        }
+        
+        const options = classTitles[pClass] || ["The Grand Duke of Dork", "Master of Low-Life Panic", "Bringer of Portal Casts", "Accidental Ground Slam Martyr"];
+        const hash = activeOwner.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const chosen = options[hash % options.length];
+        
+        titleEl.textContent = `⚔️ ${chosen} ⚔️`;
+        return;
+      }
+      
+      try {
+        const pobProfileStr = localStorage.getItem(`pob_profile_${activeOwner.toLowerCase()}`);
+        let pobStats = "Class: Unknown, Level: 60";
+        if (pobProfileStr) {
+          try {
+            const pob = JSON.parse(pobProfileStr);
+            pobStats = `Class: ${pob.xmlStats.Class || "Witch"}, Level: ${pob.xmlStats.Level || 60}, DPS: ${pob.xmlStats.TotalDPS || 0}`;
+          } catch(e){}
+        }
+        
+        let adminLikeness = "";
+        try {
+          const storedConfig = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
+          if (storedConfig) {
+            const parsed = JSON.parse(storedConfig);
+            adminLikeness = parsed[activeOwner.toLowerCase()] || "";
+          }
+        } catch(e){}
+        
+        const prompt = `Generate a single, extremely brief, silly, and friendly title (max 5 words) for Path of Exile 2 player "${capitalizedOwner}".
+Context:
+- Build: ${pobStats}
+- Likeness details: ${adminLikeness}
+- Format: "[Silly Title Description]" (e.g. "Grand Duke of Dork").
+- Respond with ONLY the title itself, no quotes, no extra words.`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 20 }
+          })
+        });
+        
+        if (res.ok) {
+          const resJson = await res.json();
+          let titleText = resJson.candidates[0].content.parts[0].text.trim();
+          titleText = titleText.replace(/^["']|["']$/g, "");
+          titleEl.textContent = `⚔️ ${titleText} ⚔️`;
+        } else {
+          throw new Error();
+        }
+      } catch(err) {
+        titleEl.textContent = `⚔️ The Legendary Sovereign of Aldur ⚔️`;
+      }
+    }
+
+    // 4. Ornate Gold-Framed Victorian Portrait Generator
+    async function generateVictorianPortrait(forceRegen) {
+      const imgEl = document.getElementById("victorianPortraitImg");
+      if (!imgEl) return;
+      
+      const ownerSelect = document.getElementById("stashOwnerFilter");
+      let activeOwner = ownerSelect ? ownerSelect.value : "creg";
+      if (activeOwner === "all" || !activeOwner) {
+        activeOwner = localStorage.getItem("loggedInUser") || "Creg";
+      }
+      
+      const lowerOwner = activeOwner.toLowerCase();
+      
+      if (!forceRegen) {
+        const cachedLocal = localStorage.getItem(`victorian_portrait_url_${lowerOwner}`);
+        if (cachedLocal) {
+          imgEl.src = cachedLocal;
+          return;
+        }
+        
+        if (window.__GUILD_PORTRAITS__ && window.__GUILD_PORTRAITS__[lowerOwner]) {
+          imgEl.src = window.__GUILD_PORTRAITS__[lowerOwner];
+          localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, window.__GUILD_PORTRAITS__[lowerOwner]);
+          return;
+        }
+      }
+      
+      if (forceRegen) {
+        const lastGen = localStorage.getItem(`last_portrait_gen_${lowerOwner}`) || "0";
+        const now = Date.now();
+        if (now - parseInt(lastGen, 10) < 5000) {
+          alert("Gathering paint brushes... Please wait a few seconds before generating another masterpiece!");
+          return;
+        }
+        localStorage.setItem(`last_portrait_gen_${lowerOwner}`, now.toString());
+      }
+      
+      imgEl.src = "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=512&h=768&auto=format&fit=crop";
+      
+      let likeness = "A Path of Exile adventurer";
+      try {
+        const storedConfig = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
+        if (storedConfig) {
+          const parsed = JSON.parse(storedConfig);
+          likeness = parsed[lowerOwner] || likeness;
+        }
+      } catch(e){}
+      
+      let pClass = "adventurer";
+      let weapons = "a glowing magical staff";
+      const pobProfileStr = localStorage.getItem(`pob_profile_${lowerOwner}`);
+      if (pobProfileStr) {
+        try {
+          const pob = JSON.parse(pobProfileStr);
+          pClass = pob.xmlStats.Class || "witch";
+          if (pob.items && pob.items.weapon1) {
+            weapons = `a goofy ${pob.items.weapon1.name}`;
+          }
+        } catch(e){}
+      }
+      
+      let finalPrompt = "";
+      const key = localStorage.getItem("geminiKey") || "";
+      
+      if (key) {
+        try {
+          const geminiPrompt = `Write a high-detail text prompt for Stable Diffusion describing a goofy Victorian portrait of a Path of Exile 2 player.
+Details:
+- Player Class: ${pClass}
+- Weapons/Gear details: ${weapons}
+- Player physical/personality description: ${likeness}
+Artistic style:
+- A hilarious, goofy, high-fidelity oil painting in an ornate gilded gold Victorian portrait frame.
+- High-society Victorian apparel mixed with bulky, absurd PoE2 plate armor.
+- Dramatic candlelight shadows, heavy canvas oil textures, rich colors, cinematic moody lighting.
+- Respond with ONLY the image generator prompt text, no quotes.`;
+
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+          const res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: geminiPrompt }] }],
+              generationConfig: { maxOutputTokens: 120 }
+            })
+          });
+          
+          if (res.ok) {
+            const resJson = await res.json();
+            finalPrompt = resJson.candidates[0].content.parts[0].text.trim();
+            finalPrompt = finalPrompt.replace(/^["']|["']$/g, "");
+          }
+        } catch(e) {
+          console.warn("Failed to generate custom Gemini portrait prompt:", e);
+        }
+      }
+      
+      if (!finalPrompt) {
+        finalPrompt = `A goofy, whimsical, high-fidelity oil painting in a framed Victorian style. A ${likeness} dressed as a Path of Exile 2 ${pClass} holding ${weapons}, surrounded by golden coins. Dark gothic dungeon background, cinematic candle lighting, oil on canvas, highly detailed.`;
+      }
+      
+      const seed = Math.floor(Math.random() * 1000000);
+      const pollinationsUrl = `https://image.pollinations.ai/p/${encodeURIComponent(finalPrompt)}?width=512&height=768&nologo=true&seed=${seed}`;
+      
+      imgEl.src = pollinationsUrl;
+      localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, pollinationsUrl);
+      
+      try {
+        if (!window.__GUILD_PORTRAITS__) window.__GUILD_PORTRAITS__ = {};
+        window.__GUILD_PORTRAITS__[lowerOwner] = pollinationsUrl;
+        
+        await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            p_name: "__GUILD_PORTRAITS__",
+            p_data: window.__GUILD_PORTRAITS__,
+            p_write_key: GUILD_WRITE_KEY
+          })
+        });
+      } catch(e) {
+        console.warn("Failed to save portrait globally:", e);
+      }
+    }
+
+    // 5. Latest Adventures Scroll Story & Bardic TTS Engine
+    let currentBardicTaleAudioUrl = "";
+
+    async function generateBardicTale() {
+      const logEl = document.getElementById("adventureScrollLog");
+      const actSelect = document.getElementById("adventureActSelect");
+      const promptInput = document.getElementById("adventurePromptInput");
+      const saveBtn = document.getElementById("btnSaveMp3");
+      
+      if (!logEl || !actSelect || !promptInput || !saveBtn) return;
+      
+      const act = actSelect.value;
+      const promptText = promptInput.value.trim();
+      if (!promptText) {
+        alert("Please enter some details about what happens in your adventure first!");
+        return;
+      }
+      
+      const ownerSelect = document.getElementById("stashOwnerFilter");
+      let activeOwner = ownerSelect ? ownerSelect.value : "creg";
+      if (activeOwner === "all" || !activeOwner) {
+        activeOwner = localStorage.getItem("loggedInUser") || "Creg";
+      }
+      const capitalizedOwner = activeOwner.charAt(0).toUpperCase() + activeOwner.slice(1).toLowerCase();
+      
+      logEl.innerHTML = `⏳ <i>The bard closes his eyes, strumming a low chord... summoning tales of "${promptText}" in "${act}"...</i>`;
+      saveBtn.style.display = "none";
+      
+      const key = localStorage.getItem("geminiKey") || "";
+      let narrativeText = "";
+      
+      let pClass = "adventurer";
+      const pobProfileStr = localStorage.getItem(`pob_profile_${activeOwner.toLowerCase()}`);
+      if (pobProfileStr) {
+        try {
+          pClass = JSON.parse(pobProfileStr).xmlStats.Class || "witch";
+        } catch(e){}
+      }
+      
+      if (key) {
+        try {
+          const prompt = `Write a short, highly amusing, mock-heroic narrative exploit (approx 2-3 sentences, max 80 words) about Path of Exile 2 player "${capitalizedOwner}", a level 60 ${pClass}.
+Setting: Campaign location is "${act}".
+Adventure event: "${promptText}".
+Style: Theatrical, high-fantasy Victorian bard reading, using medieval flourishes and gentle teasing.
+Respond with ONLY the narrative story text. No introductory remarks, no quotes.`;
+
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+          const res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens: 120 }
+            })
+          });
+          
+          if (res.ok) {
+            const resJson = await res.json();
+            narrativeText = resJson.candidates[0].content.parts[0].text.trim();
+            narrativeText = narrativeText.replace(/^["']|["']$/g, "");
+          }
+        } catch(err) {
+          console.warn("Failed to generate tale via Gemini:", err);
+        }
+      }
+      
+      if (!narrativeText) {
+        narrativeText = `Hark! In the shadowed depths of ${act}, the brave ${pClass} ${capitalizedOwner} strode forth. Sudden disaster struck: ${promptText}! Yet through sheer panic, they survived to tell the tale, leaving the guild hall in absolute stitcheth!`;
+      }
+      
+      logEl.innerHTML = `✍️ <b>The Bard recounts:</b><br>"${narrativeText}"`;
+      promptInput.value = "";
+      
+      speakBardicTale(narrativeText);
+      
+      const shortText = narrativeText.substring(0, 200);
+      currentBardicTaleAudioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(shortText)}`;
+      saveBtn.style.display = "inline-block";
+    }
+
+    function speakBardicTale(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices();
+      let deepVoice = null;
+      
+      const preferred = ["google uk english male", "microsoft david", "male", "en-gb", "en-us"];
+      for (const pattern of preferred) {
+        deepVoice = voices.find(v => v.name.toLowerCase().includes(pattern) || v.lang.toLowerCase().includes(pattern));
+        if (deepVoice) break;
+      }
+      
+      if (deepVoice) utterance.voice = deepVoice;
+      utterance.pitch = 0.8;
+      utterance.rate = 0.88;
+      
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function downloadBardicAudio() {
+      if (!currentBardicTaleAudioUrl) return;
+      const link = document.createElement("a");
+      link.href = currentBardicTaleAudioUrl;
+      link.target = "_blank";
+      link.download = "bardic_adventure_log.mp3";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 6. SVG Constellation Skill Map
+    let constellationPanX = 0;
+    let constellationPanY = 0;
+    let constellationZoom = 1.0;
+    let isConstellationDragging = false;
+    let constDragStartX = 0;
+    let constDragStartY = 0;
+
+    function drawPassiveConstellationMap(specXml) {
+      const svg = document.getElementById("passiveConstellationSvg");
+      if (!svg) return;
+      svg.innerHTML = "";
+      
+      svg.style.background = "radial-gradient(circle at center, #110e1a 0%, #06050a 100%)";
+      svg.style.border = "1px solid rgba(197, 168, 128, 0.25)";
+      svg.style.borderRadius = "4px";
+      svg.style.width = "100%";
+      svg.style.height = "350px";
+      svg.style.cursor = "grab";
+      svg.style.overflow = "hidden";
+      
+      const mainGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      mainGroup.id = "constellationMainGroup";
+      svg.appendChild(mainGroup);
+      
+      let specNode = specXml.querySelector("Spec");
+      let nodesAttr = specNode ? specNode.getAttribute("nodes") : "";
+      let nodeIds = nodesAttr ? nodesAttr.split(",").map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n)) : [];
+      
+      if (nodeIds.length === 0) {
+        nodeIds = [1420, 3940, 5630, 2190, 8910, 4420, 970, 7550, 6080, 1120];
+      }
+      
+      const centerX = 350;
+      const centerY = 175;
+      const plottedNodes = [];
+      
+      const starPrefixes = ["Alpha", "Beta", "Gamma", "Vortex", "Caelum", "Rigel", "Orion", "Polaris", "Nebula", "Nova", "Vega", "Altair"];
+      const starSuffixes = ["Sentinel", "Catalyst", "Focus", "Nexus", "Infusion", "Ward", "Conduit", "Stance", "Attunement", "Legacy"];
+      
+      nodeIds.forEach(nodeId => {
+        const radius = ((nodeId % 7) * 45) + 30 + (nodeId % 13) * 5;
+        const angle = (nodeId * 137.5) * Math.PI / 180;
+        
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        
+        const pIdx = nodeId % starPrefixes.length;
+        const sIdx = (nodeId + 3) % starSuffixes.length;
+        const starName = `${starPrefixes[pIdx]} ${starSuffixes[sIdx]} (Node ${nodeId})`;
+        
+        plottedNodes.push({ id: nodeId, x, y, name: starName });
+      });
+      
+      updateConstellationTransform();
+      
+      for (let i = 0; i < plottedNodes.length; i++) {
+        const nodeA = plottedNodes[i];
+        const distances = plottedNodes
+          .map((nodeB, idx) => ({ idx, dist: Math.hypot(nodeA.x - nodeB.x, nodeA.y - nodeB.y) }))
+          .filter(d => d.idx !== i)
+          .sort((a, b) => a.dist - b.dist);
+          
+        const neighborsCount = Math.min(2, distances.length);
+        for (let k = 0; k < neighborsCount; k++) {
+          const nodeB = plottedNodes[distances[k].idx];
+          
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", nodeA.x);
+          line.setAttribute("y1", nodeA.y);
+          line.setAttribute("x2", nodeB.x);
+          line.setAttribute("y2", nodeB.y);
+          line.setAttribute("stroke", "rgba(197, 168, 128, 0.2)");
+          line.setAttribute("stroke-width", "1");
+          line.setAttribute("filter", "drop-shadow(0 0 2px rgba(197,168,128,0.4))");
+          mainGroup.appendChild(line);
+        }
+      }
+      
+      plottedNodes.forEach(node => {
+        const isKeystone = node.id % 5 === 0;
+        
+        const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        glow.setAttribute("cx", node.x);
+        glow.setAttribute("cy", node.y);
+        glow.setAttribute("r", isKeystone ? "9" : "5");
+        glow.setAttribute("fill", isKeystone ? "rgba(255, 215, 0, 0.15)" : "rgba(84, 140, 247, 0.15)");
+        glow.setAttribute("filter", "blur(2px)");
+        mainGroup.appendChild(glow);
+        
+        const star = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        star.setAttribute("cx", node.x);
+        star.setAttribute("cy", node.y);
+        star.setAttribute("r", isKeystone ? "4" : "2.2");
+        star.setAttribute("fill", isKeystone ? "#ffd700" : "#548cf7");
+        star.style.cursor = "pointer";
+        
+        star.onmouseenter = (e) => {
+          star.setAttribute("r", isKeystone ? "6" : "4.5");
+          star.setAttribute("fill", "#ffffff");
+          showSvgConstellationTooltip(e, node.name);
+        };
+        
+        star.onmouseleave = () => {
+          star.setAttribute("r", isKeystone ? "4" : "2.2");
+          star.setAttribute("fill", isKeystone ? "#ffd700" : "#548cf7");
+          hideSvgConstellationTooltip();
+        };
+        
+        mainGroup.appendChild(star);
+      });
+      
+      svg.onmousedown = (e) => {
+        isConstellationDragging = true;
+        svg.style.cursor = "grabbing";
+        constDragStartX = e.clientX - constellationPanX;
+        constDragStartY = e.clientY - constellationPanY;
+      };
+      
+      svg.onmousemove = (e) => {
+        if (!isConstellationDragging) return;
+        constellationPanX = e.clientX - constDragStartX;
+        constellationPanY = e.clientY - constDragStartY;
+        updateConstellationTransform();
+      };
+      
+      svg.onwheel = (e) => {
+        e.preventDefault();
+        const zoomIntensity = 0.08;
+        const rect = svg.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const wheel = e.deltaY < 0 ? 1 : -1;
+        const zoomFactor = Math.exp(wheel * zoomIntensity);
+        const newZoom = Math.min(2.5, Math.max(0.4, constellationZoom * zoomFactor));
+        
+        constellationPanX = mouseX - (mouseX - constellationPanX) * (newZoom / constellationZoom);
+        constellationPanY = mouseY - (mouseY - constellationPanY) * (newZoom / constellationZoom);
+        constellationZoom = newZoom;
+        
+        updateConstellationTransform();
+      };
+    }
+
+    function updateConstellationTransform() {
+      const g = document.getElementById("constellationMainGroup");
+      if (g) {
+        g.setAttribute("transform", `translate(${constellationPanX}, ${constellationPanY}) scale(${constellationZoom})`);
+      }
+    }
+
+    function showSvgConstellationTooltip(e, text) {
+      let tip = document.getElementById("constellationTooltip");
+      if (!tip) {
+        tip = document.createElement("div");
+        tip.id = "constellationTooltip";
+        tip.style.position = "fixed";
+        tip.style.background = "#0c0a09";
+        tip.style.border = "1px solid #ffd700";
+        tip.style.color = "#cbd5e1";
+        tip.style.padding = "4px 8px";
+        tip.style.borderRadius = "3px";
+        tip.style.fontSize = "0.6rem";
+        tip.style.pointerEvents = "none";
+        tip.style.zIndex = "9999";
+        tip.style.fontFamily = "'Outfit', sans-serif";
+        tip.style.boxShadow = "0 3px 6px rgba(0,0,0,0.5)";
+        document.body.appendChild(tip);
+      }
+      tip.innerHTML = `✨ <b>${text}</b>`;
+      tip.style.display = "block";
+      tip.style.left = (e.clientX + 12) + "px";
+      tip.style.top = (e.clientY + 12) + "px";
+    }
+
+    function hideSvgConstellationTooltip() {
+      const tip = document.getElementById("constellationTooltip");
+      if (tip) tip.style.display = "none";
+    }
+
+    // 7. Passcode Gated Administrator Likeness Console Drawer
+    function toggleAdminLikenessSection() {
+      const panel = document.getElementById("adminConsolePanel");
+      const icon = document.getElementById("adminLikenessConsoleToggleIcon");
+      if (!panel || !icon) return;
+      
+      const loggedInUser = (localStorage.getItem("loggedInUser") || "").toLowerCase();
+      if (loggedInUser !== "creg" && loggedInUser !== "radiocommander") {
+        alert("🔒 ACCESS DENIED. Only Guild Administrators (Creg or Radiocommander) can open the Likeness Console drawer.");
+        return;
+      }
+      
+      if (panel.style.display === "none" || panel.style.display === "") {
+        panel.style.display = "block";
+        icon.textContent = "[-] COLLAPSE";
+        loadAdminPlayerConfig();
+      } else {
+        panel.style.display = "none";
+        icon.textContent = "[+] EXPAND";
+      }
+    }
+
+    function loadAdminPlayerConfig() {
+      const targetSelect = document.getElementById("adminTargetSelect");
+      const input = document.getElementById("adminLikenessPromptInput");
+      const status = document.getElementById("adminConsoleStatus");
+      if (!targetSelect || !input) return;
+      
+      const target = targetSelect.value.toLowerCase();
+      if (status) {
+        status.style.color = "#cbd5e1";
+        status.textContent = "";
+      }
+      
+      let config = {};
+      try {
+        const stored = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
+        if (stored) {
+          config = JSON.parse(stored);
+        }
+      } catch(e){}
+      
+      input.value = config[target] || "";
+    }
+
+    async function saveAdminPlayerConfig() {
+      const targetSelect = document.getElementById("adminTargetSelect");
+      const input = document.getElementById("adminLikenessPromptInput");
+      const status = document.getElementById("adminConsoleStatus");
+      if (!targetSelect || !input) return;
+      
+      const target = targetSelect.value.toLowerCase();
+      const text = input.value.trim();
+      
+      if (status) {
+        status.style.color = "#ffd700";
+        status.textContent = "⏳ Synchronizing config to Supabase...";
+      }
+      
+      let config = {};
+      try {
+        const stored = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
+        if (stored) {
+          config = JSON.parse(stored);
+        }
+      } catch(e){}
+      
+      config[target] = text;
+      
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            p_name: "__GUILD_ADMIN_CONFIG__",
+            p_data: config,
+            p_write_key: GUILD_WRITE_KEY
+          })
+        });
+        
+        if (!res.ok) {
+          throw new Error("RPC failed: " + await res.text());
+        }
+        
+        localStorage.setItem("__GUILD_ADMIN_CONFIG__", JSON.stringify(config));
+        
+        if (status) {
+          status.style.color = "#2ecc71";
+          status.textContent = "✅ Config synchronized globally!";
+        }
+        
+        const ownerSelect = document.getElementById("stashOwnerFilter");
+        let activeOwner = ownerSelect ? ownerSelect.value : "creg";
+        if (activeOwner === "all" || !activeOwner) {
+          activeOwner = localStorage.getItem("loggedInUser") || "Creg";
+        }
+        
+        if (activeOwner.toLowerCase() === target) {
+          generateCharacterSillyTitle();
+          generateVictorianPortrait(false);
+        }
+      } catch(err) {
+        if (status) {
+          status.style.color = "#ef4444";
+          status.textContent = "❌ Failed to save: " + err.message;
+        }
       }
     }
 
