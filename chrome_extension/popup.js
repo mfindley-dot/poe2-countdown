@@ -912,7 +912,7 @@ async function bulkSyncStashTab() {
     }
     
     log(`Connecting to GGG Stash (Tab #${tabIndex}) on www.pathofexile.com...`);
-    const res = await fetch(gggUrl);
+    const res = await fetch(gggUrl, { credentials: "include" });
     
     if (res.status === 403 || res.redirected) {
       throw new Error("Access Denied (403). Please make sure you are logged into pathofexile.com in this browser first!");
