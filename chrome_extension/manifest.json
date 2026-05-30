@@ -20,5 +20,16 @@
     "https://pathofexile.com/*",
     "https://*.pathofexile2.com/*",
     "https://pathofexile2.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.pathofexile.com/*",
+        "https://pathofexile.com/*",
+        "https://*.pathofexile2.com/*",
+        "https://pathofexile2.com/*"
+      ],
+      "js": ["content_script.js"]
+    }
   ]
 }

@@ -911,17 +911,37 @@ async function bulkSyncStashTab() {
       gggUrl += `&accountName=${encodeURIComponent(accountName)}`;
     }
     
-    log(`Connecting to GGG Stash (Tab #${tabIndex}) on pathofexile.com...`);
-    const res = await fetch(gggUrl, { credentials: "include" });
+    log(`Forwarding stash fetch request same-origin through browser content script...`);
     
-    if (res.status === 403 || res.redirected) {
-      throw new Error("Access Denied (403). Please make sure you are logged into pathofexile.com in this browser first!");
-    }
-    if (!res.ok) {
-      throw new Error(`GGG API returned status ${res.status}`);
+    // Query active tab in the current window
+    const activeTabs = await new Promise(resolve => {
+      chrome.tabs.query({ active: true, currentWindow: true }, resolve);
+    });
+    
+    if (!activeTabs || !activeTabs[0]) {
+      throw new Error("No active browser tab found. Please make sure pathofexile.com or pathofexile2.com is active in your browser!");
     }
     
-    const stashData = await res.json();
+    const activeTab = activeTabs[0];
+    const activeUrl = activeTab.url || "";
+    
+    if (!activeUrl.includes("pathofexile.com") && !activeUrl.includes("pathofexile2.com")) {
+      throw new Error("Please select your active pathofexile.com or pathofexile2.com tab in Chrome first!");
+    }
+    
+    // Send message to the active tab's content script to execute the fetch same-origin
+    const stashData = await new Promise((resolve, reject) => {
+      chrome.tabs.sendMessage(activeTab.id, { action: "fetchStash", url: gggUrl }, response => {
+        if (chrome.runtime.lastError) {
+          reject(new Error("Content script not loaded. Please hard-refresh (F5) your pathofexile.com or pathofexile2.com page once and try again!"));
+        } else if (response && response.success) {
+          resolve(response.data);
+        } else {
+          reject(new Error(response ? response.error : "Failed to retrieve stash data same-origin from the active tab."));
+        }
+      });
+    });
+    
     if (!stashData || !stashData.items) {
       throw new Error("Invalid tab index or no items found in this stash tab.");
     }
