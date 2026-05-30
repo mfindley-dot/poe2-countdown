@@ -69,22 +69,31 @@ def parse_args():
     parser.add_argument("--capture", action="store_true", help="Natively capture the primary display screenshot")
     parser.add_argument("--crop", type=str, help="Optional crop box coordinates as 'left,top,right,bottom' (e.g. '100,200,900,800')")
     parser.add_argument("--api-key", type=str, help="Your Gemini API Key (falls back to GEMINI_API_KEY environment variable)")
-    parser.add_argument("--push-to-guild", action="store_true", help="Automatically push scanned counts to the guild's online website database (Dreamlo)")
-    parser.add_argument("--dreamlo-key", type=str, help="Your Dreamlo Private Key (falls back to DREAMLO_PRIVATE_KEY environment variable)")
+    parser.add_argument("--push-to-guild", action="store_true", help="Automatically push scanned counts to the guild's online website database (Supabase)")
+    parser.add_argument("--supabase-url", type=str, help="Your Supabase project URL (falls back to SUPABASE_URL environment variable)")
+    parser.add_argument("--supabase-key", type=str, help="Your Supabase anon key (falls back to SUPABASE_ANON_KEY environment variable)")
+    parser.add_argument("--write-key", type=str, help="Your Guild Write Key (falls back to GUILD_WRITE_KEY environment variable)")
     return parser.parse_args()
 
 def main():
     args = parse_args()
     
-    # 1. Fetch Gemini API Key
+    # 1. Fetch Gemini API Key and Supabase Configs
     # Try loading from local git-ignored config.json first (safeguard for easy guild sharing)
     default_key = None
+    default_supabase_url = "https://qqljadcpxsubawmzkecl.supabase.co"
+    default_supabase_anon_key = "sb_publishable_T8G6w3OtwXRG_cXd_-h9YQ_s8U9iDnx"
+    default_guild_write_key = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A"
+    
     try:
         config_path = os.path.join(os.path.dirname(__file__), "config.json")
         if os.path.exists(config_path):
             with open(config_path, 'r') as f:
                 cfg = json.load(f)
-                default_key = cfg.get("default_api_key")
+                default_key = cfg.get("default_api_key") or cfg.get("default_gemini_key")
+                default_supabase_url = cfg.get("default_supabase_url") or default_supabase_url
+                default_supabase_anon_key = cfg.get("default_supabase_anon_key") or default_supabase_anon_key
+                default_guild_write_key = cfg.get("default_guild_write_key") or default_guild_write_key
     except Exception:
         pass
         
@@ -237,13 +246,11 @@ def main():
             print(f"Total Stash Net Worth: {total_chaos:.1f} Chaos Orbs (Approx {(total_chaos/150.0):.2f} Divine Orbs)")
             
             # 6. Push to online Guild Vault if requested
-            dreamlo_key = args.dreamlo_key or os.environ.get("DREAMLO_PRIVATE_KEY")
-            if args.push_to_guild or dreamlo_key:
-                if not dreamlo_key:
-                    # Fallback to GLG pre-allocated guild private key if the user is GLG
-                    dreamlo_key = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A"
-                
-                import urllib.parse
+            supabase_url = args.supabase_url or os.environ.get("SUPABASE_URL") or default_supabase_url
+            supabase_key = args.supabase_key or os.environ.get("SUPABASE_ANON_KEY") or default_supabase_anon_key
+            write_key = args.write_key or os.environ.get("GUILD_WRITE_KEY") or default_guild_write_key
+            
+            if args.push_to_guild or args.supabase_url or os.environ.get("SUPABASE_URL"):
                 import requests
                 
                 # Map the 26+ extended currency tiers down to the core 11 currencies
@@ -261,24 +268,28 @@ def main():
                     "mirror": data.get("mirror", 0)
                 }
                 
-                # Squeeze data into a highly compact, pipe-separated positional string matching game.js order:
-                # order: scroll|transmute|augmentation|alchemy|regal|chaos|vaal|annulment|exalted|divine|mirror
-                core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"]
-                pipe_str = "|".join([str(core_data.get(k, 0)) for k in core_keys])
+                currency_payload = {
+                    **core_data,
+                    "sync_version": "1.0"
+                }
                 
-                # Calculate total net worth for Dreamlo score mapping (score = net_worth * 10)
-                total_score = int(total_chaos * 10)
-                
-                # Construct dreamlo URL
-                push_url = f"https://dreamlo.com/lb/{dreamlo_key}/add/__GUILD_VAULT__/{total_score}/0/{urllib.parse.quote(pipe_str)}"
-                
-                print("Syncing live scan results to your online guild website database...")
+                print("Syncing live scan results to your serverless Supabase vault database...")
                 try:
-                    push_res = requests.get(push_url, timeout=5)
+                    headers = {
+                        "apikey": supabase_key,
+                        "Authorization": f"Bearer {supabase_key}",
+                        "Content-Type": "application/json"
+                    }
+                    payload = {
+                        "p_name": "__GUILD_VAULT__",
+                        "p_data": currency_payload,
+                        "p_write_key": write_key
+                    }
+                    push_res = requests.post(f"{supabase_url}/rest/v1/rpc/sync_vault_item", json=payload, headers=headers, timeout=10)
                     if push_res.status_code == 200:
                         print("✅ Online Guild Vault successfully updated globally!")
                     else:
-                        print(f"⚠️ Failed to update online vault. Dreamlo status code: {push_res.status_code}")
+                        print(f"⚠️ Failed to update online vault. Supabase response: {push_res.status_code} - {push_res.text}")
                 except Exception as push_err:
                     print(f"⚠️ Failed to connect to online database: {push_err}")
                     

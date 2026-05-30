@@ -2,8 +2,9 @@
 
 // Default pre-allocated shared keys loaded dynamically from git-ignored config.json
 let defaultGeminiKey = "";
-let defaultDreamloKey = "";
-let defaultDreamloPublicKey = "";
+let defaultSupabaseUrl = "https://qqljadcpxsubawmzkecl.supabase.co";
+let defaultSupabaseAnonKey = "sb_publishable_T8G6w3OtwXRG_cXd_-h9YQ_s8U9iDnx";
+let defaultGuildWriteKey = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A";
 
 // Global appraised item storage
 let appraisedItem = null;
@@ -11,8 +12,9 @@ let activeMode = "stash"; // "stash" or "appraiser"
 
 // Elements
 const geminiInput = document.getElementById("geminiKey");
-const dreamloInput = document.getElementById("dreamloKey");
-const dreamloPublicKeyInput = document.getElementById("dreamloPublicKey");
+const supabaseUrlInput = document.getElementById("supabaseUrl");
+const supabaseAnonKeyInput = document.getElementById("supabaseAnonKey");
+const guildWriteKeyInput = document.getElementById("guildWriteKey");
 const btnSync = document.getElementById("btnSync");
 const logBox = document.getElementById("logBox");
 const previewCanvas = document.getElementById("previewCanvas");
@@ -204,21 +206,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (configRes.ok) {
       const config = await configRes.json();
       defaultGeminiKey = config.default_gemini_key || "";
-      defaultDreamloKey = config.default_dreamlo_key || "";
-      defaultDreamloPublicKey = config.default_dreamlo_public_key || "";
+      defaultSupabaseUrl = config.default_supabase_url || defaultSupabaseUrl;
+      defaultSupabaseAnonKey = config.default_supabase_anon_key || defaultSupabaseAnonKey;
+      defaultGuildWriteKey = config.default_guild_write_key || defaultGuildWriteKey;
     }
   } catch (err) {
     console.warn("Failed to load local config.json:", err);
   }
 
   chrome.storage.local.get([
-    "geminiKey", "dreamloKey", "dreamloPublicKey", "hotkeyIdentify", "hotkeyAppraise", 
+    "geminiKey", "supabaseUrl", "supabaseAnonKey", "guildWriteKey", "hotkeyIdentify", "hotkeyAppraise", 
     "bulkLeague", "bulkTabIndex", "bulkStashType", "bulkAccountName",
     "manualFireRes", "manualColdRes", "manualLightRes", "manualStr", "manualDex", "manualInt"
   ], (data) => {
     geminiInput.value = data.geminiKey || defaultGeminiKey;
-    dreamloInput.value = data.dreamloKey || defaultDreamloKey;
-    dreamloPublicKeyInput.value = data.dreamloPublicKey || defaultDreamloPublicKey;
+    supabaseUrlInput.value = data.supabaseUrl || defaultSupabaseUrl;
+    supabaseAnonKeyInput.value = data.supabaseAnonKey || defaultSupabaseAnonKey;
+    guildWriteKeyInput.value = data.guildWriteKey || defaultGuildWriteKey;
     
     if (data.hotkeyIdentify) {
       hotkeyIdentify = data.hotkeyIdentify;
@@ -314,18 +318,24 @@ async function readClipboardText() {
 // Stash Sync Click Trigger
 btnSync.addEventListener("click", async () => {
   const geminiKey = geminiInput.value.trim();
-  const dreamloKey = dreamloInput.value.trim();
+  const supabaseUrl = supabaseUrlInput.value.trim();
+  const supabaseAnonKey = supabaseAnonKeyInput.value.trim();
+  const guildWriteKey = guildWriteKeyInput.value.trim();
   
   if (!geminiKey) {
     log("Error: Gemini API Key required.", "error");
     return;
   }
-  if (!dreamloKey) {
-    log("Error: Dreamlo Private Key required.", "error");
+  if (!supabaseUrl || !supabaseAnonKey) {
+    log("Error: Supabase URL and Anon Key required.", "error");
+    return;
+  }
+  if (!guildWriteKey) {
+    log("Error: Guild Write Key required.", "error");
     return;
   }
   
-  chrome.storage.local.set({ geminiKey, dreamloKey });
+  chrome.storage.local.set({ geminiKey, supabaseUrl, supabaseAnonKey, guildWriteKey });
   logBox.innerHTML = "Status: Initializing display grab...";
   
   try {
@@ -341,7 +351,7 @@ btnSync.addEventListener("click", async () => {
     
     tempVideo.onloadedmetadata = () => {
       setTimeout(() => {
-        captureAndUpload(stream, geminiKey, dreamloKey);
+        captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey, guildWriteKey);
       }, 500);
     };
     
@@ -350,8 +360,8 @@ btnSync.addEventListener("click", async () => {
   }
 });
 
-// Capture frame, crop, and run Gemini/Dreamlo processing
-async function captureAndUpload(stream, geminiKey, dreamloKey) {
+// Capture frame, crop, and run Gemini/Supabase processing
+async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey, guildWriteKey) {
   try {
     const videoWidth = tempVideo.videoWidth;
     const videoHeight = tempVideo.videoHeight;
@@ -438,13 +448,30 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
     const pipe_str = core_keys.map(k => core_data[k]).join("|") + "|1.0";
     
     const total_score = Math.floor(total_chaos * 10);
-    log("Syncing live scan results to your online guild website...");
+    log("Syncing live scan results to your serverless Supabase vault...");
     
-    const pushUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/add/__GUILD_VAULT__/${total_score}/0/${encodeURIComponent(pipe_str)}`;
+    const currencyPayload = {
+      ...core_data,
+      sync_version: "1.0"
+    };
+
+    const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
+      method: "POST",
+      headers: {
+        "apikey": supabaseAnonKey,
+        "Authorization": `Bearer ${supabaseAnonKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        p_name: "__GUILD_VAULT__",
+        p_data: currencyPayload,
+        p_write_key: guildWriteKey
+      })
+    });
     
-    const pushRes = await fetch(pushUrl);
     if (!pushRes.ok) {
-      throw new Error(`Dreamlo database push failed with status: ${pushRes.status}`);
+      const errTxt = await pushRes.text();
+      throw new Error(`Supabase push failed: ${errTxt}`);
     }
     
     log(`✅ Guild Vault successfully updated globally! Net Worth: ${total_chaos.toFixed(0)}c (~${(total_chaos/150).toFixed(1)} EX)`, "success");
@@ -461,14 +488,20 @@ async function captureAndUpload(stream, geminiKey, dreamloKey) {
 // Refactored modular appraisal function
 async function appraiseItemText(itemText, autoSync = false) {
   const geminiKey = geminiInput.value.trim();
-  const dreamloKey = dreamloInput.value.trim();
+  const supabaseUrl = supabaseUrlInput.value.trim();
+  const supabaseAnonKey = supabaseAnonKeyInput.value.trim();
+  const guildWriteKey = guildWriteKeyInput.value.trim();
   
   if (!geminiKey) {
     log("Error: Gemini API Key required.", "error");
     return;
   }
-  if (!dreamloKey) {
-    log("Error: Dreamlo Private Key required.", "error");
+  if (!supabaseUrl || !supabaseAnonKey) {
+    log("Error: Supabase URL and Anon Key required.", "error");
+    return;
+  }
+  if (!guildWriteKey) {
+    log("Error: Guild Write Key required.", "error");
     return;
   }
   if (!itemText) {
@@ -476,7 +509,7 @@ async function appraiseItemText(itemText, autoSync = false) {
     return;
   }
   
-  chrome.storage.local.set({ geminiKey, dreamloKey });
+  chrome.storage.local.set({ geminiKey, supabaseUrl, supabaseAnonKey, guildWriteKey });
   logBox.innerHTML = `Status: Appraising item text stats via Gemini AI... ${autoSync ? '(Auto-Syncing)' : ''}`;
   appraisalCard.style.display = "none";
   
@@ -541,7 +574,7 @@ async function appraiseItemText(itemText, autoSync = false) {
     
     if (autoSync) {
       log("Direct hotkey detected: Syncing appraised item immediately...");
-      await syncAppraisedItemDirectly(dreamloKey);
+      await syncAppraisedItemDirectly(supabaseUrl, supabaseAnonKey, guildWriteKey);
     } else {
       appraisalCard.style.display = "block";
     }
@@ -552,34 +585,44 @@ async function appraiseItemText(itemText, autoSync = false) {
 }
 
 // Refactored modular sync function
-async function syncAppraisedItemDirectly(dreamloKey) {
+async function syncAppraisedItemDirectly(supabaseUrl, supabaseAnonKey, guildWriteKey) {
   if (!appraisedItem) return;
   
   logBox.innerHTML = "Status: Syncing appraised gear to visual stash online...";
   
   try {
     const entryName = `ITEM_${Date.now()}`;
-    const explicit_str = appraisedItem.explicit_mods.join(";");
+    const itemPayload = {
+      rarity: appraisedItem.rarity,
+      name: appraisedItem.name,
+      base: appraisedItem.base_type,
+      level: appraisedItem.level_req || 0,
+      ilvl: appraisedItem.item_level || 0,
+      affixes: appraisedItem.explicit_mods,
+      price: appraisedItem.estimated_price_string,
+      flavor: appraisedItem.flavor_text || "",
+      logs: appraisedItem.bot_culling_logs,
+      url: getIconUrl(appraisedItem.name, appraisedItem.base_type),
+      owner: "Shared Guild Vault"
+    };
     
-    // Position pipe separated payload
-    const item_payload = [
-      appraisedItem.rarity,
-      appraisedItem.name,
-      appraisedItem.base_type,
-      appraisedItem.level_req || 0,
-      appraisedItem.item_level || 0,
-      explicit_str,
-      appraisedItem.estimated_price_string,
-      appraisedItem.flavor_text || "",
-      appraisedItem.bot_culling_logs,
-      getIconUrl(appraisedItem.name, appraisedItem.base_type)
-    ].join("|");
+    const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
+      method: "POST",
+      headers: {
+        "apikey": supabaseAnonKey,
+        "Authorization": `Bearer ${supabaseAnonKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        p_name: entryName,
+        p_data: itemPayload,
+        p_write_key: guildWriteKey
+      })
+    });
     
-    const pushUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/add/${entryName}/0/0/${encodeURIComponent(item_payload)}`;
-    
-    const pushRes = await fetch(pushUrl);
     if (!pushRes.ok) {
-      throw new Error(`Database push failed: ${pushRes.status}`);
+      const errTxt = await pushRes.text();
+      throw new Error(`Database push failed: ${errTxt}`);
     }
     
     log(`✅ Live item successfully added to Depot Drop! ${appraisedItem.name} listed at ${appraisedItem.estimated_price_string}.`, "success");
@@ -600,8 +643,10 @@ btnAppraise.addEventListener("click", () => {
 });
 
 btnSyncItem.addEventListener("click", () => {
-  const dreamloKey = dreamloInput.value.trim();
-  syncAppraisedItemDirectly(dreamloKey);
+  const supabaseUrl = supabaseUrlInput.value.trim();
+  const supabaseAnonKey = supabaseAnonKeyInput.value.trim();
+  const guildWriteKey = guildWriteKeyInput.value.trim();
+  syncAppraisedItemDirectly(supabaseUrl, supabaseAnonKey, guildWriteKey);
 });
 
 // ==========================================
@@ -747,7 +792,7 @@ const PoE_RARITY_MAP = {
   9: "Relic"
 };
 
-// Maps GGG API item payload to our standard pipe-separated format
+// Maps GGG API item payload to our standard structured JSON format
 function parsePoEItem(item) {
   const rarity = PoE_RARITY_MAP[item.frameType] || "Rare";
   
@@ -775,7 +820,8 @@ function parsePoEItem(item) {
   if (item.implicitMods) affixes.push(...item.implicitMods);
   if (item.explicitMods) affixes.push(...item.explicitMods);
   // Sanitize mods text (remove PoE internal syntax bracket codes)
-  const explicit_str = affixes.map(m => m.replace(/<<.*?>>/g, "")).join(";");
+  const explicit_mods = affixes.map(m => m.replace(/<<.*?>>/g, ""));
+  const explicit_str = explicit_mods.join(";");
   
   // Default valuations (Free, 100% tokenless heuristic)
   let price = "Gear Pool";
@@ -802,35 +848,36 @@ function parsePoEItem(item) {
   const logs = "GGG Web API Bulk Sync";
   const url = item.icon || "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png";
   
-  return [
+  return {
     rarity,
     name,
     base,
-    levelReq,
+    level: levelReq,
     ilvl,
-    explicit_str,
+    affixes: explicit_mods,
     price,
     flavor,
     logs,
     url
-  ].join("|");
+  };
 }
 
 // Bulk sync execution handler
 async function bulkSyncStashTab() {
-  const dreamloKey = dreamloInput.value.trim();
-  const dreamloPublicKey = dreamloPublicKeyInput.value.trim();
+  const supabaseUrl = supabaseUrlInput.value.trim();
+  const supabaseAnonKey = supabaseAnonKeyInput.value.trim();
+  const guildWriteKey = guildWriteKeyInput.value.trim();
   const league = bulkLeagueInput.value.trim();
   const tabIndex = parseInt(bulkTabIndexInput.value.trim(), 10) || 0;
   const stashType = bulkStashTypeSelect.value;
   const accountName = bulkAccountNameInput.value.trim();
   
-  if (!dreamloKey) {
-    log("Error: Dreamlo Private Key required.", "error");
+  if (!supabaseUrl || !supabaseAnonKey) {
+    log("Error: Supabase URL and Anon Key required.", "error");
     return;
   }
-  if (!dreamloPublicKey) {
-    log("Error: Dreamlo Public Key required.", "error");
+  if (!guildWriteKey) {
+    log("Error: Guild Write Key required.", "error");
     return;
   }
   if (!league) {
@@ -844,8 +891,9 @@ async function bulkSyncStashTab() {
   
   // Persist input values to local storage
   chrome.storage.local.set({
-    dreamloKey: dreamloKey,
-    dreamloPublicKey: dreamloPublicKey,
+    supabaseUrl: supabaseUrl,
+    supabaseAnonKey: supabaseAnonKey,
+    guildWriteKey: guildWriteKey,
     bulkLeague: league,
     bulkTabIndex: tabIndex,
     bulkStashType: stashType,
@@ -927,37 +975,32 @@ async function bulkSyncStashTab() {
         total_chaos += currencyCounts[k] * rates[k];
       });
       
-      const core_keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
-      const pipe_str = core_keys.map(k => currencyCounts[k]).join("|") + "|1.0";
-      const total_score = Math.floor(total_chaos * 10);
+      const currencyPayload = {
+        ...currencyCounts,
+        sync_version: "1.0"
+      };
       
       log("Syncing Currency counts directly to __GUILD_VAULT__ entry...");
-      const pushUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/add/__GUILD_VAULT__/${total_score}/0/${encodeURIComponent(pipe_str)}`;
+      const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseAnonKey,
+          "Authorization": `Bearer ${supabaseAnonKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          p_name: "__GUILD_VAULT__",
+          p_data: currencyPayload,
+          p_write_key: guildWriteKey
+        })
+      });
       
-      const pushRes = await fetch(pushUrl);
       if (!pushRes.ok) {
-        throw new Error(`Database push failed with status: ${pushRes.status}`);
+        throw new Error(`Supabase push failed: ${await pushRes.text()}`);
       }
       
       log(`✅ Guild Currency Tab synced! Net Worth: ${total_chaos.toFixed(0)}c (~${(total_chaos/150).toFixed(1)} EX)`, "success");
       return;
-    }
-    
-    // 2. Fetch current database entries to purge old items
-    log("Querying online database for stale entries...");
-    const dlGetUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloPublicKey}/json`;
-    const dlRes = await fetch(dlGetUrl);
-    let dlData = null;
-    if (dlRes.ok) {
-      const text = await dlRes.text();
-      if (text.startsWith("ERROR:")) {
-        throw new Error(`Dreamlo database error: ${text}`);
-      }
-      try {
-        dlData = JSON.parse(text);
-      } catch (jsonErr) {
-        console.warn("Dreamlo did not return valid JSON, skipping stale checks:", jsonErr);
-      }
     }
     
     // Naming prefixes sanitized
@@ -966,26 +1009,24 @@ async function bulkSyncStashTab() {
       ? `ITEM_GUILD_T${tabIndex}_`
       : `ITEM_PERS_${safeAccount}_T${tabIndex}_`;
       
-    let deleteCount = 0;
-    if (dlData && dlData.dreamlo && dlData.dreamlo.leaderboard && dlData.dreamlo.leaderboard.entry) {
-      let entries = dlData.dreamlo.leaderboard.entry;
-      if (!Array.isArray(entries)) entries = [entries];
-      
-      const staleEntries = entries.filter(e => e.name.startsWith(deletePrefix));
-      if (staleEntries.length > 0) {
-        log(`Purging ${staleEntries.length} old visual items for this tab...`);
-        for (const entry of staleEntries) {
-          try {
-            const delUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/delete/${entry.name}`;
-            await fetch(delUrl);
-            deleteCount++;
-            await new Promise(r => setTimeout(r, 80)); // Sequential delay
-          } catch (e) {
-            console.warn("Purge failed for entry:", entry.name, e);
-          }
-        }
-      }
+    // 2. Fetch current database entries to purge old items (atomic in Supabase!)
+    log("Purging old visual items for this tab online...");
+    const purgeRes = await fetch(`${supabaseUrl}/rest/v1/rpc/purge_vault_items`, {
+      method: "POST",
+      headers: {
+        "apikey": supabaseAnonKey,
+        "Authorization": `Bearer ${supabaseAnonKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        p_prefix: deletePrefix,
+        p_write_key: guildWriteKey
+      })
+    });
+    if (!purgeRes.ok) {
+      throw new Error(`Failed to purge old items: ${await purgeRes.text()}`);
     }
+    const deleteCount = await purgeRes.json();
     if (deleteCount > 0) {
       log(`Database cleared: Purged ${deleteCount} stale items.`, "success");
     }
@@ -996,16 +1037,32 @@ async function bulkSyncStashTab() {
     
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      const payload = parsePoEItem(item);
+      const parsedItem = parsePoEItem(item);
       const entryName = `${deletePrefix}${i}`;
       
       try {
-        const pushUrl = `https://corsproxy.io/?http://dreamlo.com/lb/${dreamloKey}/add/${entryName}/0/0/${encodeURIComponent(payload)}`;
-        const pushRes = await fetch(pushUrl);
+        const itemPayload = {
+          ...parsedItem,
+          owner: stashType === "guild" ? "Shared Guild Vault" : accountName
+        };
+
+        const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
+          method: "POST",
+          headers: {
+            "apikey": supabaseAnonKey,
+            "Authorization": `Bearer ${supabaseAnonKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            p_name: entryName,
+            p_data: itemPayload,
+            p_write_key: guildWriteKey
+          })
+        });
         if (pushRes.ok) {
           successCount++;
         }
-        await new Promise(r => setTimeout(r, 120)); // Rate limit protection
+        await new Promise(r => setTimeout(r, 60)); // Rate limit protection
       } catch (pushErr) {
         console.warn("Item upload failed:", item.typeLine, pushErr);
       }

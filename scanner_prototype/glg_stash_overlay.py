@@ -441,14 +441,19 @@ class GLGOverlayApp:
             pipe_str = "|".join([str(core_data.get(k, 0)) for k in core_keys])
             total_score = int(total_chaos * 10)
             
-            # Fetch dreamlo key (default fallback)
-            dreamlo_key = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A"
+            # Fetch Supabase configuration (default fallbacks)
+            supabase_url = "https://qqljadcpxsubawmzkecl.supabase.co"
+            supabase_key = "sb_publishable_T8G6w3OtwXRG_cXd_-h9YQ_s8U9iDnx"
+            guild_write_key = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A"
+            
             config_path = os.path.join(os.path.dirname(__file__), "config.json")
             if os.path.exists(config_path):
                 try:
                     with open(config_path, 'r') as f:
                         cfg = json.load(f)
-                        dreamlo_key = cfg.get("default_dreamlo_key") or dreamlo_key
+                        supabase_url = cfg.get("default_supabase_url") or supabase_url
+                        supabase_key = cfg.get("default_supabase_anon_key") or supabase_key
+                        guild_write_key = cfg.get("default_guild_write_key") or guild_write_key
                 except:
                     pass
             
@@ -456,8 +461,27 @@ class GLGOverlayApp:
             import urllib.request
             import urllib.parse
             
-            push_url = f"https://dreamlo.com/lb/{dreamlo_key}/add/__GUILD_VAULT__/{total_score}/0/{urllib.parse.quote(pipe_str)}"
-            req = urllib.request.Request(push_url, headers={'User-Agent': 'Mozilla/5.0'})
+            payload = {
+                "p_name": "__GUILD_VAULT__",
+                "p_data": {
+                    **core_data,
+                    "sync_version": "1.0"
+                },
+                "p_write_key": guild_write_key
+            }
+            
+            req_data = json.dumps(payload).encode('utf-8')
+            req = urllib.request.Request(
+                f"{supabase_url}/rest/v1/rpc/sync_vault_item",
+                data=req_data,
+                headers={
+                    'User-Agent': 'Mozilla/5.0',
+                    'apikey': supabase_key,
+                    'Authorization': f'Bearer {supabase_key}',
+                    'Content-Type': 'application/json'
+                },
+                method='POST'
+            )
             
             with urllib.request.urlopen(req, timeout=12) as response_http:
                 html = response_http.read().decode('utf-8')

@@ -664,8 +664,9 @@
   </div>
 
   <script>
-    // Serverless Dreamlo API Keys
-    const DREAMLO_PUBLIC_KEY = "6a1a0f778f40bb17b021d0c5";
+    // Serverless Supabase API Config
+    const SUPABASE_URL = "https://qqljadcpxsubawmzkecl.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_T8G6w3OtwXRG_cXd_-h9YQ_s8U9iDnx";
     
     // Core currencies config linked to official GGG CDN high-definition assets
     // Core currencies config linked to beautiful local assets
@@ -816,7 +817,7 @@
       }
     }
 
-    // 1. Fetch scanned currency and gear data from serverless Dreamlo database
+    // 1. Fetch scanned currency and gear data from serverless Supabase database
     async function loadScannedStash() {
       const grid = document.getElementById("vaultGrid");
       const worthBadge = document.getElementById("vaultNetWorth");
@@ -825,93 +826,89 @@
       if (!grid) return;
       
       try {
-        const response = await fetch(`https://corsproxy.io/?http://dreamlo.com/lb/${DREAMLO_PUBLIC_KEY}/json`);
-        if (!response.ok) throw new Error("Leaderboard API returned: " + response.status);
-        const data = await response.json();
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/poe2_guild_vault?select=*`, {
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (!response.ok) throw new Error("Supabase API returned: " + response.status);
+        const entries = await response.json();
         
         let foundVault = false;
         scannedItems = [];
         
-        if (data && data.dreamlo && data.dreamlo.leaderboard && data.dreamlo.leaderboard.entry) {
-          let entries = data.dreamlo.leaderboard.entry;
-          if (!Array.isArray(entries)) entries = [entries];
-          
+        if (entries && Array.isArray(entries)) {
           // Parse currency tab
           const vaultEntry = entries.find(e => e.name === "__GUILD_VAULT__");
-          if (vaultEntry && vaultEntry.text) {
-            const decoded = decodeURIComponent(vaultEntry.text);
-            const parts = decoded.split("|");
-            if (parts.length >= 11) {
-              const keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
-              keys.forEach((key, idx) => {
-                scannedCounts[key] = parseInt(parts[idx], 10) || 0;
-              });
-              foundVault = true;
-              
-              // Handle version tracking alerts
-              const lastUsedVersion = parts[11] || "1.0";
-              const latestVersion = "1.0";
-              
-              const syncStatusEl = document.getElementById("syncStatus");
-              const alertBox = document.getElementById("updateAlertBox");
-              
-              if (syncStatusEl) {
-                syncStatusEl.innerHTML = `
-                  <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 5px #10b981; animation: pulse 1.5s infinite;"></span>
-                  CONNECTED (LIVE V${lastUsedVersion})
+          if (vaultEntry && vaultEntry.data) {
+            const cData = vaultEntry.data;
+            const keys = ["scroll", "transmute", "augmentation", "alchemy", "regal", "chaos", "vaal", "annulment", "exalted", "divine", "mirror"];
+            keys.forEach(key => {
+              scannedCounts[key] = parseInt(cData[key], 10) || 0;
+            });
+            foundVault = true;
+            
+            // Handle version tracking alerts
+            const lastUsedVersion = cData.sync_version || "1.0";
+            const latestVersion = "1.0";
+            
+            const syncStatusEl = document.getElementById("syncStatus");
+            const alertBox = document.getElementById("updateAlertBox");
+            
+            if (syncStatusEl) {
+              syncStatusEl.innerHTML = `
+                <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 5px #10b981; animation: pulse 1.5s infinite;"></span>
+                CONNECTED (LIVE V${lastUsedVersion})
+              `;
+            }
+            
+            if (alertBox) {
+              if (parseFloat(lastUsedVersion) < parseFloat(latestVersion)) {
+                alertBox.style.display = "block";
+                alertBox.innerHTML = `
+                  <span style="font-weight: bold; display: block; margin-bottom: 2px;">🚨 UPDATE RECOMMENDED</span>
+                  The last scan used V${lastUsedVersion}. A newer version (V${latestVersion}) is available. Please download the update below!
                 `;
-              }
-              
-              if (alertBox) {
-                if (parseFloat(lastUsedVersion) < parseFloat(latestVersion)) {
-                  alertBox.style.display = "block";
-                  alertBox.innerHTML = `
-                    <span style="font-weight: bold; display: block; margin-bottom: 2px;">🚨 UPDATE RECOMMENDED</span>
-                    The last scan used V${lastUsedVersion}. A newer version (V${latestVersion}) is available. Please download the update below!
-                  `;
-                } else {
-                  alertBox.style.display = "none";
-                }
+              } else {
+                alertBox.style.display = "none";
               }
             }
           }
           
           // Parse any identified items synced from clipboard appraisers (starts with ITEM_)
           entries.forEach(e => {
-            if (e.name.startsWith("ITEM_") && e.text) {
+            if (e.name.startsWith("ITEM_") && e.data) {
               try {
-                const decodedText = decodeURIComponent(e.text);
-                const itemParts = decodedText.split("|");
-                if (itemParts.length >= 8) {
-                  // Determine owner based on prefix (V2.2)
-                  let ownerName = "Shared Guild Vault";
-                  if (e.name.startsWith("ITEM_PERS_")) {
-                    const prefixParts = e.name.split("_");
-                    if (prefixParts.length >= 3) {
-                      const rawName = prefixParts[2];
-                      ownerName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-                    }
+                const itemData = e.data;
+                // Determine owner based on prefix (V2.2)
+                let ownerName = itemData.owner || "Shared Guild Vault";
+                if (!itemData.owner && e.name.startsWith("ITEM_PERS_")) {
+                  const prefixParts = e.name.split("_");
+                  if (prefixParts.length >= 3) {
+                    const rawName = prefixParts[2];
+                    ownerName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
                   }
-                  
-                  const newItem = {
-                    rarity: itemParts[0] || "Rare",
-                    name: itemParts[1] || "Identified Item",
-                    base: itemParts[2] || "Gear",
-                    level: parseInt(itemParts[3], 10) || 60,
-                    ilvl: parseInt(itemParts[4], 10) || 75,
-                    affixes: (itemParts[5] || "").split(";"),
-                    price: itemParts[6] || "10 Chaos Orbs",
-                    flavor: itemParts[7] || "",
-                    logs: itemParts[8] || "Direct Clipboard Appraisal V1.0",
-                    url: itemParts[9] || "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png",
-                    owner: ownerName
-                  };
-                  scannedItems.push(newItem);
-                  
-                  // Dynamically append live logs to show culling activity
-                  if (logsBox) {
-                    logsBox.innerHTML += `<br>[LIVE APPRAISAL] Scanned high-value ${newItem.rarity} ${newItem.name} (${newItem.price})!`;
-                  }
+                }
+                
+                const newItem = {
+                  rarity: itemData.rarity || "Rare",
+                  name: itemData.name || "Identified Item",
+                  base: itemData.base || "Gear",
+                  level: parseInt(itemData.level, 10) || 60,
+                  ilvl: parseInt(itemData.ilvl, 10) || 75,
+                  affixes: Array.isArray(itemData.affixes) ? itemData.affixes : (itemData.affixes || "").split(";"),
+                  price: itemData.price || "10 Chaos Orbs",
+                  flavor: itemData.flavor || "",
+                  logs: itemData.logs || "Direct Clipboard Appraisal V1.0",
+                  url: itemData.url || "https://web.poecdn.com/image/Art/2DItems/Rings/OpalRing.png",
+                  owner: ownerName
+                };
+                scannedItems.push(newItem);
+                
+                // Dynamically append live logs to show culling activity
+                if (logsBox) {
+                  logsBox.innerHTML += `<br>[LIVE APPRAISAL] Scanned high-value ${newItem.rarity} ${newItem.name} (${newItem.price})!`;
                 }
               } catch (parseErr) {
                 console.warn("Failed to parse scanned gear item:", parseErr);

@@ -12,9 +12,10 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false; // Retro pixel feel
 
-// Live serverless dreamlo.com leaderboard keys (Pre-allocated for GLG Guild!)
-const DREAMLO_PUBLIC_KEY = "6a1a0f778f40bb17b021d0c5";
-const DREAMLO_PRIVATE_KEY = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A";
+// Live serverless Supabase configuration (Pre-allocated for GLG Guild!)
+const SUPABASE_URL = "https://qqljadcpxsubawmzkecl.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_T8G6w3OtwXRG_cXd_-h9YQ_s8U9iDnx";
+const GUILD_WRITE_KEY = "BCU5C-reDUecvjLm4tV6QkGVvTGbX-Uyuyz5Xtpml5A";
 
 // Game State Enum
 const GameState = {
@@ -3169,21 +3170,29 @@ async function loadDreamloLeaderboard() {
   const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 seconds timeout
   
   try {
-    const response = await fetch(`https://dreamlo.com/lb/${DREAMLO_PUBLIC_KEY}/json`, { signal: controller.signal });
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/poe2_guild_vault?select=*`, {
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      signal: controller.signal
+    });
     clearTimeout(timeoutId);
     
-    if (!response.ok) throw new Error("Leaderboard API returned status: " + response.status);
+    if (!response.ok) throw new Error("Supabase returned status: " + response.status);
     
-    const data = await response.json();
+    const rows = await response.json();
     tbody.innerHTML = "";
     
-    if (data && data.dreamlo && data.dreamlo.leaderboard && data.dreamlo.leaderboard.entry) {
-      let entries = data.dreamlo.leaderboard.entry;
-      
-      // Normalize single record to array
-      if (!Array.isArray(entries)) {
-        entries = [entries];
-      }
+    if (rows && Array.isArray(rows)) {
+      // Map Supabase rows to Dreamlo schema format: { name, score, seconds }
+      const entries = rows
+        .filter(r => !r.name.startsWith("ITEM_") && r.name !== "__GUILD_VAULT__")
+        .map(r => ({
+          name: r.data.name || r.name,
+          score: (r.data.score !== undefined ? r.data.score : 0).toString(),
+          seconds: r.data.seconds || "Witch"
+        }));
       
       leaderboardEntriesRaw = entries;
       
@@ -3304,11 +3313,10 @@ function updateGuildGrindTotalDisplay(grindChaos) {
   }
 }
 
-// Submit negative score to dreamlo representing loot deducted from reserves
+// Submit negative score to Supabase representing loot deducted from reserves
 async function submitBankerDeduction(chaosValue) {
   const deductedScore = -Math.floor(chaosValue * 10);
   const dbName = `CREG_DEDUCTION-${Date.now()}`;
-  const url = `https://dreamlo.com/lb/${DREAMLO_PRIVATE_KEY}/add/${encodeURIComponent(dbName)}/${deductedScore}/0/Banker`;
   
   console.log(`Submitting banker deduction of ${chaosValue}c (score: ${deductedScore}) to database...`);
   
@@ -3319,7 +3327,26 @@ async function submitBankerDeduction(chaosValue) {
   const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout
   
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const payload = {
+      p_name: dbName,
+      p_data: {
+        name: dbName,
+        score: deductedScore,
+        seconds: "Banker"
+      },
+      p_write_key: GUILD_WRITE_KEY
+    };
+    
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
     clearTimeout(timeoutId);
     
     if (!response.ok) throw new Error("Database returned error status: " + response.status);
@@ -3504,13 +3531,31 @@ async function submitScoreToLeaderboard() {
   try {
     // Append timestamp to name to treat every run as a separate unique record
     const dbName = `${cleanName}-${Date.now()}`;
-    const url = `https://dreamlo.com/lb/${DREAMLO_PRIVATE_KEY}/add/${encodeURIComponent(dbName)}/${score}/0/${encodeURIComponent(playerClass)}`;
+    
+    const payload = {
+      p_name: dbName,
+      p_data: {
+        name: dbName,
+        score: score,
+        seconds: playerClass
+      },
+      p_write_key: GUILD_WRITE_KEY
+    };
     
     // API request with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout
     
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
     clearTimeout(timeoutId);
     
     if (!response.ok) throw new Error("Submitting score returned status: " + response.status);
