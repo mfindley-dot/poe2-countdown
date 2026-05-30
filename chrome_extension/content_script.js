@@ -7,7 +7,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .then(async res => {
         if (!res.ok) {
           const text = await res.text();
-          throw new Error(`GGG API returned status ${res.status}: ${text}`);
+          let cleanMsg = text.length > 150 ? text.substring(0, 150) + "..." : text;
+          if (text.includes("Permission Denied")) {
+            cleanMsg = "Permission Denied (403). Make sure your GGG Account Name uses a hyphen instead of a hashtag (e.g. Radiocommander-0376).";
+          }
+          throw new Error(cleanMsg);
         }
         return res.json();
       })
