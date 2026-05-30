@@ -1104,14 +1104,14 @@
       // Draw active tracked tabs
       STASH_TABS.forEach(tab => {
         const btn = document.createElement("button");
-        btn.className = `stash-sidebar-tab \${activeTabId === tab.id ? 'active' : ''}`;
+        btn.className = `stash-sidebar-tab ${activeTabId === tab.id ? 'active' : ''}`;
         btn.style.setProperty("--tab-bg", tab.color);
         btn.style.setProperty("--tab-border", tab.textColor);
         btn.style.color = tab.textColor;
         
         btn.innerHTML = `
-          <span>\${tab.name}</span>
-          <span style="font-size: 0.6rem; opacity: 0.6;">T\${tab.tabIndex}</span>
+          <span>${tab.name}</span>
+          <span style="font-size: 0.6rem; opacity: 0.6;">T${tab.tabIndex}</span>
         `;
         
         btn.onclick = () => selectStashTab(tab.id);
@@ -1128,7 +1128,7 @@
         btn.style.cursor = "not-allowed";
         
         btn.innerHTML = `
-          <span>\${tab.name}</span>
+          <span>${tab.name}</span>
           <span style="font-size: 0.6rem;">🔒</span>
         `;
         
@@ -1138,7 +1138,7 @@
       // Draw Global Search Results Tab (Gold Border) at the bottom
       const searchBtn = document.createElement("button");
       searchBtn.id = "btnSearchTab";
-      searchBtn.className = `stash-sidebar-tab \${activeTabId === 'search_results' ? 'active' : ''}`;
+      searchBtn.className = `stash-sidebar-tab ${activeTabId === 'search_results' ? 'active' : ''}`;
       searchBtn.style.setProperty("--tab-bg", "#2d2616");
       searchBtn.style.setProperty("--tab-border", "#ffd700");
       searchBtn.style.color = "#ffd700";
@@ -1208,10 +1208,10 @@
       const logsBox = document.getElementById("botAuditLogs");
       
       try {
-        const response = await fetch(`\${SUPABASE_URL}/rest/v1/poe2_guild_vault?select=*`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/poe2_guild_vault?select=*`, {
           headers: {
             "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer \${SUPABASE_ANON_KEY}`
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
           }
         });
         if (!response.ok) throw new Error("Supabase API returned: " + response.status);
@@ -1239,7 +1239,7 @@
             if (syncStatusEl) {
               syncStatusEl.innerHTML = `
                 <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 5px #10b981; animation: pulse 1.5s infinite;"></span>
-                CONNECTED (LIVE V\${lastUsedVersion})
+                CONNECTED (LIVE V${lastUsedVersion})
               `;
             }
             
@@ -1248,7 +1248,7 @@
                 alertBox.style.display = "block";
                 alertBox.innerHTML = `
                   <span style="font-weight: bold; display: block; margin-bottom: 2px;">🚨 UPDATE RECOMMENDED</span>
-                  The last scan used V\${lastUsedVersion}. A newer version (V\${latestVersion}) is available. Please download the update below!
+                  The last scan used V${lastUsedVersion}. A newer version (V${latestVersion}) is available. Please download the update below!
                 `;
               } else {
                 alertBox.style.display = "none";
@@ -1292,7 +1292,7 @@
                 scannedItems.push(newItem);
                 
                 if (logsBox) {
-                  logsBox.innerHTML += `<br>[LIVE APPRAISAL] Scanned high-value \${newItem.rarity} \${newItem.name} (\${newItem.price}) in Tab \${newItem.tabIndex}!`;
+                  logsBox.innerHTML += `<br>[LIVE APPRAISAL] Scanned high-value ${newItem.rarity} ${newItem.name} (${newItem.price}) in Tab ${newItem.tabIndex}!`;
                 }
               } catch (parseErr) {
                 console.warn("Failed to parse scanned gear item:", parseErr);
