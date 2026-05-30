@@ -327,8 +327,46 @@
         <span style="color: #a2a1a0;">APPRAISE ONLY:</span>
         <button id="btnBindAppraise" class="keybind-btn">Alt+O</button>
       </div>
-      <div style="font-size: 0.55rem; color: #a2a1a0; text-align: center; line-height: 1.35; border-top: 1px dashed rgba(197,168,128,0.15); padding-top: 4px; margin-top: 2px;">
-        Click button, then press any key (or Alt + Key) to bind.
+    </div>
+  </div>
+
+  <!-- Vault Routing & Profile Authentication -->
+  <div style="border-top: 1px dashed rgba(197, 168, 128, 0.25); margin-top: 12px; padding-top: 10px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+    <div style="font-family: 'Outfit', sans-serif; font-size: 0.72rem; color: #ffd700; font-weight: bold; letter-spacing: 0.5px;">
+      🔮 VAULT ROUTING & PROFILE:
+    </div>
+    
+    <div style="display: flex; gap: 8px;">
+      <div class="field-group" style="flex: 2; margin-bottom: 0;">
+        <label for="vaultStashType">STASH TYPE:</label>
+        <select id="vaultStashType" style="background: #1c1917; border: 1px solid rgba(197, 168, 128, 0.25); color: #f8fafc; padding: 5px; border-radius: 4px; font-size: 0.7rem; outline: none; font-family: sans-serif; height: 26px;">
+          <option value="guild">🛡️ Guild Vault</option>
+          <option value="personal">👤 Personal Stash</option>
+        </select>
+      </div>
+      <div class="field-group" style="flex: 1; margin-bottom: 0;">
+        <label for="bulkTabIndex">TAB INDEX:</label>
+        <input type="number" id="bulkTabIndex" value="1" min="0" style="padding: 4px; font-size: 0.7rem; height: 26px; box-sizing: border-box;">
+      </div>
+    </div>
+    
+    <div id="personalRoutingFields" style="display: none; flex-direction: column; gap: 8px;">
+      <div class="field-group" style="margin-bottom: 0;">
+        <label for="vaultUsername">VAULT PROFILE:</label>
+        <select id="vaultUsername" style="background: #1c1917; border: 1px solid rgba(197, 168, 128, 0.25); color: #f8fafc; padding: 5px; border-radius: 4px; font-size: 0.7rem; outline: none; font-family: sans-serif; height: 26px;">
+          <option value="baorunner">baoRunner</option>
+          <option value="chaz">Chaz</option>
+          <option value="creg">Creg</option>
+          <option value="huneybutta">HuneyButta</option>
+          <option value="pseudofro">pseudofro</option>
+          <option value="radiocommander">Radiocommander</option>
+          <option value="smooth">Smooth</option>
+        </select>
+      </div>
+      
+      <div class="field-group" style="margin-bottom: 0;">
+        <label for="vaultPassword">VAULT PASSCODE:</label>
+        <input type="password" id="vaultPassword" placeholder="Enter profile passcode (e.g. rad75)" style="padding: 4px 6px; font-size: 0.72rem; height: 26px; box-sizing: border-box;">
       </div>
     </div>
   </div>

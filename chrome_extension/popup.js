@@ -35,13 +35,12 @@ const appPrice = document.getElementById("appPrice");
 const appCullingLogs = document.getElementById("appCullingLogs");
 const btnSyncItem = document.getElementById("btnSyncItem");
 
-// Bulk Syncer Elements
-const bulkLeagueInput = document.getElementById("bulkLeague");
+// Bulk / Vault Routing Elements
 const bulkTabIndexInput = document.getElementById("bulkTabIndex");
-const bulkStashTypeSelect = document.getElementById("bulkStashType");
-const groupBulkAccountName = document.getElementById("groupBulkAccountName");
-const bulkAccountNameInput = document.getElementById("bulkAccountName");
-const btnBulkSync = document.getElementById("btnBulkSync");
+const vaultStashTypeSelect = document.getElementById("vaultStashType");
+const personalRoutingFields = document.getElementById("personalRoutingFields");
+const vaultUsernameSelect = document.getElementById("vaultUsername");
+const vaultPasswordInput = document.getElementById("vaultPassword");
 
 // Build Deficiency Optimizer Elements (V2.3 Pivot)
 const btnCaptureChar = document.getElementById("btnCaptureChar");
@@ -325,7 +324,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   chrome.storage.local.get([
     "geminiKey", "supabaseUrl", "supabaseAnonKey", "guildWriteKey", "hotkeyIdentify", "hotkeyAppraise", 
-    "bulkLeague", "bulkTabIndex", "bulkStashType", "bulkAccountName",
+    "bulkTabIndex", "vaultStashType", "vaultUsername", "vaultPassword",
     "manualFireRes", "manualColdRes", "manualLightRes", "manualStr", "manualDex", "manualInt"
   ], (data) => {
     geminiInput.value = data.geminiKey || defaultGeminiKey;
@@ -343,13 +342,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     btnBindIdentify.textContent = formatHotkey(hotkeyIdentify);
     btnBindAppraise.textContent = formatHotkey(hotkeyAppraise);
 
-    // V2.2 inputs loading
-    if (data.bulkLeague) bulkLeagueInput.value = data.bulkLeague;
+    // Vault routing inputs loading
     if (data.bulkTabIndex !== undefined) bulkTabIndexInput.value = data.bulkTabIndex;
-    if (data.bulkStashType) {
-      bulkStashTypeSelect.value = data.bulkStashType;
+    if (data.vaultStashType) {
+      vaultStashTypeSelect.value = data.vaultStashType;
+      if (data.vaultStashType === "personal") {
+        personalRoutingFields.style.display = "flex";
+      }
     }
-    if (data.bulkAccountName) bulkAccountNameInput.value = data.bulkAccountName;
+    if (data.vaultUsername) vaultUsernameSelect.value = data.vaultUsername;
+    if (data.vaultPassword) vaultPasswordInput.value = data.vaultPassword;
 
     // V2.3 inputs loading
     if (data.manualFireRes !== undefined) manualFireRes.value = data.manualFireRes;
@@ -358,6 +360,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (data.manualStr !== undefined) manualStr.value = data.manualStr;
     if (data.manualDex !== undefined) manualDex.value = data.manualDex;
     if (data.manualInt !== undefined) manualInt.value = data.manualInt;
+  });
+
+  // Vault Routing Change Listeners
+  vaultStashTypeSelect.addEventListener("change", () => {
+    if (vaultStashTypeSelect.value === "personal") {
+      personalRoutingFields.style.display = "flex";
+    } else {
+      personalRoutingFields.style.display = "none";
+    }
+    chrome.storage.local.set({ vaultStashType: vaultStashTypeSelect.value });
+  });
+
+  vaultUsernameSelect.addEventListener("change", () => {
+    chrome.storage.local.set({ vaultUsername: vaultUsernameSelect.value });
+  });
+
+  vaultPasswordInput.addEventListener("input", () => {
+    chrome.storage.local.set({ vaultPassword: vaultPasswordInput.value });
+  });
+
+  bulkTabIndexInput.addEventListener("input", () => {
+    chrome.storage.local.set({ bulkTabIndex: parseInt(bulkTabIndexInput.value, 10) || 0 });
   });
 
   // Attempt auto-clipboard read on startup if in Appraiser mode
@@ -419,6 +443,42 @@ async function readClipboardText() {
   }
 }
 
+const VAULT_PASSCODE_HASHES = {
+  "baorunner": "f00bf0465d1fede533b97579707f2557931fcf992d37eacbec7f034edd50c2ec", // bao79
+  "chaz": "ddb17e4ab6b5536440cf6b6a37803cf86bfd5ee31bdbe85cc2f97c4cf9ed3406", // chz42
+  "creg": "01dcef5ee2938a16dbec8e1c31278ff56a8faef1c60b5406c1c243f779780074", // crg88
+  "huneybutta": "b04292cd4150567e95454655f8e658ec3d839217a26f049fa5ebc28cc887ab67", // hny13
+  "pseudofro": "394d29d892d19451d6cc47d9539ecb001d78cb5cf92b8d0a87a74797034cf939", // psd64
+  "radiocommander": "1bc844f5e006387edaf2de438063666b0c21c72dfd4636666d6db2b64cd6bf9b", // rad75
+  "smooth": "9741cb83bf3688b14a2a16d8e87498c4749f7e5df633b4974d6c66dbb72bc21c" // smh27
+};
+
+async function validateVaultProfile() {
+  if (vaultStashTypeSelect.value === "guild") return true;
+  
+  const user = vaultUsernameSelect.value.toLowerCase();
+  const pass = vaultPasswordInput.value.trim();
+  
+  if (!pass) {
+    alert("🔒 Profile Passcode required for player personal stashes!");
+    return false;
+  }
+  
+  const encoder = new TextEncoder();
+  const data = encoder.encode(pass);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  
+  const expected = VAULT_PASSCODE_HASHES[user];
+  if (hashHex === expected) {
+    return true;
+  } else {
+    alert("❌ Vault Passcode authentication failed. Please enter the correct profile passcode!");
+    return false;
+  }
+}
+
 // Stash Sync Click Trigger
 btnSync.addEventListener("click", async () => {
   const geminiKey = geminiInput.value.trim();
@@ -438,6 +498,9 @@ btnSync.addEventListener("click", async () => {
     log("Error: Guild Write Key required.", "error");
     return;
   }
+  
+  const authOk = await validateVaultProfile();
+  if (!authOk) return;
   
   chrome.storage.local.set({ geminiKey, supabaseUrl, supabaseAnonKey, guildWriteKey });
   logBox.innerHTML = "Status: Initializing display grab...";
@@ -608,12 +671,16 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
       
       log(`✅ Guild Vault Currency synced successfully! Net Worth: ${total_chaos.toFixed(0)}c (~${(total_chaos/150).toFixed(1)} EX)`, "success");
       
-    } else {
       // Standard / Quad / Specialty Gear Stash tabs culling & reconciliation
       const gearItems = data.gear_items || [];
       log(`Scanned ${gearItems.length} items. Ditching coordinates and appraising via fingerprints...`);
       
-      const deletePrefix = `ITEM_GUILD_T${matchedTab.tabIndex}_`;
+      const stashType = vaultStashTypeSelect.value;
+      const vaultUser = vaultUsernameSelect.value.toLowerCase();
+      
+      const deletePrefix = stashType === "guild"
+        ? `ITEM_GUILD_T${matchedTab.tabIndex}_`
+        : `ITEM_PERS_${vaultUser}_T${matchedTab.tabIndex}_`;
       
       // 1. Fetch existing entries inside this specific tab
       log(`Fetching current database listings for Tab Index ${matchedTab.tabIndex} (${matchedTab.name})...`);
@@ -761,7 +828,9 @@ async function captureAndUpload(stream, geminiKey, supabaseUrl, supabaseAnonKey,
             flavor: item.flavor || "",
             logs: item.logs || "Visual OCR Scan",
             url: getIconUrl(item.name, item.base),
-            owner: "Shared Guild Vault"
+            owner: stashType === "guild"
+              ? "Shared Guild Vault"
+              : vaultUsernameSelect.options[vaultUsernameSelect.selectedIndex].text
           };
           
           const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
@@ -918,14 +987,16 @@ async function syncAppraisedItemDirectly(supabaseUrl, supabaseAnonKey, guildWrit
   logBox.innerHTML = "Status: Syncing appraised gear to visual stash online...";
   
   try {
+    const authOk = await validateVaultProfile();
+    if (!authOk) return;
+
     const tabIndex = bulkTabIndexInput ? parseInt(bulkTabIndexInput.value.trim(), 10) || 1 : 1;
-    const stashType = bulkStashTypeSelect ? bulkStashTypeSelect.value : "guild";
-    const accountName = bulkAccountNameInput ? bulkAccountNameInput.value.trim() : "Radiocommander";
-    const safeAccount = accountName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const stashType = vaultStashTypeSelect.value;
+    const vaultUser = vaultUsernameSelect.value.toLowerCase();
     
     const prefix = stashType === "guild"
       ? `ITEM_GUILD_T${tabIndex}_`
-      : `ITEM_PERS_${safeAccount}_T${tabIndex}_`;
+      : `ITEM_PERS_${vaultUser}_T${tabIndex}_`;
       
     const fingerprint = await getFingerprint(
       appraisedItem.rarity,
@@ -946,7 +1017,9 @@ async function syncAppraisedItemDirectly(supabaseUrl, supabaseAnonKey, guildWrit
       flavor: appraisedItem.flavor_text || "",
       logs: appraisedItem.bot_culling_logs,
       url: getIconUrl(appraisedItem.name, appraisedItem.base_type),
-      owner: stashType === "guild" ? "Shared Guild Vault" : accountName
+      owner: stashType === "guild"
+        ? "Shared Guild Vault"
+        : vaultUsernameSelect.options[vaultUsernameSelect.selectedIndex].text
     };
     
     const pushRes = await fetch(`${supabaseUrl}/rest/v1/rpc/sync_vault_item`, {
