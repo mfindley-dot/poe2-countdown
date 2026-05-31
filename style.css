@@ -117,10 +117,21 @@ body {
 }
 
 .app-header {
-  text-align: center;
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 20px auto;
+  padding: 20px 20px 10px 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+  box-sizing: border-box;
   position: relative;
-  padding-top: 100px; /* Pushed down inside container to sit beautifully under the absolute sign! */
+}
+
+.lobby-header {
+  padding-top: 260px;
 }
 
 .header-logo-img {
@@ -3147,5 +3158,43 @@ body.ticker-hidden {
   margin-top: 12px;
   font-family: var(--font-header);
   letter-spacing: 0.5px;
+}
+
+/* Responsive Header spacing, button wrapping, and text scaling */
+@media (max-width: 1024px) {
+  .lobby-header {
+    padding-top: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .lobby-header {
+    padding-top: 140px;
+  }
+  
+  .app-header {
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 12px !important;
+    padding: 10px !important;
+  }
+  
+  .app-header div {
+    justify-content: center !important;
+  }
+  
+  .app-header .subtitle {
+    text-align: center !important;
+    font-size: 0.85rem !important;
+    width: 100% !important;
+  }
+
+  .gothic-btn {
+    font-size: 0.72rem !important;
+    padding: 6px 12px !important;
+    letter-spacing: 0.5px !important;
+  }
 }
 

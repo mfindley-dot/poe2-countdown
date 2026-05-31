@@ -1150,7 +1150,7 @@
 
   <div class="app-container" style="position: relative; z-index: 10;">
     <!-- Header -->
-    <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 260px 20px 10px 20px; box-sizing: border-box;">
+    <header class="app-header lobby-header">
       <div style="display: flex; align-items: center; gap: 15px;">
         <img src="assets/images/icons/glg_stash-scanner_icon.png" alt="GLG Logo" style="height: 64px; width: auto; object-fit: contain; filter: drop-shadow(0 0 6px rgba(255,215,0,0.45));">
         <div>
@@ -4895,7 +4895,35 @@ Context:
         }
         throw new Error("Direct image generation in vault.html returned non-ok or empty image");
       } catch(err) {
-        console.error("Direct gemini image generation in vault.html failed:", err);
+        console.error("Direct gemini image generation in vault.html failed, falling back to Pollinations AI with local prompt compiler:", err);
+        try {
+          const seed = Math.floor(Math.random() * 1000000);
+          const promptText = `Gothic oil painting portrait, medieval RPG character, realistic oil on canvas, cinematic dramatic lighting, waist-up mid-shot. Likeness: ${likeness}. ${pobClassStr ? pobClassStr : 'Class: Exile'}. Equipped gear: ${gearStr || 'traditional robes'}.`;
+          const dataUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=768&nologo=true&seed=${seed}`;
+          
+          imgEl.src = dataUrl;
+          localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, dataUrl);
+          
+          if (!window.__GUILD_PORTRAITS__) window.__GUILD_PORTRAITS__ = {};
+          window.__GUILD_PORTRAITS__[lowerOwner] = dataUrl;
+          
+          await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+            method: "POST",
+            headers: {
+              "apikey": SUPABASE_ANON_KEY,
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              p_name: "__GUILD_PORTRAITS__",
+              p_data: window.__GUILD_PORTRAITS__,
+              p_write_key: GUILD_WRITE_KEY
+            })
+          });
+          console.log("Successfully synchronized local Pollinations portrait from vault.html to Supabase.");
+        } catch(fallbackErr) {
+          console.error("Pollinations fallback in vault.html failed:", fallbackErr);
+        }
       }
     }
 
