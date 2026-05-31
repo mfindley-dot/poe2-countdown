@@ -4750,180 +4750,33 @@ Context:
         }
       }
       
-      if (forceRegen) {
-        const lastGen = localStorage.getItem(`last_portrait_gen_${lowerOwner}`) || "0";
-        const now = Date.now();
-        if (now - parseInt(lastGen, 10) < 5000) {
-          alert("Gathering paint brushes... Please wait a few seconds before generating another masterpiece!");
-          return;
-        }
-        localStorage.setItem(`last_portrait_gen_${lowerOwner}`, now.toString());
-      }
+      showBackendSyncModal(lowerOwner);
       
-      imgEl.src = "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=512&h=768&auto=format&fit=crop";
-      
-      let likeness = "A Path of Exile adventurer";
-      try {
-        const storedConfig = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
-        if (storedConfig) {
-          const parsed = JSON.parse(storedConfig);
-          const activeConf = parsed[lowerOwner];
-          if (activeConf && activeConf.portrait_prompt) {
-            likeness = activeConf.portrait_prompt;
-          }
-        }
-      } catch(e){}
-      
-      const geminiApiKey = localStorage.getItem("geminiKey") || atob("QVEuQWI4Uk42S05kWjJxTVBGbm9IamVQTjdKMlluUlpIbnRfdG9XOFk3VFJ4TUYtdlBpMHc=");
-      
-      let refImageBase64 = "";
-      try {
-        const storedConfig = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
-        if (storedConfig) {
-          const parsed = JSON.parse(storedConfig);
-          const activeConf = parsed[lowerOwner];
-          if (activeConf && activeConf.reference_image) {
-            refImageBase64 = activeConf.reference_image;
-          }
-        }
-      } catch(e){}
-
-      // Build dynamic equipped gear details from window.charGearData
-      const charData = (window.charGearData && window.charGearData[lowerOwner]) || {};
-      const gearParts = [];
-      if (charData.helm) gearParts.push(`wearing helmet: ${charData.helm.base || charData.helm.name}`);
-      if (charData.body) gearParts.push(`wearing body armor: ${charData.body.base || charData.body.name}`);
-      if (charData.weapon1) gearParts.push(`wielding weapon: ${charData.weapon1.base || charData.weapon1.name}`);
-      if (charData.gloves) gearParts.push(`wearing gloves: ${charData.gloves.base || charData.gloves.name}`);
-      const gearStr = gearParts.join(", ") || "";
-
-      let pobClassStr = "";
-      const pobProfileStr = localStorage.getItem(`pob_profile_${lowerOwner}`);
-      if (pobProfileStr) {
-        try {
-          const parsed = JSON.parse(pobProfileStr);
-          if (parsed.class_name) {
-            pobClassStr = `Subject Class: ${parsed.class_name} from PoE2`;
-            if (parsed.ascend_name && parsed.ascend_name !== "None") {
-              pobClassStr += `, Ascendancy: ${parsed.ascend_name}`;
-            }
-          }
-        } catch(e) {}
-      }
-
-      const promptText = `A highly realistic gothic oil painting of a medieval RPG character.
-- Style: Rich colors, deep dramatic shadows, cinematic candlelight lighting, oil on canvas, highly detailed masterpiece.
-- Composition: Waist-up mid-shot portrait showing the head down to waist.
-- Likeness details: "${likeness}".
-- Class Context: ${pobClassStr ? pobClassStr : 'Subject Class: Adventurer from PoE2'}.
-- Equipped gear: "${gearStr || 'traditional exile robes'}".`;
-
-      const partsList = [
-        { text: promptText }
-      ];
-
-      if (refImageBase64) {
-        const base64Clean = refImageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-        partsList.push({
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: base64Clean
-          }
-        });
-        partsList[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
-- Carefully analyze the face in the attached photo.
-- You MUST explicitly copy their exact gender, hair style, hair color, presence of glasses (glasses must be explicitly described in the portrait!), stubble, face shape, and expression.
-- The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
-      }
-
-      try {
-        let gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiApiKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: partsList }],
-            generationConfig: {
-              responseModalities: ["IMAGE"]
-            }
-          })
-        });
-
-        if (!gResponse.ok) {
-          console.log("Trying gemini-2.5-flash-image-preview fallback in vault.html...");
-          gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: partsList }],
-              generationConfig: {
-                responseModalities: ["IMAGE"]
-              }
-            })
-          });
-        }
-
-        if (gResponse.ok) {
-          const gJson = await gResponse.json();
-          const parts = gJson?.candidates?.[0]?.content?.parts || [];
-          const imagePart = parts.find(p => p.inlineData);
-          if (imagePart && imagePart.inlineData) {
-            const mime = imagePart.inlineData.mimeType || "image/jpeg";
-            const base64Data = imagePart.inlineData.data;
-            const dataUrl = `data:${mime};base64,${base64Data}`;
-
-            imgEl.src = dataUrl;
-            localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, dataUrl);
-            
-            if (!window.__GUILD_PORTRAITS__) window.__GUILD_PORTRAITS__ = {};
-            window.__GUILD_PORTRAITS__[lowerOwner] = dataUrl;
-
-            await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
-              method: "POST",
-              headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                p_name: "__GUILD_PORTRAITS__",
-                p_data: window.__GUILD_PORTRAITS__,
-                p_write_key: GUILD_WRITE_KEY
-              })
-            });
-            return;
-          }
-        }
-        throw new Error("Direct image generation in vault.html returned non-ok or empty image");
-      } catch(err) {
-        console.error("Direct gemini image generation in vault.html failed, falling back to Pollinations AI with local prompt compiler:", err);
-        try {
-          const seed = Math.floor(Math.random() * 1000000);
-          const promptText = `Gothic oil painting portrait, medieval RPG character, realistic oil on canvas, cinematic dramatic lighting, waist-up mid-shot. Likeness: ${likeness}. ${pobClassStr ? pobClassStr : 'Class: Exile'}. Equipped gear: ${gearStr || 'traditional robes'}.`;
-          const dataUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=768&nologo=true&seed=${seed}`;
-          
-          imgEl.src = dataUrl;
-          localStorage.setItem(`victorian_portrait_url_${lowerOwner}`, dataUrl);
-          
-          if (!window.__GUILD_PORTRAITS__) window.__GUILD_PORTRAITS__ = {};
-          window.__GUILD_PORTRAITS__[lowerOwner] = dataUrl;
-          
-          await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
-            method: "POST",
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              p_name: "__GUILD_PORTRAITS__",
-              p_data: window.__GUILD_PORTRAITS__,
-              p_write_key: GUILD_WRITE_KEY
-            })
-          });
-          console.log("Successfully synchronized local Pollinations portrait from vault.html to Supabase.");
-        } catch(fallbackErr) {
-          console.error("Pollinations fallback in vault.html failed:", fallbackErr);
-        }
+      function showBackendSyncModal(player) {
+        // Remove existing modal if any
+        const old = document.getElementById("backendSyncModal");
+        if (old) old.remove();
+        
+        const modal = document.createElement("div");
+        modal.id = "backendSyncModal";
+        modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+        
+        modal.innerHTML = `
+          <div class="glass-chambers-panel" style="max-width: 550px; padding: 35px; border: 2px solid var(--gold-primary); text-align: center; background: radial-gradient(circle, #1a120c 0%, #0d0906 100%); box-shadow: 0 0 30px rgba(0,0,0,0.95); position: relative; border-radius: 4px; box-sizing: border-box;">
+            <h2 class="text-gold" style="font-family: var(--font-header); letter-spacing: 2px; margin-bottom: 15px; font-size: 1.5rem; text-shadow: 0 0 10px var(--gold-glow);">🎨 BACKEND PORTRAIT GENERATOR</h2>
+            <p style="font-size: 0.9rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 20px;">
+              The system architecture for the Guild Chambers room profiles is officially confirmed! To completely bypass external scrapers and utilize the native <span class="text-gold">gemini-3.1-flash-image</span> (Nano Banana 2) multi-modal model, please execute our backend generation tool:
+            </p>
+            <div style="background: #000; border: 1px solid rgba(212,175,55,0.3); padding: 12px; font-family: monospace; font-size: 0.85rem; color: #10b981; border-radius: 4px; margin-bottom: 20px; text-align: left; word-break: break-all; user-select: all; cursor: pointer;" onclick="document.execCommand('copy')" title="Click to Copy Command">
+              python generate_portraits.py --player ${player.toLowerCase()}
+            </div>
+            <p style="font-size: 0.75rem; color: var(--gold-faded); margin-bottom: 25px; line-height: 1.4;">
+              This backend utility automatically fetches your uploaded reference uploader image, prompt steering rules, and active Path of Building armor configurations directly from Supabase, processes the multi-modal request, and updates the gold frame instantly!
+            </p>
+            <button class="gothic-btn" onclick="document.getElementById('backendSyncModal').remove()" style="padding: 10px 24px; font-size: 0.8rem; font-family: var(--font-header); letter-spacing: 1.5px; cursor: pointer; background: linear-gradient(180deg, #1f1812 0%, #110c08 100%); color: #fff; border: 1px solid var(--gold-primary); border-radius: 4px;">🚪 RETURN TO VAULT</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
       }
     }
 

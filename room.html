@@ -1831,183 +1831,33 @@
         return;
       }
       
-      const adminConfigStr = localStorage.getItem("__GUILD_ADMIN_CONFIG__");
-      let activeConf = null;
-      if (adminConfigStr) {
-        try {
-          const config = JSON.parse(adminConfigStr);
-          activeConf = config[owner.toLowerCase()];
-        } catch(e) {}
-      }
-
-      // Build dynamic equipped gear details from window.charGearData
-      const charData = (window.charGearData && window.charGearData[owner.toLowerCase()]) || {};
-      const gearParts = [];
-      if (charData.helm) gearParts.push(`wearing helmet: ${charData.helm.base || charData.helm.name}`);
-      if (charData.body) gearParts.push(`wearing body armor: ${charData.body.base || charData.body.name}`);
-      if (charData.weapon1) gearParts.push(`wielding weapon: ${charData.weapon1.base || charData.weapon1.name}`);
-      if (charData.gloves) gearParts.push(`wearing gloves: ${charData.gloves.base || charData.gloves.name}`);
-      const gearStr = gearParts.join(", ") || "";
-
-      // Extract class and ascendancy from PoB profile
-      const savedPob = localStorage.getItem(`pob_profile_${owner.toLowerCase()}`);
-      let pobClassStr = "";
-      if (savedPob) {
-        try {
-          const parsed = JSON.parse(savedPob);
-          if (parsed.class_name) {
-            pobClassStr = `Subject Class: ${parsed.class_name} from PoE2`;
-            if (parsed.ascend_name && parsed.ascend_name !== "None") {
-              pobClassStr += `, Ascendancy: ${parsed.ascend_name}`;
-            }
-          }
-        } catch(e) {}
-      }
-
-      let likenessPrompt = "gothic medieval PoE exile adventurer, dark atmospheric backdrop";
-      let refImageBase64 = "";
-      if (activeConf) {
-        likenessPrompt = activeConf.portrait_prompt || likenessPrompt;
-        refImageBase64 = activeConf.reference_image || "";
-      }
-        
-      if (forceRegen || !cachedPortrait) {
-        if (btn) {
-          btn.disabled = true;
-          btn.textContent = "⌛ BRUSHING ART LIKENESS...";
-        }
-        
-        try {
-          const hasArmorRef = !!refImageBase64;
-          const hasEquippedGear = gearParts.length > 0;
-          const pauperInstruction = (!hasArmorRef && !hasEquippedGear)
-            ? "CRITICAL DEFAULT: The player has NO reference face/armor image and NO equipped gear. You MUST force generate them as a pauper in rags!"
-            : "";
-
-          const promptText = `A highly realistic gothic oil painting of a medieval RPG character named "${capitalized}".
-- Style: Rich colors, deep dramatic shadows, cinematic candlelight lighting, oil on canvas, highly detailed masterpiece.
-- Composition: Waist-up mid-shot portrait showing the head down to waist.
-- Likeness details: "${likenessPrompt}".
-- Class Context: ${pobClassStr ? pobClassStr : 'Subject Class: Adventurer from PoE2'}.
-- Equipped gear: "${gearStr || 'traditional exile robes'}".
-${pauperInstruction}`;
-
-          const partsList = [
-            { text: promptText }
-          ];
-
-          // If a reference image base64 is configured, feed it directly to the model parts!
-          if (refImageBase64) {
-            const base64Clean = refImageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-            partsList.push({
-              inlineData: {
-                mimeType: "image/jpeg",
-                data: base64Clean
-              }
-            });
-            partsList[0].text += `\nCRITICAL FACIAL LIKENESS MATCH:
-- Carefully analyze the face in the attached photo.
-- You MUST explicitly copy their exact gender, hair style, hair color, presence of glasses (glasses must be explicitly described in the portrait!), stubble, face shape, and expression.
-- The resulting generated portrait MUST look exactly like the face and likeness in the attached photo!`;
-          }
-
-          let gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: partsList }],
-              generationConfig: {
-                responseModalities: ["IMAGE"]
-              }
-            })
-          });
-          
-          if (!gResponse.ok) {
-            console.log("Trying gemini-2.5-flash-image-preview fallback...");
-            gResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${GEMINI_API_KEY}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ parts: partsList }],
-                generationConfig: {
-                  responseModalities: ["IMAGE"]
-                }
-              })
-            });
-          }
-          
-          if (gResponse.ok) {
-            const gJson = await gResponse.json();
-            const parts = gJson?.candidates?.[0]?.content?.parts || [];
-            const imagePart = parts.find(p => p.inlineData);
-            if (imagePart && imagePart.inlineData) {
-              const mime = imagePart.inlineData.mimeType || "image/jpeg";
-              const base64Data = imagePart.inlineData.data;
-              const dataUrl = `data:${mime};base64,${base64Data}`;
-              
-              img.src = dataUrl;
-              window.__GUILD_PORTRAITS__[owner.toLowerCase()] = dataUrl;
-              
-              // Sync portraits config back to Supabase
-              try {
-                await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
-                  method: "POST",
-                  headers: {
-                    "apikey": SUPABASE_ANON_KEY,
-                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify({
-                    p_name: "__GUILD_PORTRAITS__",
-                    p_data: window.__GUILD_PORTRAITS__,
-                    p_write_key: GUILD_WRITE_KEY
-                  })
-                });
-              } catch(e) {
-                console.warn("Portrait sync fail:", e);
-              }
-              resetBtn();
-              return;
-            }
-          }
-          throw new Error("Gemini image generation failed or did not return inlineData image");
-        } catch(err) {
-          console.error("Direct gemini image generation failed, falling back to Pollinations AI with local prompt compiler:", err);
-          try {
-            const seed = Math.floor(Math.random() * 1000000);
-            const promptText = `Gothic oil painting portrait, medieval RPG character, realistic oil on canvas, cinematic dramatic lighting, waist-up mid-shot. Likeness: ${likenessPrompt}. ${pobClassStr ? pobClassStr : 'Class: Exile'}. Equipped gear: ${gearStr || 'traditional robes'}.`;
-            const dataUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=768&nologo=true&seed=${seed}`;
-            
-            img.src = dataUrl;
-            window.__GUILD_PORTRAITS__[owner.toLowerCase()] = dataUrl;
-            
-            // Sync portraits config back to Supabase
-            await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
-              method: "POST",
-              headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                p_name: "__GUILD_PORTRAITS__",
-                p_data: window.__GUILD_PORTRAITS__,
-                p_write_key: GUILD_WRITE_KEY
-              })
-            });
-            console.log("Successfully synchronized local Pollinations portrait to Supabase.");
-          } catch(fallbackErr) {
-            console.error("Pollinations fallback failed:", fallbackErr);
-          }
-          resetBtn();
-        }
-      }
+      showBackendSyncModal(capitalized);
       
-      function resetBtn() {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "🎨 REFRESH PORTRAIT";
-        }
+      function showBackendSyncModal(player) {
+        // Remove existing modal if any
+        const old = document.getElementById("backendSyncModal");
+        if (old) old.remove();
+        
+        const modal = document.createElement("div");
+        modal.id = "backendSyncModal";
+        modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+        
+        modal.innerHTML = `
+          <div class="glass-chambers-panel" style="max-width: 550px; padding: 35px; border: 2px solid var(--gold-primary); text-align: center; background: radial-gradient(circle, #1a120c 0%, #0d0906 100%); box-shadow: 0 0 30px rgba(0,0,0,0.95); position: relative; border-radius: 4px; box-sizing: border-box;">
+            <h2 class="text-gold" style="font-family: var(--font-header); letter-spacing: 2px; margin-bottom: 15px; font-size: 1.5rem; text-shadow: 0 0 10px var(--gold-glow);">🎨 BACKEND PORTRAIT GENERATOR</h2>
+            <p style="font-size: 0.9rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 20px;">
+              The system architecture for the Guild Chambers room profiles is officially confirmed! To completely bypass external scrapers and utilize the native <span class="text-gold">gemini-3.1-flash-image</span> (Nano Banana 2) multi-modal model, please execute our backend generation tool:
+            </p>
+            <div style="background: #000; border: 1px solid rgba(212,175,55,0.3); padding: 12px; font-family: monospace; font-size: 0.85rem; color: #10b981; border-radius: 4px; margin-bottom: 20px; text-align: left; word-break: break-all; user-select: all; cursor: pointer;" onclick="document.execCommand('copy')" title="Click to Copy Command">
+              python generate_portraits.py --player ${player.toLowerCase()}
+            </div>
+            <p style="font-size: 0.75rem; color: var(--gold-faded); margin-bottom: 25px; line-height: 1.4;">
+              This backend utility automatically fetches your uploaded reference uploader image, prompt steering rules, and active Path of Building armor configurations directly from Supabase, processes the multi-modal request, and updates the gold frame instantly!
+            </p>
+            <button class="gothic-btn" onclick="document.getElementById('backendSyncModal').remove()" style="padding: 10px 24px; font-size: 0.8rem; font-family: var(--font-header); letter-spacing: 1.5px; cursor: pointer; background: linear-gradient(180deg, #1f1812 0%, #110c08 100%); color: #fff; border: 1px solid var(--gold-primary); border-radius: 4px;">🚪 RETURN TO CHAMBERS</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
       }
     }
 
