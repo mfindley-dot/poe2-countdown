@@ -253,6 +253,26 @@
     <!-- Active Management Board -->
     <div id="adminBoard" style="display: none;">
       
+      <!-- Central API Key configuration card -->
+      <div class="admin-card">
+        <div class="admin-section-header">
+          🔑 CENTRAL GEMINI API KEY CONFIGURATION (WITH BILLING ATTACHED)
+        </div>
+        <p style="font-size: 0.75rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4;">
+          Provide your billing-enabled Gemini API Key. This key is securely saved inside your private Supabase storage row and retrieved in real-time by exiles to render custom portraits in their browser!
+        </p>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+          <div class="admin-form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+            <label>Gemini API Key</label>
+            <input type="password" id="adminGeminiKey" class="admin-input" placeholder="Enter AQ.Ab... or AIzaSy... key" style="font-family: monospace; letter-spacing: 1px;">
+          </div>
+          <button onclick="saveGeminiApiKey()" class="gothic-btn" style="border-color: #ffd700; color: #ffd700; font-weight: bold; font-size: 0.85rem; height: 36px; padding: 0 20px; cursor: pointer; background: linear-gradient(180deg, #1c1917 0%, #0d0a09 100%);">
+            💾 SAVE API KEY
+          </button>
+        </div>
+        <span id="apiKeyStatus" style="display: block; margin-top: 10px; font-size: 0.75rem; font-weight: bold;"></span>
+      </div>
+
       <!-- Player Tabs -->
       <div class="player-tabs-grid" id="playerTabsGrid">
         <!-- Rendered dynamically -->
@@ -493,6 +513,7 @@
         localStorage.setItem("adminAuthenticated", "true");
         await loadLiveExilesList();
         await loadAllConfigs();
+        await loadGeminiApiKey();
         renderPlayerTabs();
         loadActiveExile();
       } else {
@@ -510,12 +531,77 @@
         document.getElementById("adminBoard").style.display = "block";
         await loadLiveExilesList();
         await loadAllConfigs();
+        await loadGeminiApiKey();
         renderPlayerTabs();
         loadActiveExile();
       }
     });
 
     // 3. Retrieve DB configs
+    async function loadGeminiApiKey() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/poe2_guild_vault?name=eq.__GEMINI_API_KEY__&select=*`, {
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (response.ok) {
+          const rows = await response.json();
+          if (rows && rows.length > 0 && rows[0].data && rows[0].data.api_key) {
+            document.getElementById("adminGeminiKey").value = rows[0].data.api_key;
+            localStorage.setItem("geminiKey", rows[0].data.api_key);
+          }
+        }
+      } catch(e) {
+        console.warn("Failed to load Gemini key:", e);
+      }
+    }
+
+    async function saveGeminiApiKey() {
+      const keyField = document.getElementById("adminGeminiKey");
+      const status = document.getElementById("apiKeyStatus");
+      if (!keyField || !status) return;
+      
+      const keyVal = keyField.value.trim();
+      if (!keyVal) {
+        status.style.color = "#ef4444";
+        status.textContent = "❌ ERROR: API Key cannot be empty!";
+        return;
+      }
+      
+      status.style.color = "#ffd700";
+      status.textContent = "⏳ Saving Gemini API Key securely to Supabase...";
+      
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_vault_item`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            p_name: "__GEMINI_API_KEY__",
+            p_data: { api_key: keyVal },
+            p_write_key: GUILD_WRITE_KEY
+          })
+        });
+        
+        if (response.ok) {
+          status.style.color = "#2ecc71";
+          status.textContent = "🎉 SUCCESS: API Key synchronized to Supabase securely!";
+          localStorage.setItem("geminiKey", keyVal);
+        } else {
+          throw new Error("API Key sync failed: " + response.status);
+        }
+      } catch(e) {
+        console.error(e);
+        status.style.color = "#ef4444";
+        status.textContent = "❌ ERROR: Failed to save API Key to Supabase.";
+      }
+    }
+
     async function loadAllConfigs() {
       try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/poe2_guild_vault?name=eq.__GUILD_ADMIN_CONFIG__&select=*`, {
