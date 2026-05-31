@@ -781,6 +781,21 @@
         statusDiv.style.color = "#ffd700";
       }
 
+      // Auto-sync Gemini API key if modified in the input field
+      try {
+        const keyField = document.getElementById("adminGeminiKey");
+        if (keyField && keyField.value.trim()) {
+          const keyVal = keyField.value.trim();
+          const cachedKey = localStorage.getItem("geminiKey");
+          if (keyVal !== cachedKey) {
+            console.log("Auto-saving updated Gemini API key...");
+            await saveGeminiApiKey();
+          }
+        }
+      } catch(e) {
+        console.warn("Auto-save of API key failed:", e);
+      }
+
       const payload = {
         p_name: "__GUILD_ADMIN_CONFIG__",
         p_data: guildAdminConfigs,

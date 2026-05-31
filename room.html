@@ -600,6 +600,8 @@
           const apiKeyEntry = entries.find(e => e.name === "__GEMINI_API_KEY__");
           if (apiKeyEntry && apiKeyEntry.data && apiKeyEntry.data.api_key) {
             localStorage.setItem("geminiKey", apiKeyEntry.data.api_key);
+          } else {
+            localStorage.removeItem("geminiKey");
           }
         }
       } catch (err) {
