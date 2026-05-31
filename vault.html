@@ -4323,10 +4323,16 @@
 
     async function runGeminiBuildAudit() {
       const loggedInUser = localStorage.getItem("loggedInUser") || "Mike";
-      const key = localStorage.getItem("geminiKey") || atob("QVEuQWI4Uk42S05kWjJxTVBGbm9IamVQTjdKMlluUlpIbnRfdG9XOFk3VFJ4TUYtdlBpMHc=");
+      const key = localStorage.getItem("geminiKey");
       
       const resultsBox = document.getElementById("geminiAuditResultsBox");
       if (!resultsBox) return;
+      
+      if (!key) {
+        showApiKeyWarningModal();
+        resultsBox.style.display = "none";
+        return;
+      }
       
       resultsBox.style.display = "block";
       resultsBox.innerHTML = `
@@ -4649,7 +4655,7 @@ INSTRUCTION: Evaluate the player's equipped items against their pasted Path of B
       }
       
       const capitalizedOwner = activeOwner.charAt(0).toUpperCase() + activeOwner.slice(1).toLowerCase();
-      const key = localStorage.getItem("geminiKey") || atob("QVEuQWI4Uk42S05kWjJxTVBGbm9IamVQTjdKMlluUlpIbnRfdG9XOFk3VFJ4TUYtdlBpMHc=");
+      const key = localStorage.getItem("geminiKey");
       
       if (!key) {
         const classTitles = {
@@ -4896,32 +4902,33 @@ Context:
         alert("🎨 Direct Gemini portrait generation failed. Please verify your API Key with billing attached inside the Admin Console, and check developer tools console for details.");
       }
 
-      function showApiKeyWarningModal() {
-        // Remove existing modal if any
-        const old = document.getElementById("apiKeyWarningModal");
-        if (old) old.remove();
-        
-        const modal = document.createElement("div");
-        modal.id = "apiKeyWarningModal";
-        modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
-        
-        modal.innerHTML = `
-          <div class="glass-chambers-panel" style="max-width: 500px; padding: 35px; border: 2px solid var(--gold-primary); text-align: center; background: radial-gradient(circle, #1a120c 0%, #0d0906 100%); box-shadow: 0 0 30px rgba(0,0,0,0.95); position: relative; border-radius: 4px; box-sizing: border-box;">
-            <h2 class="text-gold" style="font-family: var(--font-header); letter-spacing: 2px; margin-bottom: 15px; font-size: 1.3rem; text-shadow: 0 0 10px var(--gold-glow);">🔑 GEMINI API KEY REQUIRED</h2>
-            <p style="font-size: 0.9rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 20px;">
-              The system is configured to generate your tailored gothic portraits in real-time inside your browser! However, no active Gemini API key has been configured yet.
-            </p>
-            <p style="font-size: 0.8rem; color: var(--gold-faded); margin-bottom: 25px; line-height: 1.4;">
-              Please go to the <span class="text-gold">Admin Console</span>, unlock it with your passcode, and enter your billing-enabled Gemini API Key in the central configuration card at the top. Once saved, exiles can click "Refresh Portrait" to paint their own masterpieces instantly!
-            </p>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-              <a href="admin.html" class="gothic-btn" style="padding: 10px 20px; font-size: 0.8rem; font-family: var(--font-header); letter-spacing: 1.5px; text-decoration: none; border: 1px solid var(--gold-primary); color: #ffd700; background: linear-gradient(180deg, #1f1812 0%, #110c08 100%); border-radius: 4px; cursor: pointer;">⚙️ ADMIN CONSOLE</a>
-              <button class="gothic-btn" onclick="document.getElementById('apiKeyWarningModal').remove()" style="padding: 10px 20px; font-size: 0.8rem; font-family: var(--font-header); letter-spacing: 1.5px; cursor: pointer; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;">🚪 RETURN</button>
-            </div>
+    }
+
+    function showApiKeyWarningModal() {
+      // Remove existing modal if any
+      const old = document.getElementById("apiKeyWarningModal");
+      if (old) old.remove();
+      
+      const modal = document.createElement("div");
+      modal.id = "apiKeyWarningModal";
+      modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+      
+      modal.innerHTML = `
+        <div class="glass-chambers-panel" style="max-width: 500px; padding: 35px; border: 2px solid var(--gold-primary); text-align: center; background: radial-gradient(circle, #1a120c 0%, #0d0906 100%); box-shadow: 0 0 30px rgba(0,0,0,0.95); position: relative; border-radius: 4px; box-sizing: border-box;">
+          <h2 class="text-gold" style="font-family: var(--font-header); letter-spacing: 2px; margin-bottom: 15px; font-size: 1.3rem; text-shadow: 0 0 10px var(--gold-glow);">🔑 GEMINI API KEY REQUIRED</h2>
+          <p style="font-size: 0.9rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 20px;">
+            The system is configured to generate your dynamic bardic tales, multimodal voice notes, and portraits in real-time inside your browser! However, no active Gemini API key has been configured yet.
+          </p>
+          <p style="font-size: 0.8rem; color: var(--gold-faded); margin-bottom: 25px; line-height: 1.4;">
+            Please go to the <span class="text-gold">Admin Console</span>, unlock it with your passcode, and enter your billing-enabled Gemini API Key in the central configuration card at the top. Once saved, exiles can trigger all AI storytelling features instantly!
+          </p>
+          <div style="display: flex; gap: 10px; justify-content: center;">
+            <a href="admin.html" class="gothic-btn" style="padding: 10px 20px; font-size: 0.8rem; font-family: var(--font-header); letter-spacing: 1.5px; text-decoration: none; border: 1px solid var(--gold-primary); color: #ffd700; background: linear-gradient(180deg, #1f1812 0%, #110c08 100%); border-radius: 4px; cursor: pointer;">⚙️ ADMIN CONSOLE</a>
+            <button class="gothic-btn" onclick="document.getElementById('apiKeyWarningModal').remove()" style="padding: 10px 20px; font-size: 0.8rem; font-family: var(--font-header); letter-spacing: 1.5px; cursor: pointer; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;">🚪 RETURN</button>
           </div>
-        `;
-        document.body.appendChild(modal);
-      }
+        </div>
+      `;
+      document.body.appendChild(modal);
     }
 
     // 5. Latest Adventures Scroll Story & Bardic TTS Engine
@@ -4952,7 +4959,11 @@ Context:
       logEl.innerHTML = `⏳ <i>The bard closes his eyes, strumming a low chord... summoning tales of "${promptText}" in "${act}"...</i>`;
       saveBtn.style.display = "none";
       
-      const key = localStorage.getItem("geminiKey") || atob("QVEuQWI4Uk42S05kWjJxTVBGbm9IamVQTjdKMlluUlpIbnRfdG9XOFk3VFJ4TUYtdlBpMHc=");
+      const key = localStorage.getItem("geminiKey");
+      if (!key) {
+        showApiKeyWarningModal();
+        return;
+      }
       let narrativeText = "";
       
       let pClass = "adventurer";
